@@ -1,15 +1,17 @@
 ﻿import { createTheme } from "@mui/material/styles";
 
+/**
+ * Tema base de Material UI (HU-21).
+ * Estado: A DEFINIR por el equipo de diseño / desarrollo.
+ */
 export const theme = createTheme({
   palette: {
+    mode: "light",
     primary: {
-      main: "#1976d2",
+      main: "#1976d2", // A definir
     },
     secondary: {
-      main: "#00b4d8",
-    },
-    background: {
-      default: "#f4f6f8",
+      main: "#9c27b0", // A definir
     },
   },
   typography: {
