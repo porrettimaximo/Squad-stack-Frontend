@@ -1,7 +1,6 @@
 ﻿import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
-  Container,
   Typography,
   Grid,
   Alert,
@@ -14,8 +13,11 @@ import {
   InputAdornment,
   CircularProgress,
   Snackbar,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import Sidebar from "../../components/layout/Sidebar";
 import DashboardNavbar from "../../components/layout/DashboardNavbar";
 import MobileBottomNav from "../../components/layout/MobileBottomNav";
 import BalanceCard from "../../components/dashboard/BalanceCard";
@@ -25,15 +27,19 @@ import accountService from "../../services/accountService";
 import transactionService from "../../services/transactionService";
 
 export function DashboardPage() {
+  const muiTheme = useTheme();
+  const isDesktop = useMediaQuery(muiTheme.breakpoints.up("md"));
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [account, setAccount] = useState({ money: 45230.50, cardNumber: "4892", trend: 2.4 });
   const [transactions, setTransactions] = useState([]);
   const [currentTab, setCurrentTab] = useState(0);
+  const [activeSidebarItem, setActiveSidebarItem] = useState("inicio");
   const [activeMobileNav, setActiveMobileNav] = useState(0);
   const [userName] = useState("Alejandro Silva");
 
-  // Estado para modales de acciones directas
+  // Modales de acciones rápidas
   const [depositOpen, setDepositOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
@@ -47,7 +53,6 @@ export function DashboardPage() {
     setError(null);
 
     try {
-      // Consumir en paralelo GET /api/accounts/me y GET /api/transactions/me
       const [accountData, txData] = await Promise.all([
         accountService.getMyAccount(),
         transactionService.getRecentTransactions(5),
@@ -65,7 +70,7 @@ export function DashboardPage() {
         setTransactions(txData);
       }
     } catch (err) {
-      console.error("Error cargando datos del dashboard:", err);
+      console.error("Error cargando dashboard:", err);
       setError("No se pudieron actualizar los datos en tiempo real. Mostrando último estado conocido.");
     } finally {
       setLoading(false);
@@ -76,7 +81,6 @@ export function DashboardPage() {
     loadDashboardData();
   }, [loadDashboardData]);
 
-  // Manejador de Depósito rápido
   const handleConfirmDeposit = async () => {
     const num = Number(depositAmount);
     if (!num || num <= 0) return;
@@ -100,13 +104,12 @@ export function DashboardPage() {
       setDepositAmount("");
       setSnackbar({ open: true, message: `¡Depósito de $${num.toLocaleString("es-AR")} exitoso!`, severity: "success" });
     } catch (err) {
-      setSnackbar({ open: true, message: err.message || "Error al realizar depósito", severity: "error" });
+      setSnackbar({ open: true, message: err.message || "Error al depositar", severity: "error" });
     } finally {
       setActionLoading(false);
     }
   };
 
-  // Manejador de Transferencia rápida
   const handleConfirmTransfer = async () => {
     const num = Number(transferAmount);
     if (!num || num <= 0 || !destinationAccount) return;
@@ -137,104 +140,139 @@ export function DashboardPage() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC", pb: { xs: 12, md: 6 } }}>
-      {/* Barra de Navegación Superior */}
-      <DashboardNavbar
-        currentTab={currentTab}
-        onTabChange={(e, val) => setCurrentTab(val)}
-        userName={userName}
-      />
+    <Box
+      sx={{
+        display: "flex",
+        width: "100vw",
+        height: "100vh",
+        overflow: "hidden",
+        bgcolor: "#F8FAFC",
+      }}
+    >
+      {/* Barra Lateral Izquierda (Visible en Desktop) */}
+      {isDesktop && (
+        <Sidebar
+          activeItem={activeSidebarItem}
+          onItemClick={(item) => {
+            setActiveSidebarItem(item);
+            setSnackbar({ open: true, message: `Navegando a ${item.toUpperCase()}...`, severity: "info" });
+          }}
+          onLogout={() => setSnackbar({ open: true, message: "Sesión finalizada.", severity: "info" })}
+        />
+      )}
 
-      <Container maxWidth="lg" sx={{ pt: { xs: 2.5, sm: 4 } }}>
-        {/* Mensaje de Error si falla la conexión */}
-        {error && (
-          <Alert
-            severity="warning"
-            sx={{ mb: 3, borderRadius: "12px" }}
-            action={
-              <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={loadDashboardData}>
-                Reintentar
-              </Button>
-            }
-          >
-            {error}
-          </Alert>
-        )}
+      {/* Área Principal de Contenido (Ajustada a la ventana con scroll vertical) */}
+      <Box
+        component="main"
+        sx={{
+          flex: 1,
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          overflowY: "auto",
+          bgcolor: "#F8FAFC",
+          pb: { xs: 10, md: 4 },
+        }}
+      >
+        {/* Barra Superior con Pestañas y Perfil */}
+        <DashboardNavbar
+          currentTab={currentTab}
+          onTabChange={(e, val) => setCurrentTab(val)}
+          userName={userName}
+        />
 
-        {/* Saludo y Título de Bienvenida (Exacto de Figma) */}
-        <Box sx={{ mb: 3.5 }}>
-          <Typography
-            variant="caption"
-            sx={{
-              display: "block",
-              color: "#64748B",
-              fontWeight: 600,
-              fontSize: "0.85rem",
-              letterSpacing: "0.02em",
-              mb: 0.25,
-            }}
-          >
-            Bienvenido de nuevo
-          </Typography>
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 800,
-              color: "#0F172A",
-              fontSize: { xs: "1.75rem", sm: "2.1rem" },
-              letterSpacing: "-0.02em",
-            }}
-          >
-            {userName}
-          </Typography>
-        </Box>
+        {/* Contenedor del Dashboard */}
+        <Box sx={{ flex: 1, p: { xs: 2.5, sm: 3.5, md: 4 }, maxWidth: 1240, width: "100%", mx: "auto" }}>
+          {/* Notificación de Error */}
+          {error && (
+            <Alert
+              severity="warning"
+              sx={{ mb: 3, borderRadius: "12px" }}
+              action={
+                <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={loadDashboardData}>
+                  Reintentar
+                </Button>
+              }
+            >
+              {error}
+            </Alert>
+          )}
 
-        {/* Layout Principal Dividido en Dos Columnas */}
-        <Grid container spacing={3.5}>
-          {/* Columna Izquierda: Tarjeta de Saldo y Acciones Rápidas */}
-          <Grid item xs={12} md={7}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              {/* Tarjeta Destacada de Saldo */}
-              <BalanceCard
-                balance={account.money}
-                cardNumber={account.cardNumber}
-                trend={account.trend}
+          {/* Encabezado: Saludo y Nombre */}
+          <Box sx={{ mb: 3.5 }}>
+            <Typography
+              variant="caption"
+              sx={{
+                display: "block",
+                color: "#64748B",
+                fontWeight: 600,
+                fontSize: "0.85rem",
+                letterSpacing: "0.02em",
+                mb: 0.25,
+              }}
+            >
+              Bienvenido de nuevo
+            </Typography>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 800,
+                color: "#0F172A",
+                fontSize: { xs: "1.75rem", sm: "2.1rem" },
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {userName}
+            </Typography>
+          </Box>
+
+          {/* Grid de 2 Columnas Principal */}
+          <Grid container spacing={3.5}>
+            {/* Columna Izquierda: Tarjeta Azul + Acciones Rápidas */}
+            <Grid item xs={12} md={7}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                <BalanceCard
+                  balance={account.money}
+                  cardNumber={account.cardNumber}
+                  trend={account.trend}
+                  loading={loading}
+                />
+
+                <QuickActions
+                  onDeposit={() => setDepositOpen(true)}
+                  onTransfer={() => setTransferOpen(true)}
+                  onScan={() => setSnackbar({ open: true, message: "Módulo Escanear QR próximamente disponible.", severity: "info" })}
+                  onServices={() => setSnackbar({ open: true, message: "Módulo Pago de Servicios próximamente disponible.", severity: "info" })}
+                />
+              </Box>
+            </Grid>
+
+            {/* Columna Derecha: Actividad Reciente */}
+            <Grid item xs={12} md={5}>
+              <RecentActivity
+                transactions={transactions}
                 loading={loading}
+                onViewAll={() => setSnackbar({ open: true, message: "Navegando al historial completo...", severity: "info" })}
               />
-
-              {/* Accesos Directos (Depositar, Transferir, Escanear, Servicios) */}
-              <QuickActions
-                onDeposit={() => setDepositOpen(true)}
-                onTransfer={() => setTransferOpen(true)}
-                onScan={() => setSnackbar({ open: true, message: "Módulo Escanear QR próximamente disponible.", severity: "info" })}
-                onServices={() => setSnackbar({ open: true, message: "Módulo Pago de Servicios próximamente disponible.", severity: "info" })}
-              />
-            </Box>
+            </Grid>
           </Grid>
+        </Box>
+      </Box>
 
-          {/* Columna Derecha: Actividad Reciente (Últimos 5 movimientos) */}
-          <Grid item xs={12} md={5}>
-            <RecentActivity
-              transactions={transactions}
-              loading={loading}
-              onViewAll={() => setSnackbar({ open: true, message: "Navegando al historial completo de movimientos...", severity: "info" })}
-            />
-          </Grid>
-        </Grid>
-      </Container>
+      {/* Barra de Navegación Inferior (Móvil) */}
+      {!isDesktop && (
+        <MobileBottomNav
+          activeNav={activeMobileNav}
+          onChange={(e, val) => setActiveMobileNav(val)}
+        />
+      )}
 
-      {/* Navegación Móvil Inferior (Bottom Navigation) */}
-      <MobileBottomNav
-        activeNav={activeMobileNav}
-        onChange={(e, val) => setActiveMobileNav(val)}
-      />
-
-      {/* Modal / Dialog Rápido para Depositar */}
+      {/* Modal para Depositar */}
       <Dialog open={depositOpen} onClose={() => setDepositOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>Depositar Fondos</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Ingresa el monto que deseas acreditar a tu cuenta DigitalArs.
+            Ingresa el monto a acreditar en tu cuenta DigitalArs.
           </Typography>
           <TextField
             autoFocus
@@ -263,12 +301,12 @@ export function DashboardPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Modal / Dialog Rápido para Transferir */}
+      {/* Modal para Transferir */}
       <Dialog open={transferOpen} onClose={() => setTransferOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>Transferir Dinero</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Ingresa la cuenta destino y el monto a enviar.
+            Ingresa la cuenta receptora y el monto a enviar.
           </Typography>
           <TextField
             fullWidth
@@ -304,10 +342,10 @@ export function DashboardPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar de notificaciones */}
+      {/* Feedback Toast */}
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={4000}
+        autoHideDuration={3500}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
         message={snackbar.message}
       />
