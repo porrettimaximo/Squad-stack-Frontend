@@ -12,52 +12,55 @@ export function QuickActions({ onDeposit, onTransfer, onScan, onServices }) {
       title: "Depositar",
       icon: <AddCircleOutlineOutlinedIcon fontSize="medium" />,
       onClick: onDeposit,
-      isPrimaryOnMobile: true,
+      isPrimaryMobile: true,
     },
     {
       id: "transfer",
       title: "Transferir",
       icon: <SwapHorizIcon fontSize="medium" />,
       onClick: onTransfer,
-      isPrimaryOnMobile: true,
+      isPrimaryMobile: true,
     },
     {
       id: "scan",
       title: "Escanear",
       icon: <QrCodeScannerIcon fontSize="medium" />,
       onClick: onScan,
-      isPrimaryOnMobile: false,
+      isPrimaryMobile: false,
     },
     {
       id: "services",
       title: "Servicios",
       icon: <ReceiptLongIcon fontSize="medium" />,
       onClick: onServices,
-      isPrimaryOnMobile: false,
+      isPrimaryMobile: false,
     },
   ];
 
   return (
     <Grid container spacing={2}>
       {actions.map((act) => (
-        <Grid item xs={6} sm={3} key={act.id}>
+        <Grid item xs={6} md={3} key={act.id}>
           <Card
             elevation={0}
             sx={{
               borderRadius: "16px",
-              border: "1px solid #E2E8F0",
-              transition: "all 0.2s ease-in-out",
+              border: {
+                xs: act.isPrimaryMobile ? "none" : "1px solid #E2E8F0",
+                md: "1px solid #E2E8F0",
+              },
               bgcolor: {
-                xs: act.isPrimaryOnMobile ? "#0056D2" : "#FFFFFF",
-                sm: "#FFFFFF",
+                xs: act.isPrimaryMobile ? "#0056D2" : "#FFFFFF",
+                md: "#FFFFFF",
               },
               color: {
-                xs: act.isPrimaryOnMobile ? "#FFFFFF" : "#0F172A",
-                sm: "#0F172A",
+                xs: act.isPrimaryMobile ? "#FFFFFF" : "#0F172A",
+                md: "#0F172A",
               },
+              transition: "all 0.2s ease-in-out",
               "&:hover": {
-                transform: "translateY(-3px)",
-                boxShadow: "0 8px 20px -4px rgba(15, 23, 42, 0.08)",
+                transform: "translateY(-2px)",
+                boxShadow: "0 6px 16px -3px rgba(15, 23, 42, 0.08)",
                 borderColor: "#0066FF",
               },
             }}
@@ -65,30 +68,32 @@ export function QuickActions({ onDeposit, onTransfer, onScan, onServices }) {
             <CardActionArea
               onClick={act.onClick}
               sx={{
-                p: { xs: 2, sm: 2.5 },
+                p: { xs: 2, sm: 2.2, md: 2.5 },
                 display: "flex",
-                flexDirection: "column",
+                flexDirection: { xs: act.isPrimaryMobile ? "column" : "row", md: "column" },
                 alignItems: "center",
                 justifyContent: "center",
-                minHeight: { xs: 96, sm: 112 },
+                gap: { xs: 1, md: 0 },
+                minHeight: { xs: act.isPrimaryMobile ? 84 : 58, md: 104 },
               }}
             >
               <Box
                 sx={{
-                  width: 44,
-                  height: 44,
+                  width: { xs: act.isPrimaryMobile ? 36 : 28, md: 44 },
+                  height: { xs: act.isPrimaryMobile ? 36 : 28, md: 44 },
                   borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  mb: 1.2,
+                  mb: { xs: act.isPrimaryMobile ? 0.75 : 0, md: 1.2 },
+                  mr: { xs: !act.isPrimaryMobile ? 1 : 0, md: 0 },
                   bgcolor: {
-                    xs: act.isPrimaryOnMobile ? "rgba(255, 255, 255, 0.18)" : "#F1F5F9",
-                    sm: "#EEF4FF",
+                    xs: act.isPrimaryMobile ? "transparent" : "transparent",
+                    md: "#EEF4FF",
                   },
                   color: {
-                    xs: act.isPrimaryOnMobile ? "#FFFFFF" : "#0056D2",
-                    sm: "#0056D2",
+                    xs: act.isPrimaryMobile ? "#FFFFFF" : "#0F172A",
+                    md: "#0056D2",
                   },
                 }}
               >
@@ -99,7 +104,7 @@ export function QuickActions({ onDeposit, onTransfer, onScan, onServices }) {
                 variant="body2"
                 sx={{
                   fontWeight: 700,
-                  fontSize: { xs: "0.85rem", sm: "0.925rem" },
+                  fontSize: { xs: "0.95rem", md: "0.925rem" },
                   textAlign: "center",
                 }}
               >

@@ -13,10 +13,18 @@ import {
   InputAdornment,
   CircularProgress,
   Snackbar,
+  IconButton,
+  Badge,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
+import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
+import SignalCellularAltIcon from "@mui/icons-material/SignalCellularAlt";
+import WifiIcon from "@mui/icons-material/Wifi";
+import BatteryFullIcon from "@mui/icons-material/BatteryFull";
+
 import Sidebar from "../../components/layout/Sidebar";
 import DashboardNavbar from "../../components/layout/DashboardNavbar";
 import MobileBottomNav from "../../components/layout/MobileBottomNav";
@@ -140,134 +148,267 @@ export function DashboardPage() {
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        width: "100vw",
-        height: "100vh",
-        overflow: "hidden",
-        bgcolor: "#F8FAFC",
-      }}
-    >
-      {/* Barra Lateral Izquierda (Visible en Desktop) */}
-      {isDesktop && (
-        <Sidebar
-          activeItem={activeSidebarItem}
-          onItemClick={(item) => {
-            setActiveSidebarItem(item);
-            setSnackbar({ open: true, message: `Navegando a ${item.toUpperCase()}...`, severity: "info" });
+    <Box sx={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", bgcolor: "#F8FAFC" }}>
+      {/* ─── 1. VISTA DESKTOP (md y superior) ─── */}
+      {isDesktop ? (
+        <>
+          {/* Barra Lateral Izquierda */}
+          <Sidebar
+            activeItem={activeSidebarItem}
+            onItemClick={(item) => {
+              setActiveSidebarItem(item);
+              setSnackbar({ open: true, message: `Navegando a ${item.toUpperCase()}...`, severity: "info" });
+            }}
+            onLogout={() => setSnackbar({ open: true, message: "Sesión finalizada.", severity: "info" })}
+          />
+
+          {/* Área Central de Contenido */}
+          <Box
+            component="main"
+            sx={{
+              flex: 1,
+              height: "100vh",
+              display: "flex",
+              flexDirection: "column",
+              overflowY: "auto",
+              bgcolor: "#F8FAFC",
+              pb: 4,
+            }}
+          >
+            {/* Barra de Navegación Superior Desktop */}
+            <DashboardNavbar
+              currentTab={currentTab}
+              onTabChange={(e, val) => setCurrentTab(val)}
+              userName={userName}
+            />
+
+            {/* Contenedor del Dashboard Desktop */}
+            <Box sx={{ flex: 1, p: 4, maxWidth: 1240, width: "100%", mx: "auto" }}>
+              {error && (
+                <Alert
+                  severity="warning"
+                  sx={{ mb: 3, borderRadius: "12px" }}
+                  action={
+                    <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={loadDashboardData}>
+                      Reintentar
+                    </Button>
+                  }
+                >
+                  {error}
+                </Alert>
+              )}
+
+              {/* Saludo */}
+              <Box sx={{ mb: 3.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    display: "block",
+                    color: "#64748B",
+                    fontWeight: 600,
+                    fontSize: "0.85rem",
+                    letterSpacing: "0.02em",
+                    mb: 0.25,
+                  }}
+                >
+                  Bienvenido de nuevo
+                </Typography>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 800,
+                    color: "#0F172A",
+                    fontSize: "2.1rem",
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  {userName}
+                </Typography>
+              </Box>
+
+              {/* Grid Desktop de 2 Columnas */}
+              <Grid container spacing={3.5}>
+                <Grid item xs={12} md={7}>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                    <BalanceCard
+                      balance={account.money}
+                      cardNumber={account.cardNumber}
+                      trend={account.trend}
+                      loading={loading}
+                    />
+                    <QuickActions
+                      onDeposit={() => setDepositOpen(true)}
+                      onTransfer={() => setTransferOpen(true)}
+                      onScan={() => setSnackbar({ open: true, message: "Módulo Escanear QR próximamente disponible.", severity: "info" })}
+                      onServices={() => setSnackbar({ open: true, message: "Módulo Pago de Servicios próximamente disponible.", severity: "info" })}
+                    />
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} md={5}>
+                  <RecentActivity
+                    transactions={transactions}
+                    loading={loading}
+                    onViewAll={() => setSnackbar({ open: true, message: "Navegando al historial completo...", severity: "info" })}
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+          </Box>
+        </>
+      ) : (
+        /* ─── 2. VISTA MOBILE (xs y sm) — Exacta a Figma ─── */
+        <Box
+          component="main"
+          sx={{
+            flex: 1,
+            height: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            overflowY: "auto",
+            bgcolor: "#001639", // Fondo azul oscuro superior
           }}
-          onLogout={() => setSnackbar({ open: true, message: "Sesión finalizada.", severity: "info" })}
-        />
-      )}
+        >
+          {/* Sección Superior Azul Oscura */}
+          <Box sx={{ px: 2.5, pt: 1.5, pb: 3, bgcolor: "#001639", color: "#FFFFFF" }}>
+            {/* Barra de Estado Teléfono (9:41, Señal, Wifi, Batería) */}
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, px: 0.5 }}>
+              <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: "#FFFFFF" }}>
+                9:41
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, color: "#FFFFFF" }}>
+                <SignalCellularAltIcon sx={{ fontSize: "1.1rem" }} />
+                <WifiIcon sx={{ fontSize: "1.1rem" }} />
+                <BatteryFullIcon sx={{ fontSize: "1.2rem" }} />
+              </Box>
+            </Box>
 
-      {/* Área Principal de Contenido (Ajustada a la ventana con scroll vertical) */}
-      <Box
-        component="main"
-        sx={{
-          flex: 1,
-          height: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          overflowY: "auto",
-          bgcolor: "#F8FAFC",
-          pb: { xs: 10, md: 4 },
-        }}
-      >
-        {/* Barra Superior con Pestañas y Perfil */}
-        <DashboardNavbar
-          currentTab={currentTab}
-          onTabChange={(e, val) => setCurrentTab(val)}
-          userName={userName}
-        />
+            {/* Cabecera DigitalArs + Notificaciones */}
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: "12px",
+                    bgcolor: "#0d2650",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  <AccountBalanceWalletOutlinedIcon fontSize="small" />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 800, fontSize: "1.35rem", letterSpacing: "-0.01em" }}>
+                  DigitalArs
+                </Typography>
+              </Box>
 
-        {/* Contenedor del Dashboard */}
-        <Box sx={{ flex: 1, p: { xs: 2.5, sm: 3.5, md: 4 }, maxWidth: 1240, width: "100%", mx: "auto" }}>
-          {/* Notificación de Error */}
-          {error && (
-            <Alert
-              severity="warning"
-              sx={{ mb: 3, borderRadius: "12px" }}
-              action={
-                <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={loadDashboardData}>
-                  Reintentar
-                </Button>
-              }
-            >
-              {error}
-            </Alert>
-          )}
+              {/* Botón Circular de Notificaciones */}
+              <IconButton
+                sx={{
+                  bgcolor: "#0d2650",
+                  width: 44,
+                  height: 44,
+                  "&:hover": { bgcolor: "#133368" },
+                }}
+              >
+                <Badge
+                  color="error"
+                  variant="dot"
+                  sx={{
+                    "& .MuiBadge-badge": {
+                      bgcolor: "#EF4444",
+                      top: 4,
+                      right: 4,
+                    },
+                  }}
+                >
+                  <NotificationsNoneOutlinedIcon sx={{ color: "#FFFFFF", fontSize: "1.35rem" }} />
+                </Badge>
+              </IconButton>
+            </Box>
 
-          {/* Encabezado: Saludo y Nombre */}
-          <Box sx={{ mb: 3.5 }}>
-            <Typography
-              variant="caption"
-              sx={{
-                display: "block",
-                color: "#64748B",
-                fontWeight: 600,
-                fontSize: "0.85rem",
-                letterSpacing: "0.02em",
-                mb: 0.25,
-              }}
-            >
-              Bienvenido de nuevo
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 800,
-                color: "#0F172A",
-                fontSize: { xs: "1.75rem", sm: "2.1rem" },
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {userName}
-            </Typography>
+            {/* Saludo Mobile */}
+            <Box sx={{ mb: 2.5 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#8FA3BC",
+                  fontWeight: 500,
+                  fontSize: "0.95rem",
+                  mb: 0.5,
+                }}
+              >
+                Bienvenido de nuevo
+              </Typography>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: 800,
+                  color: "#FFFFFF",
+                  fontSize: "1.75rem",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                {userName}
+              </Typography>
+            </Box>
+
+            {/* Tarjeta Azul de Saldo */}
+            <BalanceCard
+              balance={account.money}
+              cardNumber={account.cardNumber}
+              trend={account.trend}
+              loading={loading}
+            />
           </Box>
 
-          {/* Grid de 2 Columnas Principal */}
-          <Grid container spacing={3.5}>
-            {/* Columna Izquierda: Tarjeta Azul + Acciones Rápidas */}
-            <Grid item xs={12} md={7}>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                <BalanceCard
-                  balance={account.money}
-                  cardNumber={account.cardNumber}
-                  trend={account.trend}
-                  loading={loading}
-                />
+          {/* Sección Inferior Blanca con Esquinas Redondeadas (Curved Bottom Sheet) */}
+          <Box
+            sx={{
+              flex: 1,
+              bgcolor: "#FFFFFF",
+              borderRadius: "28px 28px 0 0",
+              px: 2.5,
+              pt: 3,
+              pb: 12, // Espacio para la barra de navegación móvil inferior
+            }}
+          >
+            {error && (
+              <Alert severity="warning" sx={{ mb: 2.5, borderRadius: "12px" }}>
+                {error}
+              </Alert>
+            )}
 
-                <QuickActions
-                  onDeposit={() => setDepositOpen(true)}
-                  onTransfer={() => setTransferOpen(true)}
-                  onScan={() => setSnackbar({ open: true, message: "Módulo Escanear QR próximamente disponible.", severity: "info" })}
-                  onServices={() => setSnackbar({ open: true, message: "Módulo Pago de Servicios próximamente disponible.", severity: "info" })}
-                />
-              </Box>
-            </Grid>
-
-            {/* Columna Derecha: Actividad Reciente */}
-            <Grid item xs={12} md={5}>
-              <RecentActivity
-                transactions={transactions}
-                loading={loading}
-                onViewAll={() => setSnackbar({ open: true, message: "Navegando al historial completo...", severity: "info" })}
+            {/* Acciones Rápidas (2x2 Grid) */}
+            <Box sx={{ mb: 3.5 }}>
+              <QuickActions
+                onDeposit={() => setDepositOpen(true)}
+                onTransfer={() => setTransferOpen(true)}
+                onScan={() => setSnackbar({ open: true, message: "Módulo Escanear QR próximamente disponible.", severity: "info" })}
+                onServices={() => setSnackbar({ open: true, message: "Módulo Pago de Servicios próximamente disponible.", severity: "info" })}
               />
-            </Grid>
-          </Grid>
-        </Box>
-      </Box>
+            </Box>
 
-      {/* Barra de Navegación Inferior (Móvil) */}
-      {!isDesktop && (
-        <MobileBottomNav
-          activeNav={activeMobileNav}
-          onChange={(e, val) => setActiveMobileNav(val)}
-        />
+            {/* Actividad Reciente (Tarjetas individuales separadas) */}
+            <RecentActivity
+              transactions={transactions}
+              loading={loading}
+              onViewAll={() => setSnackbar({ open: true, message: "Navegando al historial completo...", severity: "info" })}
+            />
+          </Box>
+
+          {/* Barra Fija Inferior Mobile */}
+          <MobileBottomNav
+            activeNav={activeMobileNav}
+            onChange={(e, val) => setActiveMobileNav(val)}
+          />
+        </Box>
       )}
 
-      {/* Modal para Depositar */}
+      {/* ─── Diálogos de Acciones (Comunes para Desktop y Mobile) ─── */}
       <Dialog open={depositOpen} onClose={() => setDepositOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>Depositar Fondos</DialogTitle>
         <DialogContent>
@@ -301,7 +442,6 @@ export function DashboardPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Modal para Transferir */}
       <Dialog open={transferOpen} onClose={() => setTransferOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>Transferir Dinero</DialogTitle>
         <DialogContent>
@@ -342,7 +482,6 @@ export function DashboardPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Feedback Toast */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3500}
