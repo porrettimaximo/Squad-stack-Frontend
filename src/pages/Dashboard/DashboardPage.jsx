@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -21,9 +21,6 @@ import {
 import RefreshIcon from "@mui/icons-material/Refresh";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
 import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
-import SignalCellularAltIcon from "@mui/icons-material/SignalCellularAlt";
-import WifiIcon from "@mui/icons-material/Wifi";
-import BatteryFullIcon from "@mui/icons-material/BatteryFull";
 
 import Sidebar from "../../components/layout/Sidebar";
 import DashboardNavbar from "../../components/layout/DashboardNavbar";
@@ -270,19 +267,7 @@ export function DashboardPage() {
           }}
         >
           {/* Sección Superior Azul Oscura */}
-          <Box sx={{ px: 2.5, pt: 1.5, pb: 3, bgcolor: "#001639", color: "#FFFFFF" }}>
-            {/* Barra de Estado Teléfono (9:41, Señal, Wifi, Batería) */}
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, px: 0.5 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: "#FFFFFF" }}>
-                9:41
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, color: "#FFFFFF" }}>
-                <SignalCellularAltIcon sx={{ fontSize: "1.1rem" }} />
-                <WifiIcon sx={{ fontSize: "1.1rem" }} />
-                <BatteryFullIcon sx={{ fontSize: "1.2rem" }} />
-              </Box>
-            </Box>
-
+          <Box sx={{ px: 2.5, pt: 2.5, pb: 3, bgcolor: "#001639", color: "#FFFFFF" }}>
             {/* Cabecera DigitalArs + Notificaciones */}
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
