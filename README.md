@@ -136,7 +136,7 @@ Squad-stack-Frontend/
 
 ---
 
-## 7. Instalación y Puesta en Marcha
+## 6. Instalación y Puesta en Marcha
 
 ### Prerrequisitos
 * Node.js v18.0.0 o superior
