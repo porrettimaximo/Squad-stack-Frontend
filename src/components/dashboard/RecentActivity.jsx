@@ -13,7 +13,14 @@ import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import SouthWestOutlinedIcon from "@mui/icons-material/SouthWestOutlined";
 import LocalCafeOutlinedIcon from "@mui/icons-material/LocalCafeOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
+import { motion } from "framer-motion";
 
+/**
+ * RecentActivity: Lista de los últimos movimientos
+ * Efectos integrados (motion.dev & reactbits.dev):
+ * - Entrada escalonada (Staggered entrance): cada fila entra con un delay proporcional a su índice.
+ * - Desplazamiento reactivo al hover: whileHover con desplazamiento sutil en X (+4px) que da sensación de selección activa.
+ */
 export function RecentActivity({ transactions = [], loading = false, onViewAll }) {
   const muiTheme = useTheme();
   const isDesktop = useMediaQuery(muiTheme.breakpoints.up("md"));
@@ -130,27 +137,29 @@ export function RecentActivity({ transactions = [], loading = false, onViewAll }
 
   return (
     <Box>
-      {/* Cabecera de Sección */}
+      {/* Cabecera de Sección con botón animado */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Typography variant="h6" sx={{ fontWeight: 800, color: "#0F172A", fontSize: "1.2rem" }}>
           Actividad Reciente
         </Typography>
 
-        <Button
-          variant="text"
-          onClick={onViewAll}
-          sx={{
-            textTransform: "none",
-            fontWeight: 700,
-            fontSize: "0.95rem",
-            color: "#0066FF",
-            p: 0,
-            minWidth: "auto",
-            "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
-          }}
-        >
-          Ver todo
-        </Button>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Button
+            variant="text"
+            onClick={onViewAll}
+            sx={{
+              textTransform: "none",
+              fontWeight: 700,
+              fontSize: "0.95rem",
+              color: "#0066FF",
+              p: 0,
+              minWidth: "auto",
+              "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
+            }}
+          >
+            Ver todo
+          </Button>
+        </motion.div>
       </Box>
 
       {/* Estados de Carga / Vacío / Lista */}
@@ -176,7 +185,7 @@ export function RecentActivity({ transactions = [], loading = false, onViewAll }
           </Typography>
         </Card>
       ) : isDesktop ? (
-        /* Formato Desktop: Contenedor único con divisores */
+        /* Formato Desktop: Contenedor único con divisores y animación escalonada */
         <Card
           elevation={0}
           sx={{
@@ -184,33 +193,48 @@ export function RecentActivity({ transactions = [], loading = false, onViewAll }
             border: "1px solid #E2E8F0",
             bgcolor: "#FFFFFF",
             overflow: "hidden",
+            boxShadow: "0 2px 10px -2px rgba(15, 23, 42, 0.04)",
           }}
         >
           {transactions.slice(0, 5).map((tx, idx) => (
             <React.Fragment key={tx.id || idx}>
-              <Box sx={{ "&:hover": { bgcolor: "#F8FAFC" }, transition: "background-color 0.15s ease" }}>
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: idx * 0.06 }}
+                whileHover={{ x: 4, backgroundColor: "rgba(248, 250, 252, 0.9)" }}
+                style={{ cursor: "pointer", transition: "background-color 0.15s ease" }}
+              >
                 {renderItemContent(tx)}
-              </Box>
+              </motion.div>
               {idx < Math.min(transactions.length, 5) - 1 && <Divider sx={{ borderColor: "#F1F5F9" }} />}
             </React.Fragment>
           ))}
         </Card>
       ) : (
-        /* Formato Mobile: Tarjetas individuales separadas (Exacto a Figma) */
+        /* Formato Mobile: Tarjetas individuales separadas con efecto hover/tap */
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
           {transactions.slice(0, 5).map((tx, idx) => (
-            <Card
+            <motion.div
               key={tx.id || idx}
-              elevation={0}
-              sx={{
-                borderRadius: "16px",
-                border: "1px solid #E2E8F0",
-                bgcolor: "#FFFFFF",
-                overflow: "hidden",
-              }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: idx * 0.06 }}
+              whileTap={{ scale: 0.98 }}
             >
-              {renderItemContent(tx)}
-            </Card>
+              <Card
+                elevation={0}
+                sx={{
+                  borderRadius: "16px",
+                  border: "1px solid #E2E8F0",
+                  bgcolor: "#FFFFFF",
+                  overflow: "hidden",
+                  boxShadow: "0 2px 6px -2px rgba(15, 23, 42, 0.04)",
+                }}
+              >
+                {renderItemContent(tx)}
+              </Card>
+            </motion.div>
           ))}
         </Box>
       )}

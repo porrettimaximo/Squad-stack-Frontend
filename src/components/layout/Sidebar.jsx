@@ -19,7 +19,14 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import HeadsetMicOutlinedIcon from "@mui/icons-material/HeadsetMicOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+import { motion } from "framer-motion";
 
+/**
+ * Sidebar: Barra lateral izquierda fija (Desktop)
+ * Efectos integrados (motion.dev):
+ * - Microdesplazamiento en X al hover: whileHover={{ x: 4 }} para dar dinamismo a la navegación.
+ * - Feedback táctil / tap: whileTap={{ scale: 0.98 }}.
+ */
 export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
   const mainNav = [
     { id: "inicio", label: "Inicio", icon: <HomeOutlinedIcon /> },
@@ -82,37 +89,45 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
           const isActive = activeItem === item.id;
           return (
             <ListItem key={item.id} disablePadding sx={{ mb: 0.6 }}>
-              <ListItemButton
-                onClick={() => onItemClick && onItemClick(item.id)}
-                sx={{
-                  borderRadius: "8px",
-                  py: 1.1,
-                  px: 2,
-                  bgcolor: isActive ? "#0056D2" : "transparent",
-                  color: isActive ? "#FFFFFF" : "#8EA3BF",
-                  fontWeight: isActive ? 700 : 500,
-                  "&:hover": {
-                    bgcolor: isActive ? "#0047B3" : "rgba(255, 255, 255, 0.05)",
-                    color: "#FFFFFF",
-                  },
-                }}
+              <motion.div
+                whileHover={{ x: 4 }}
+                whileTap={{ scale: 0.98 }}
+                style={{ width: "100%" }}
+                transition={{ duration: 0.15 }}
               >
-                <ListItemIcon
+                <ListItemButton
+                  onClick={() => onItemClick && onItemClick(item.id)}
                   sx={{
+                    borderRadius: "8px",
+                    py: 1.1,
+                    px: 2,
+                    bgcolor: isActive ? "#0056D2" : "transparent",
                     color: isActive ? "#FFFFFF" : "#8EA3BF",
-                    minWidth: 38,
+                    fontWeight: isActive ? 700 : 500,
+                    transition: "all 0.15s ease",
+                    "&:hover": {
+                      bgcolor: isActive ? "#0047B3" : "rgba(255, 255, 255, 0.05)",
+                      color: "#FFFFFF",
+                    },
                   }}
                 >
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
-                  primaryTypographyProps={{
-                    fontSize: "0.925rem",
-                    fontWeight: isActive ? 700 : 500,
-                  }}
-                />
-              </ListItemButton>
+                  <ListItemIcon
+                    sx={{
+                      color: isActive ? "#FFFFFF" : "#8EA3BF",
+                      minWidth: 38,
+                    }}
+                  >
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{
+                      fontSize: "0.925rem",
+                      fontWeight: isActive ? 700 : 500,
+                    }}
+                  />
+                </ListItemButton>
+              </motion.div>
             </ListItem>
           );
         })}
@@ -125,50 +140,54 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
         <List disablePadding sx={{ mb: 2 }}>
           {bottomNav.map((item) => (
             <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                onClick={() => onItemClick && onItemClick(item.id)}
-                sx={{
-                  py: 0.75,
-                  px: 1.5,
-                  borderRadius: "6px",
-                  color: "#7F96B2",
-                  "&:hover": { color: "#FFFFFF", bgcolor: "rgba(255, 255, 255, 0.05)" },
-                }}
-              >
-                <ListItemIcon sx={{ color: "inherit", minWidth: 32 }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
-                  primaryTypographyProps={{ fontSize: "0.85rem", fontWeight: 500 }}
-                />
-              </ListItemButton>
+              <motion.div whileHover={{ x: 3 }} style={{ width: "100%" }}>
+                <ListItemButton
+                  onClick={() => onItemClick && onItemClick(item.id)}
+                  sx={{
+                    py: 0.75,
+                    px: 1.5,
+                    borderRadius: "6px",
+                    color: "#7F96B2",
+                    "&:hover": { color: "#FFFFFF", bgcolor: "rgba(255, 255, 255, 0.05)" },
+                  }}
+                >
+                  <ListItemIcon sx={{ color: "inherit", minWidth: 32 }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{ fontSize: "0.85rem", fontWeight: 500 }}
+                  />
+                </ListItemButton>
+              </motion.div>
             </ListItem>
           ))}
         </List>
 
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<LogoutOutlinedIcon fontSize="small" />}
-          onClick={onLogout}
-          sx={{
-            color: "#D0D9E5",
-            borderColor: "rgba(255, 255, 255, 0.2)",
-            borderRadius: "10px",
-            py: 1,
-            textTransform: "none",
-            fontWeight: 600,
-            fontSize: "0.875rem",
-            "&:hover": {
-              borderColor: "rgba(255, 255, 255, 0.4)",
-              bgcolor: "rgba(255, 255, 255, 0.05)",
-              color: "#FFFFFF",
-            },
-          }}
-        >
-          Cerrar Sesión
-        </Button>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<LogoutOutlinedIcon fontSize="small" />}
+            onClick={onLogout}
+            sx={{
+              color: "#D0D9E5",
+              borderColor: "rgba(255, 255, 255, 0.2)",
+              borderRadius: "10px",
+              py: 1,
+              textTransform: "none",
+              fontWeight: 600,
+              fontSize: "0.875rem",
+              "&:hover": {
+                borderColor: "rgba(255, 255, 255, 0.4)",
+                bgcolor: "rgba(255, 255, 255, 0.05)",
+                color: "#FFFFFF",
+              },
+            }}
+          >
+            Cerrar Sesión
+          </Button>
+        </motion.div>
       </Box>
     </Box>
   );

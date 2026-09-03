@@ -1,113 +1,123 @@
-﻿# Squad-stack-Frontend — Documentación Técnica y Especificación de UI
+﻿# DigitalArs — Billetera Virtual (Frontend)
 
-> **DigitalArs — Billetera Virtual**  
-> Aplicación Frontend SPA desarrollada con **React**, **Vite** y **Material UI (MUI)** para la gestión de cuentas, transferencias y movimientos financieros.
-
----
-
-## 📑 Historias de Usuario Implementadas
-
-### 1. HU-21: Setup del Proyecto React
-- **Objetivo**: Inicialización limpia de la arquitectura y librerías base para construir pantallas sin plomería técnica (*zero-plumbing*).
-- **Entregables Base**:
-  - Estructura modular: `pages`, `components`, `services`, `context`, `hooks`, `theme`.
-  - Instancia única de Axios en `src/services/api.js` con inyección de token Bearer y control de respuestas 401.
-  - Enrutamiento SPA con `react-router-dom`.
-  - Configuración de variables de entorno `.env` (`VITE_API_URL=http://localhost:5065/api`).
+Aplicación web SPA moderna desarrollada para la billetera virtual **DigitalArs**. La plataforma permite a los usuarios gestionar su dinero, visualizar su saldo y últimos movimientos, realizar depósitos y transferencias a terceros, con un diseño fiel a las especificaciones oficiales de **Figma** (resoluciones Desktop y Mobile).
 
 ---
 
-### 2. HU-24: Dashboard Principal de la Billetera
-- **Descripción de HU**: *Como usuario, quiero ver mi saldo y últimos movimientos al entrar, para tener el estado de mi cuenta de un vistazo.*
-- **Diseño de Referencia**: Diseños oficiales de **Figma** (Desktop y Mobile).
+## 🛠️ Tecnologías Utilizadas y su Propósito en el Proyecto
 
-#### Criterios de Aceptación Cumplidos:
-| Criterio | Estado | Implementación |
+A continuación se detallan todas las tecnologías que componen el proyecto, las que se discutieron para la arquitectura y el rol específico que cumple cada una:
+
+| Tecnología / Librería | Versión | ¿Para qué se usa en el proyecto? |
 | :--- | :---: | :--- |
-| **Card destacada con saldo formateado** | ✅ | Componente `BalanceCard` con degradado azul eléctrico, badge de tendencia (`↗ +2.4%`), saldo grande (`$45,230.50`), máscara `**** 4892` y esferas traslúcidas. |
-| **Últimos 5 movimientos** | ✅ | Componente `RecentActivity` que lista hasta 5 transacciones con título/contraparte, concepto, fecha y categoría. Enlace directo *"Ver todo"*. |
-| **Diferenciación visual de entradas y salidas** | ✅ | **Ingresos**: `+$15,000.00` en verde esmeralda (`#10B981`) con ícono en cápsula `#E6F9F0`.<br>**Egresos**: `-$1,250.00` en tono oscuro (`#0F172A`) con íconos temáticos de compra/servicio. |
-| **Consumo de APIs** | ✅ | Integración en paralelo de `GET /api/accounts/me` (saldo y estado de cuenta) y `GET /api/transactions/me?page=1&pageSize=5` (historial de movimientos de HU-17). Fallback seguro en caso de contingencia. |
-| **Estados de Carga y Error** | ✅ | Uso de `Skeleton` de Material UI en la tarjeta de saldo y en la lista de actividad mientras se obtienen los datos. Mensaje de alerta con botón *"Reintentar"* en caso de error de red. |
-| **Accesos directos funcionales** | ✅ | Componente `QuickActions` con 4 botones de acción rápida: **Depositar**, **Transferir**, **Escanear** y **Servicios**, con modales interactivos para realizar operaciones. |
+| **[React](https://react.dev/)** | `19` | **Biblioteca base de UI**: Permite construir la aplicación como una Single Page Application (SPA) basada en componentes funcionales reactivos, gestión de estado local y global (`useState`, `useEffect`, `useCallback`, `useContext`) y renderizado inmutable del DOM virtual. |
+| **[Vite](https://vite.dev/)** | `8` | **Herramienta de compilación y empaquetado (Bundler)**: Provee un entorno de desarrollo ultrarrápido con *Hot Module Replacement* (HMR instantáneo) y genera compilaciones de producción altamente optimizadas mediante Rollup/Rolldown en milisegundos (< 400ms). |
+| **[Material UI (MUI)](https://mui.com/)** | `v6 / v9` | **Sistema de componentes estructurales y accesibles**: Provee los bloques de construcción troncales de la interfaz (`Box`, `Grid`, `Card`, `Typography`, `Button`, `TextField`, `Dialog`, `Skeleton`, `Snackbar`, `Badge`). Utiliza la propiedad `sx={{ ... }}` integrada al tema para un estilizado robusto y tipado. |
+| **[@emotion/react & styled](https://emotion.sh/)** | `11` | **Motor de estilos CSS-in-JS**: Provee la infraestructura de inyección dinámica de estilos en tiempo de ejecución para Material UI y el soporte de temas personalizados. |
+| **[@mui/icons-material](https://mui.com/material-ui/material-icons/)** | `v6 / v9` | **Iconografía oficial del sistema**: Provee los íconos vectoriales SVG para la barra lateral (Inicio, Historial, Tarjetas, Perfil), cabecera (notificaciones, avatar), acciones rápidas (Depositar, Transferir, Escanear, Servicios) y tipos de transacción (compras, café, recibos). |
+| **[Motion (motion.dev)](https://motion.dev/) / Framer Motion** | `13` | **Motor de animaciones y físicas interactivas**: Se utiliza para dar vida a la interfaz mediante transiciones fluidas de entrada, físicas de resorte suaves (*springs*), microinteracciones al pasar el mouse (`whileHover`), feedback táctil de pulsación (`whileTap`) y animación de campana de notificaciones. |
+| **[React Bits](https://reactbits.dev/)** | *Patrones de diseño* | **Catálogo de inspiración de patrones UI**: Se utiliza como referencia estética para componentes fintech modernos: tarjetas levitantes con elevación dinámica, resplandor radial decorativo (*Spotlight Glow*), microinteracciones en badges de tendencia (`+2.4%`) y animaciones escalonadas en listas. |
+| **[Tailwind CSS](https://tailwindcss.com/)** | `v4` | **Clases utilitarias de layout**: Utilizado para layouting ágil, alineaciones responsivas (`flex`, `grid`, `items-center`), espaciados granulares y control rápido de visualización en conjunto con los componentes estructurados de MUI. |
+| **[Axios](https://axios-http.com/)** | `1.20` | **Cliente HTTP centralizado**: Gestiona toda la comunicación con la API REST de .NET 10 mediante una instancia única (`src/services/api.js`). Incluye **interceptor de Request** (inyección automática del token Bearer) e **interceptor de Response** (captura de errores 401 para expiración y cierre de sesión). |
+| **[React Router DOM](https://reactrouter.com/)** | `7` | **Enrutador del lado del cliente (SPA)**: Controla la navegación sin recarga de página entre el Dashboard (`/`), Historial (`/historial`), Login (`/login`) y vistas futuras. |
+| **Dotenv / Vite Env (`import.meta.env`)** | *Nativo* | **Gestión segura de variables de entorno**: Permite configurar de forma desacoplada la URL del backend (`VITE_API_URL=http://localhost:5065/api`) facilitando el cambio entre entornos local, pruebas y producción. |
 
 ---
 
-## 🎨 Especificación de UI & Tokens de Diseño (Figma Design System)
+## 📑 Documentación de la Pantalla del Dashboard (HU-24) y Efectos
 
-Basado en las pantallas oficiales de Figma aportadas para el proyecto:
+Para consultar el desglose exhaustivo de **qué se utiliza en cada sección del Dashboard** (Sidebar, Navbar, BalanceCard, QuickActions, RecentActivity y MobileBottomNav), el catálogo completo de efectos aplicados, de dónde fueron extraídos y cómo funcionan en el código, consulta el documento técnico formal:
 
-### 1. Paleta de Colores
-* **Brand Primary Gradient**: `linear-gradient(135deg, #0056D2 0%, #0066FF 60%, #0077FF 100%)`
-  - Utilizado en la tarjeta destacada de saldo y botones prioritarios.
-* **Accent Success (Ingresos / Tendencias)**:
-  - Badge de tendencia: Fondo `#C6F6D5`, Texto `#047857` (`+2.4%`).
-  - Montos de ingreso: `#10B981` con signo `+`.
-  - Cápsula de ícono de ingreso: `#E6F9F0`.
-* **Dark / Egresos**:
-  - Montos de salida: `#0F172A` con signo `-`.
-  - Cápsula de ícono neutro: `#F1F5F9` con ícono `#475569`.
-* **Superficies**:
-  - Fondo de aplicación: `#F8FAFC`.
-  - Tarjetas y contenedores: `#FFFFFF` con borde `1px solid #E2E8F0` y radio de `16px` a `20px`.
-
-### 2. Tipografía y Jerarquía
-* **Fuente**: `Roboto`, `Inter`, sans-serif.
-* **Encabezado de Bienvenida**:
-  - Subtítulo: `"Bienvenido de nuevo"` (14px, `#64748B`, font-weight 600).
-  - Título Principal: `"Alejandro Silva"` (32px, `#0F172A`, font-weight 800, tracking -0.02em).
-* **Saldo Destacado**:
-  - Parte entera: `2.9rem`, font-weight 800.
-  - Parte decimal: `1.6rem`, font-weight 700, opacidad 90%.
-
-### 3. Navegación Responsiva
-* **Desktop (`DashboardNavbar`)**:
-  - Pestañas horizontales: *Resumen* (con línea azul indicadora inferior), *Inversiones*, *Préstamos*.
-  - Campana de notificaciones con indicador de punto rojo (`#EF4444`).
-  - Badge de perfil de usuario con avatar y texto *"Mi Perfil"*.
-* **Mobile (`MobileBottomNav`)**:
-  - Barra fija inferior con accesos a: *Home* (activo), *History*, *Profile*, *Settings*.
-  - Botones *Depositar* y *Transferir* con fondo azul primario destacado para toque táctil ergonómico.
+👉 **[docs/dashboard-ui-effects.md](file:///E:/repos/Squad-stack-Frontend/docs/dashboard-ui-effects.md)**
 
 ---
 
-## 📂 Estructura del Código
+## 🎨 Especificación de Diseño y Criterios de Aceptación
+
+### HU-24: Dashboard de la Billetera (Figma 1:1)
+
+* **Tarjeta Destacada de Saldo (`BalanceCard`)**:
+  - Saldo formateado en moneda argentina (`$45,230.50`).
+  - Degradado azul oficial `linear-gradient(135deg, #0056D2 0%, #0066FF 60%, #0077FF 100%)`.
+  - Badge de variación porcentual verde neón (`↗ +2.4%`).
+  - Máscara de tarjeta `"DigitalArs Card **** 4892"` y esferas entrelazadas en transparencia.
+  - Efecto hover de levitación física y resplandor radial translúcido.
+
+* **Accesos Directos (`QuickActions`)**:
+  - 4 accesos rápidos: **Depositar**, **Transferir**, **Escanear** y **Servicios**.
+  - En Desktop: 4 tarjetas blancas con elevación al hover y físicas de pulsación.
+  - En Mobile: Fila superior de *Depositar* y *Transferir* en azul primario sólido (`#0056D2`), y fila inferior de *Escanear* y *Servicios* en blanco contorneado.
+  - Diálogos modales interactivos para realizar depósitos y transferencias en el momento.
+
+* **Actividad Reciente (`RecentActivity`)**:
+  - Muestra los últimos movimientos obtenidos de `GET /api/transactions/me?page=1&pageSize=5`.
+  - **Ingresos**: Resaltados en verde esmeralda (`#10B981`) con signo positivo (`+$15,000.00`) e ícono en cápsula `#E6F9F0`.
+  - **Egresos**: Formateados en tono oscuro (`#0F172A`) con signo negativo (`-$1,250.00`) e íconos temáticos de compras o servicios.
+  - En Desktop: Contenedor con divisores y desplazamiento lateral al hover (`x: 4px`).
+  - En Mobile: Renderizado en **tarjetas individuales separadas** con borde (`borderRadius: 16px`).
+
+* **Navegación Desktop & Mobile**:
+  - **Desktop**: Barra lateral izquierda fija (`#02122c`) con enlaces a Inicio, Historial, Tarjetas, Perfil, Configuración, Soporte, Ayuda y Cerrar Sesión. Barra superior con pestañas (*Resumen*, *Inversiones*, *Préstamos*) y perfil de usuario.
+  - **Mobile**: Cabecera azul marina superior (`#001639`), lámina inferior blanca curvada (`borderRadius: 28px 28px 0 0`) y barra de navegación fija inferior (`Home`, `History`, `Profile`, `Settings`).
+
+---
+
+## 📂 Estructura del Repositorio
 
 ```text
-src/
-├── components/
-│   ├── dashboard/
-│   │   ├── BalanceCard.jsx       # Tarjeta azul de crédito/saldo con esferas y badge
-│   │   ├── QuickActions.jsx      # Grid de 4 accesos directos (Depositar, Transferir...)
-│   │   └── RecentActivity.jsx    # Lista de los últimos 5 movimientos con colores
-│   └── layout/
-│       ├── DashboardNavbar.jsx   # Barra superior con pestañas y perfil
-│       └── MobileBottomNav.jsx   # Barra de navegación inferior móvil
-├── pages/
-│   └── Dashboard/
-│       └── DashboardPage.jsx     # Orquestador del Dashboard y modales de acción
-├── services/
-│   ├── accountService.js         # Consumo de /api/accounts/me y depósitos
-│   ├── transactionService.js     # Consumo de /api/transactions/me
-│   └── api.js                    # Instancia única de Axios con interceptores
-├── theme/
-│   └── theme.js                  # Tema de Material UI
-├── App.jsx                       # Enrutador de la aplicación
-├── index.css
-└── main.jsx
+Squad-stack-Frontend/
+├── docs/
+│   └── dashboard-ui-effects.md   # Desglose formal de componentes y efectos UI
+├── public/                       # Recursos estáticos públicos
+├── src/
+│   ├── assets/                   # Recursos visuales y logos
+│   ├── components/
+│   │   ├── dashboard/
+│   │   │   ├── BalanceCard.jsx   # Tarjeta destacada con levitación y glow
+│   │   │   ├── QuickActions.jsx  # Grid 2x2 / 1x4 con feedback háptico
+│   │   │   └── RecentActivity.jsx # Movimientos con colores y slide al hover
+│   │   └── layout/
+│   │       ├── DashboardNavbar.jsx # Barra superior con campana animada y perfil
+│   │       ├── MobileBottomNav.jsx # Barra fija inferior para móvil
+│   │       └── Sidebar.jsx       # Barra lateral fija con menú y cerrar sesión
+│   ├── context/                  # Context API para estado global (.gitkeep)
+│   ├── hooks/                    # Hooks personalizados reutilizables (.gitkeep)
+│   ├── pages/
+│   │   └── Dashboard/
+│   │       └── DashboardPage.jsx # Página orquestadora del Dashboard (Desktop/Mobile)
+│   ├── services/
+│   │   ├── accountService.js     # Servicios de cuenta y saldo
+│   │   ├── transactionService.js # Servicios de transacciones e historial
+│   │   └── api.js                # Instancia única de Axios con interceptores
+│   ├── theme/
+│   │   └── theme.js              # Configuración de tema base Material UI
+│   ├── App.css
+│   ├── App.jsx                   # Enrutador base de la aplicación
+│   ├── index.css                 # Reset full-window (100vw / 100vh)
+│   └── main.jsx                  # Entrada principal Vite
+├── .env                          # Variables de entorno locales
+├── .env.example                  # Plantilla de variables de entorno
+├── index.html                    # Documento base HTML
+├── package.json                  # Dependencias y scripts
+└── vite.config.js                # Configuración de Vite y plugins
 ```
 
 ---
 
-## 🚀 Guía de Ejecución
+## 🚀 Puesta en Marcha
+
+### Requisitos
+- Node.js v18 o superior
+- Backend .NET 10 corriendo en `http://localhost:5065`
+
+### Comandos
 
 ```bash
-# 1. Ingresar a la carpeta del proyecto
-cd E:\repos\Squad-stack-Frontend
+# 1. Instalar dependencias
+npm install
 
-# 2. Iniciar el servidor en modo desarrollo
+# 2. Iniciar el servidor de desarrollo
 npm run dev
-
-# 3. Compilar para producción
-npm run build
 ```
+
+La aplicación se ejecutará en `http://localhost:5173`.
