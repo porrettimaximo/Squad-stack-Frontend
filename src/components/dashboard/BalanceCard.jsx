@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { Box, Card, Typography, Skeleton } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { motion } from "framer-motion";
@@ -41,32 +41,19 @@ export function BalanceCard({ balance = 45230.50, cardNumber = "4892", trend = 2
         elevation={0}
         sx={{
           borderRadius: "20px",
-          p: { xs: 3, sm: 3.5 },
-          background: "linear-gradient(135deg, #0056D2 0%, #0066FF 60%, #0077FF 100%)",
+          p: { xs: 3.5, sm: 4 },
+          minHeight: { md: 220 },
+          background: "#0058BC",
           color: "#FFFFFF",
           position: "relative",
           overflow: "hidden",
-          boxShadow: "0 14px 28px -6px rgba(0, 102, 255, 0.35)",
+          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.18)",
           transition: "box-shadow 0.25s ease",
           "&:hover": {
-            boxShadow: "0 20px 38px -8px rgba(0, 102, 255, 0.48)",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.22)",
           },
         }}
       >
-        {/* Resplandor radial decorativo de fondo (Patrón Glow de React Bits) */}
-        <Box
-          sx={{
-            position: "absolute",
-            top: -60,
-            right: -60,
-            width: 220,
-            height: 220,
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 70%)",
-            pointerEvents: "none",
-          }}
-        />
-
         {/* Cabecera de la Tarjeta */}
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
           <Typography
