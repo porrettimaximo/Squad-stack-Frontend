@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -43,6 +43,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "../../components/layout/Sidebar";
 import DashboardNavbar from "../../components/layout/DashboardNavbar";
 import userService from "../../services/userService";
+import authService from "../../services/authService";
 
 export function AdminUsersPage() {
   const muiTheme = useTheme();
@@ -97,6 +98,9 @@ export function AdminUsersPage() {
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
+      // Garantizar token de administrador para la API de .NET
+      await authService.ensureAuth();
+
       const data = await userService.getUsers({
         page: page + 1, // La API de .NET es 1-indexed
         pageSize,
@@ -106,47 +110,50 @@ export function AdminUsersPage() {
         isActive: statusFilter === "" ? null : statusFilter === "true",
       });
 
-      if (data && data.items) {
-        setUsers(data.items);
-        setTotalItems(data.totalItems || data.items.length);
-      } else if (Array.isArray(data)) {
-        setUsers(data);
-        setTotalItems(data.length);
-      }
+      const rawList =
+        data?.items ||
+        data?.data ||
+        data?.users ||
+        data?.result ||
+        (Array.isArray(data) ? data : []);
+
+      const total =
+        data?.totalItems ||
+        data?.totalCount ||
+        data?.count ||
+        data?.total ||
+        rawList.length;
+
+      // Normalizar estructura de usuarios del backend .NET
+      const mappedList = rawList.map((u) => ({
+        id: u.id || u.userId,
+        firstName: u.firstName || u.first_name || u.name || "",
+        lastName: u.lastName || u.last_name || "",
+        email: u.email || "",
+        role:
+          u.role ||
+          u.roleName ||
+          (u.roleId === 1 ? "Admin" : "User") ||
+          "User",
+        balance: u.balance ?? u.initialBalance ?? 0,
+        isActive:
+          u.isActive !== undefined
+            ? u.isActive
+            : u.is_active !== undefined
+            ? u.is_active
+            : true,
+      }));
+
+      setUsers(mappedList);
+      setTotalItems(total);
     } catch (err) {
-      console.error("Error al cargar usuarios:", err);
-      // Mock inicial de desarrollo en caso de que la API esté detenida
-      setUsers([
-        {
-          id: 1,
-          firstName: "Admin",
-          lastName: "Sistema",
-          email: "admin@digitalars.com",
-          role: "Admin",
-          balance: 500000,
-          isActive: true,
-        },
-        {
-          id: 2,
-          firstName: "Roberto",
-          lastName: "Carlos",
-          email: "robercarlos3@gmail.com",
-          role: "User",
-          balance: 260000,
-          isActive: true,
-        },
-        {
-          id: 3,
-          firstName: "Mohammed",
-          lastName: "Kha",
-          email: "mokha@gmail.com",
-          role: "User",
-          balance: 185000.5,
-          isActive: true,
-        },
-      ]);
-      setTotalItems(3);
-      showNotification("Modo offline: mostrando datos de respaldo.", "info");
+      console.error("Error al cargar usuarios desde la API:", err);
+      showNotification(
+        `Error al cargar usuarios: ${
+          err.response?.data?.message || err.message || "Servidor no disponible"
+        }`,
+        "error"
+      );
     } finally {
       setLoading(false);
     }

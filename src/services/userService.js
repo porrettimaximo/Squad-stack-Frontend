@@ -22,6 +22,7 @@ export const userService = {
 
     const queryParams = new URLSearchParams();
     queryParams.append("page", page);
+    queryParams.append("pageNumber", page);
     queryParams.append("pageSize", pageSize);
 
     if (name) queryParams.append("name", name);
