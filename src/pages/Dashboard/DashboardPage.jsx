@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
-  Grid,
   Alert,
   Button,
   Dialog,
@@ -19,7 +19,7 @@ import {
   useTheme,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
+
 import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
 
 import Sidebar from "../../components/layout/Sidebar";
@@ -27,17 +27,20 @@ import DashboardNavbar from "../../components/layout/DashboardNavbar";
 import MobileBottomNav from "../../components/layout/MobileBottomNav";
 import BalanceCard from "../../components/dashboard/BalanceCard";
 import QuickActions from "../../components/dashboard/QuickActions";
-import RecentActivity from "../../components/dashboard/RecentActivity";
+import ImageCarousel from "../../components/dashboard/ImageCarousel";
 import accountService from "../../services/accountService";
 import transactionService from "../../services/transactionService";
+import { useAccount } from "../../hooks/useAccount";
+import iconoImg from "../../assets/icono.png";
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   const muiTheme = useTheme();
   const isDesktop = useMediaQuery(muiTheme.breakpoints.up("md"));
 
-  const [loading, setLoading] = useState(true);
+  const { account, setAccount, refreshAccount } = useAccount();
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [account, setAccount] = useState({ money: 45230.50, cardNumber: "4892", trend: 2.4 });
   const [transactions, setTransactions] = useState([]);
   const [currentTab, setCurrentTab] = useState(0);
   const [activeSidebarItem, setActiveSidebarItem] = useState("inicio");
@@ -58,18 +61,10 @@ export function DashboardPage() {
     setError(null);
 
     try {
-      const [accountData, txData] = await Promise.all([
-        accountService.getMyAccount(),
+      const [, txData] = await Promise.all([
+        refreshAccount(),
         transactionService.getRecentTransactions(5),
       ]);
-
-      if (accountData) {
-        setAccount({
-          money: accountData.money ?? 45230.50,
-          cardNumber: accountData.cardNumber || "4892",
-          trend: accountData.trend ?? 2.4,
-        });
-      }
 
       if (txData) {
         setTransactions(txData);
@@ -80,7 +75,7 @@ export function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refreshAccount]);
 
   useEffect(() => {
     loadDashboardData();
@@ -223,33 +218,41 @@ export function DashboardPage() {
                 </Typography>
               </Box>
 
-              {/* Grid Desktop de 2 Columnas */}
-              <Grid container spacing={3.5}>
-                <Grid item xs={12} md={7}>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                    <BalanceCard
-                      balance={account.money}
-                      cardNumber={account.cardNumber}
-                      trend={account.trend}
-                      loading={loading}
-                    />
-                    <QuickActions
-                      onDeposit={() => setDepositOpen(true)}
-                      onTransfer={() => setTransferOpen(true)}
-                      onScan={() => setSnackbar({ open: true, message: "Módulo Escanear QR próximamente disponible.", severity: "info" })}
-                      onServices={() => setSnackbar({ open: true, message: "Módulo Pago de Servicios próximamente disponible.", severity: "info" })}
-                    />
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={5}>
-                  <RecentActivity
-                    transactions={transactions}
+              {/* Grid Desktop de 2 Columnas: Columna Izquierda (Saldo + Acciones) + Columna Derecha (Carrusel) */}
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", md: "1.18fr 0.82fr" },
+                  gap: 3.5,
+                  alignItems: "stretch",
+                }}
+              >
+                {/* Columna Izquierda */}
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  <BalanceCard
+                    balance={account.money}
+                    cardNumber={account.cardNumber}
+                    trend={account.trend}
                     loading={loading}
-                    onViewAll={() => setSnackbar({ open: true, message: "Navegando al historial completo...", severity: "info" })}
                   />
-                </Grid>
-              </Grid>
+                  <QuickActions
+                    onDeposit={() => navigate("/deposit")}
+                    onTransfer={() => setTransferOpen(true)}
+                    onScan={() => setSnackbar({ open: true, message: "Módulo Escanear QR próximamente disponible.", severity: "info" })}
+                    onServices={() => setSnackbar({ open: true, message: "Módulo Pago de Servicios próximamente disponible.", severity: "info" })}
+                  />
+                </Box>
+
+                {/* Columna Derecha: Carrusel Promocional 1:1 */}
+                <Box sx={{ width: "100%", aspectRatio: "1 / 1", alignSelf: "flex-start" }}>
+                  <ImageCarousel
+                    height="100%"
+                    borderRadius="20px"
+                    onTransfer={() => setTransferOpen(true)}
+                    onInvestments={() => setCurrentTab(1)}
+                  />
+                </Box>
+              </Box>
             </Box>
           </Box>
         </>
@@ -272,19 +275,16 @@ export function DashboardPage() {
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 <Box
+                  component="img"
+                  src={iconoImg}
+                  alt="DigitalArs Logo"
                   sx={{
-                    width: 42,
-                    height: 42,
+                    width: 40,
+                    height: 40,
                     borderRadius: "12px",
-                    bgcolor: "#0d2650",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#FFFFFF",
+                    objectFit: "contain",
                   }}
-                >
-                  <AccountBalanceWalletOutlinedIcon fontSize="small" />
-                </Box>
+                />
                 <Typography variant="h6" sx={{ fontWeight: 800, fontSize: "1.35rem", letterSpacing: "-0.01em" }}>
                   DigitalArs
                 </Typography>
@@ -370,19 +370,17 @@ export function DashboardPage() {
             {/* Acciones Rápidas (2x2 Grid) */}
             <Box sx={{ mb: 3.5 }}>
               <QuickActions
-                onDeposit={() => setDepositOpen(true)}
+                onDeposit={() => navigate("/deposit")}
                 onTransfer={() => setTransferOpen(true)}
                 onScan={() => setSnackbar({ open: true, message: "Módulo Escanear QR próximamente disponible.", severity: "info" })}
                 onServices={() => setSnackbar({ open: true, message: "Módulo Pago de Servicios próximamente disponible.", severity: "info" })}
               />
             </Box>
 
-            {/* Actividad Reciente (Tarjetas individuales separadas) */}
-            <RecentActivity
-              transactions={transactions}
-              loading={loading}
-              onViewAll={() => setSnackbar({ open: true, message: "Navegando al historial completo...", severity: "info" })}
-            />
+            {/* Carrusel de imágenes */}
+            <Box sx={{ borderRadius: "20px", overflow: "hidden", height: 380 }}>
+              <ImageCarousel height="380px" borderRadius="20px" />
+            </Box>
           </Box>
 
           {/* Barra Fija Inferior Mobile */}
