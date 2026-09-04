@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+﻿import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -140,8 +140,8 @@ export function AdminUsersPage() {
           u.isActive !== undefined
             ? u.isActive
             : u.is_active !== undefined
-            ? u.is_active
-            : true,
+              ? u.is_active
+              : true,
       }));
 
       setUsers(mappedList);
@@ -149,8 +149,7 @@ export function AdminUsersPage() {
     } catch (err) {
       console.error("Error al cargar usuarios desde la API:", err);
       showNotification(
-        `Error al cargar usuarios: ${
-          err.response?.data?.message || err.message || "Servidor no disponible"
+        `Error al cargar usuarios: ${err.response?.data?.message || err.message || "Servidor no disponible"
         }`,
         "error"
       );
@@ -318,7 +317,7 @@ export function AdminUsersPage() {
           overflowY: "auto",
         }}
       >
-        <DashboardNavbar currentTab={0} onTabChange={() => {}} />
+        <DashboardNavbar currentTab={0} onTabChange={() => { }} />
 
         <Box
           sx={{
@@ -367,7 +366,7 @@ export function AdminUsersPage() {
                 sx={{ color: "#64748B", fontWeight: 500 }}
               >
                 Administra los usuarios de la plataforma, roles, estado y
-                cuentas bancarias (HU-29).
+                cuentas bancarias.
               </Typography>
             </Box>
 
@@ -726,7 +725,7 @@ export function AdminUsersPage() {
         </Box>
       </Box>
 
-      {/* --- DIALOG DE CREAR USUARIO (HU-29) --- */}
+      {/* --- DIALOG DE CREAR USUARIO --- */}
       <Dialog
         open={createOpen}
         onClose={() => !submitting && setCreateOpen(false)}
