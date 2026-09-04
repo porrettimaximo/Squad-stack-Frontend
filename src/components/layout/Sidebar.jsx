@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import {
   Box,
   Typography,
@@ -15,11 +15,13 @@ import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import CreditCardOutlinedIcon from "@mui/icons-material/CreditCardOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import HeadsetMicOutlinedIcon from "@mui/icons-material/HeadsetMicOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 /**
  * Sidebar: Barra lateral izquierda fija (Desktop)
@@ -28,18 +30,47 @@ import { motion } from "framer-motion";
  * - Feedback táctil / tap: whileTap={{ scale: 0.98 }}.
  */
 export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
+  const navigate = useNavigate();
+
   const mainNav = [
-    { id: "inicio", label: "Inicio", icon: <HomeOutlinedIcon /> },
+    { id: "inicio", label: "Inicio", icon: <HomeOutlinedIcon />, path: "/" },
+    {
+      id: "admin-users",
+      label: "Usuarios",
+      icon: <AdminPanelSettingsOutlinedIcon />,
+      path: "/admin/users",
+    },
     { id: "historial", label: "Historial", icon: <HistoryOutlinedIcon /> },
     { id: "tarjetas", label: "Tarjetas", icon: <CreditCardOutlinedIcon /> },
     { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon /> },
-    { id: "configuracion", label: "Configuración", icon: <SettingsOutlinedIcon /> },
+    {
+      id: "configuracion",
+      label: "Configuración",
+      icon: <SettingsOutlinedIcon />,
+    },
   ];
 
   const bottomNav = [
-    { id: "soporte", label: "Soporte", icon: <HeadsetMicOutlinedIcon fontSize="small" /> },
-    { id: "ayuda", label: "Ayuda", icon: <HelpOutlineOutlinedIcon fontSize="small" /> },
+    {
+      id: "soporte",
+      label: "Soporte",
+      icon: <HeadsetMicOutlinedIcon fontSize="small" />,
+    },
+    {
+      id: "ayuda",
+      label: "Ayuda",
+      icon: <HelpOutlineOutlinedIcon fontSize="small" />,
+    },
   ];
+
+  const handleClick = (item) => {
+    if (onItemClick) {
+      onItemClick(item.id);
+    }
+    if (item.path) {
+      navigate(item.path);
+    }
+  };
 
   return (
     <Box
@@ -55,7 +86,17 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
       }}
     >
       {/* Cabecera: Logo + DigitalArs */}
-      <Box sx={{ p: 3, pb: 2.5, display: "flex", alignItems: "center", gap: 1.5 }}>
+      <Box
+        onClick={() => navigate("/")}
+        sx={{
+          p: 3,
+          pb: 2.5,
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          cursor: "pointer",
+        }}
+      >
         <Box
           sx={{
             width: 40,
@@ -71,7 +112,10 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
           <AccountBalanceWalletOutlinedIcon fontSize="small" />
         </Box>
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 800, fontSize: "1.15rem", lineHeight: 1.1 }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 800, fontSize: "1.15rem", lineHeight: 1.1 }}
+          >
             DigitalArs
           </Typography>
           <Typography
@@ -96,7 +140,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
                 transition={{ duration: 0.15 }}
               >
                 <ListItemButton
-                  onClick={() => onItemClick && onItemClick(item.id)}
+                  onClick={() => handleClick(item)}
                   sx={{
                     borderRadius: "8px",
                     py: 1.1,
@@ -106,7 +150,9 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
                     fontWeight: isActive ? 700 : 500,
                     transition: "all 0.15s ease",
                     "&:hover": {
-                      bgcolor: isActive ? "#0047B3" : "rgba(255, 255, 255, 0.05)",
+                      bgcolor: isActive
+                        ? "#0047B3"
+                        : "rgba(255, 255, 255, 0.05)",
                       color: "#FFFFFF",
                     },
                   }}
@@ -148,7 +194,10 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
                     px: 1.5,
                     borderRadius: "6px",
                     color: "#7F96B2",
-                    "&:hover": { color: "#FFFFFF", bgcolor: "rgba(255, 255, 255, 0.05)" },
+                    "&:hover": {
+                      color: "#FFFFFF",
+                      bgcolor: "rgba(255, 255, 255, 0.05)",
+                    },
                   }}
                 >
                   <ListItemIcon sx={{ color: "inherit", minWidth: 32 }}>
@@ -156,7 +205,10 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
                   </ListItemIcon>
                   <ListItemText
                     primary={item.label}
-                    primaryTypographyProps={{ fontSize: "0.85rem", fontWeight: 500 }}
+                    primaryTypographyProps={{
+                      fontSize: "0.85rem",
+                      fontWeight: 500,
+                    }}
                   />
                 </ListItemButton>
               </motion.div>
