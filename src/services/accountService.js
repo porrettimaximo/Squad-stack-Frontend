@@ -1,4 +1,4 @@
-﻿import api from "./api";
+import api from "./api";
 
 export const accountService = {
   /**
@@ -11,17 +11,17 @@ export const accountService = {
       const data = response.data;
       return {
         id: data.id,
-        money: Number(data.balance ?? data.money ?? 500000.00),
+        money: Number(data.balance ?? data.money ?? 45230.50),
         isBlocked: data.isBlocked ?? false,
         cardNumber: "4892",
         trend: 2.4,
         createdAt: data.createdAt,
       };
-    } catch (error) {
-      console.warn("GET /api/accounts/me fallo o no disponible, usando fallback:", error.message);
+    } catch {
+      // Retorna el perfil y saldo base de Figma para modo autónomo
       return {
-        id: 1,
-        money: 500000.00,
+        id: 4,
+        money: 45230.50,
         isBlocked: false,
         cardNumber: "4892",
         trend: 2.4,

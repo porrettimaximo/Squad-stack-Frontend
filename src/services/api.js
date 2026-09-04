@@ -1,16 +1,16 @@
-﻿import axios from "axios";
+import axios from "axios";
 
 /**
- * Instancia única de Axios (HU-21).
- * - baseURL configurada desde variable de entorno .env (VITE_API_URL).
- * - Interceptor de Request: inyecta Bearer token desde localStorage si existe.
- * - Interceptor de Response: captura respuestas 401 (Unauthorized) para limpiar sesión.
+ * Instancia centralizada de Axios para peticiones HTTP.
+ * - Inyecta token JWT de Authorization si existe en localStorage.
+ * - Maneja respuestas de error de forma segura sin forzar redirecciones invasivas.
  */
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5065/api",
   headers: {
     "Content-Type": "application/json",
   },
+  timeout: 5000,
 });
 
 // Interceptor de token
@@ -25,16 +25,13 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Interceptor 401 Unauthorized
+// Interceptor de respuesta
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
+    if (error.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
-      }
     }
     return Promise.reject(error);
   }
