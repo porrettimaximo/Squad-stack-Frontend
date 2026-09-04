@@ -54,7 +54,48 @@ export default function TransferPage() {
       setLoadingRecipients(true);
       try {
         const txs = await transactionService.getRecentTransactions(15);
-        const outgoing = (txs || []).filter((t) => t.type === 3 || t.category === "EGRESO");
+        const nonTransferCategories = [
+          "COMPRAS",
+          "COMIDA",
+          "SERVICIOS",
+          "SUSCRIPCION",
+          "SUSCRIPCIÓN",
+          "GASTO",
+          "CONSUMO",
+        ];
+        const merchantKeywords = [
+          "mercado libre",
+          "netflix",
+          "starbucks",
+          "spotify",
+          "uber",
+          "pedidosya",
+          "rappi",
+          "amazon",
+          "steam",
+          "disney",
+          "flow",
+        ];
+
+        const isPurchaseOrSubscription = (t) => {
+          const category = (t.category || "").toUpperCase();
+          if (nonTransferCategories.some((c) => category.includes(c))) return true;
+
+          const titleLower = (t.title || "").toLowerCase();
+          if (merchantKeywords.some((m) => titleLower.includes(m))) return true;
+
+          // Si no tiene cuenta destino y no menciona transferencia o cuenta, es un consumo/compra
+          if (!t.toAccountId && !titleLower.includes("cuenta") && !titleLower.includes("transferencia")) {
+            return true;
+          }
+
+          return false;
+        };
+
+        const outgoing = (txs || []).filter((t) => {
+          if (isPurchaseOrSubscription(t)) return false;
+          return t.type === 3 || Boolean(t.toAccountId);
+        });
 
         const extracted = [];
         const seen = new Set();
@@ -67,8 +108,12 @@ export default function TransferPage() {
             destId = String(t.toAccountId);
           } else if (t.title && t.title.includes("#")) {
             destId = t.title.split("#")[1]?.trim();
-          } else {
-            destId = t.title;
+          }
+
+          if (name.toLowerCase().startsWith("transferencia enviada a ")) {
+            name = name.substring("transferencia enviada a ".length).trim();
+          } else if (name.toLowerCase().startsWith("transferencia a ")) {
+            name = name.substring("transferencia a ".length).trim();
           }
 
           if (destId && !seen.has(destId)) {
@@ -77,13 +122,13 @@ export default function TransferPage() {
               id: `tx-${t.id}`,
               name: name,
               destination: destId,
-              detail: t.subtitle || "Transferencia reciente",
+              detail: t.subtitle || `Cuenta #${destId}`,
               avatarText: (name || destId).charAt(0).toUpperCase(),
             });
           }
         });
 
-        // Contactos sugeridos del seed de la plataforma
+        // Contactos sugeridos del seed de usuarios de la plataforma
         const defaultContacts = [
           {
             id: "seed-2",
@@ -98,6 +143,20 @@ export default function TransferPage() {
             destination: "3",
             detail: "Cuenta #3 · mokha@gmail.com",
             avatarText: "M",
+          },
+          {
+            id: "seed-5",
+            name: "Micaela Mulato",
+            destination: "5",
+            detail: "Cuenta #5 · micaela.mulato@digitalars.com",
+            avatarText: "M",
+          },
+          {
+            id: "seed-6",
+            name: "Emmanuel Torres",
+            destination: "6",
+            detail: "Cuenta #6 · emmanuel.torres@digitalars.com",
+            avatarText: "E",
           },
         ];
 

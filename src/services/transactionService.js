@@ -35,6 +35,7 @@ export const transactionService = {
             amount: tx.amount,
             category: categoryName,
             isIncome,
+            toAccountId: tx.toAccountId,
           };
         });
       }
