@@ -735,16 +735,18 @@ export function AdminUsersPage() {
         PaperProps={{ sx: { borderRadius: "16px", p: 1 } }}
       >
         <DialogTitle
+          component="div"
           sx={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
             pb: 1,
+            fontWeight: 800,
+            fontSize: "1.25rem",
+            color: "#0A192F",
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 800, color: "#0A192F" }}>
-            Nuevo Usuario
-          </Typography>
+          Nuevo Usuario
           <IconButton
             onClick={() => setCreateOpen(false)}
             disabled={submitting}
@@ -869,16 +871,18 @@ export function AdminUsersPage() {
         PaperProps={{ sx: { borderRadius: "16px", p: 1 } }}
       >
         <DialogTitle
+          component="div"
           sx={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
             pb: 1,
+            fontWeight: 800,
+            fontSize: "1.25rem",
+            color: "#0A192F",
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 800, color: "#0A192F" }}>
-            Editar Usuario #{selectedUser?.id}
-          </Typography>
+          Editar Usuario #{selectedUser?.id}
           <IconButton onClick={() => setEditOpen(false)} disabled={submitting}>
             <CloseIcon fontSize="small" />
           </IconButton>
