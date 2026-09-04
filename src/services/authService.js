@@ -1,4 +1,4 @@
-﻿import api from "./api";
+import api from "./api";
 
 export const authService = {
   /**
@@ -9,6 +9,9 @@ export const authService = {
     const response = await api.post("/auth/login", { email, password });
     if (response.data?.token) {
       localStorage.setItem("token", response.data.token);
+      if (response.data.user) {
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+      }
     }
     return response.data;
   },
@@ -22,7 +25,7 @@ export const authService = {
     if (token) return token;
 
     try {
-      // Login silencioso con el seed data de desarrollo
+      // Login silencioso con el seed data de desarrollo de .NET
       const data = await this.login("admin@digitalars.com", "Admin123!");
       return data.token;
     } catch (error) {
@@ -33,6 +36,7 @@ export const authService = {
 
   logout() {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
   },
 
   getToken() {
