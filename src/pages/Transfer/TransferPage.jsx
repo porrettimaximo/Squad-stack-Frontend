@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -13,10 +13,14 @@ import {
   InputAdornment,
   Divider,
   CircularProgress,
+  Avatar,
+  Chip,
+  CardActionArea,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useAccount } from "../../hooks/useAccount";
@@ -40,6 +44,90 @@ export default function TransferPage() {
   
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+
+  // Lista de últimos destinatarios de transferencias
+  const [recentRecipients, setRecentRecipients] = useState([]);
+  const [loadingRecipients, setLoadingRecipients] = useState(false);
+
+  useEffect(() => {
+    async function loadRecipients() {
+      setLoadingRecipients(true);
+      try {
+        const txs = await transactionService.getRecentTransactions(15);
+        const outgoing = (txs || []).filter((t) => t.type === 3 || t.category === "EGRESO");
+
+        const extracted = [];
+        const seen = new Set();
+
+        outgoing.forEach((t) => {
+          let destId = "";
+          let name = t.title || "Transferencia";
+          
+          if (t.toAccountId) {
+            destId = String(t.toAccountId);
+          } else if (t.title && t.title.includes("#")) {
+            destId = t.title.split("#")[1]?.trim();
+          } else {
+            destId = t.title;
+          }
+
+          if (destId && !seen.has(destId)) {
+            seen.add(destId);
+            extracted.push({
+              id: `tx-${t.id}`,
+              name: name,
+              destination: destId,
+              detail: t.subtitle || "Transferencia reciente",
+              avatarText: (name || destId).charAt(0).toUpperCase(),
+            });
+          }
+        });
+
+        // Contactos sugeridos del seed de la plataforma
+        const defaultContacts = [
+          {
+            id: "seed-2",
+            name: "Roberto Carlos",
+            destination: "2",
+            detail: "Cuenta #2 · robercarlos3@gmail.com",
+            avatarText: "R",
+          },
+          {
+            id: "seed-3",
+            name: "Mohammed Khan",
+            destination: "3",
+            detail: "Cuenta #3 · mokha@gmail.com",
+            avatarText: "M",
+          },
+        ];
+
+        defaultContacts.forEach((c) => {
+          if (!seen.has(c.destination)) {
+            seen.add(c.destination);
+            extracted.push(c);
+          }
+        });
+
+        setRecentRecipients(extracted);
+      } catch (err) {
+        console.warn("Error cargando contactos recientes:", err);
+      } finally {
+        setLoadingRecipients(false);
+      }
+    }
+
+    loadRecipients();
+  }, []);
+
+  const filteredRecipients = recentRecipients.filter((rec) => {
+    if (!destination.trim()) return true;
+    const q = destination.toLowerCase().trim();
+    return (
+      rec.name.toLowerCase().includes(q) ||
+      rec.destination.toLowerCase().includes(q) ||
+      rec.detail.toLowerCase().includes(q)
+    );
+  });
 
   const currentBalance = account?.money ?? 0;
 
@@ -172,7 +260,7 @@ export default function TransferPage() {
                 <Box sx={{ flex: 1 }}>
                   <TextField
                     fullWidth
-                    label="Email, CVU o Alias"
+                    label="Email, CVU, Alias o Nº de Cuenta"
                     variant="outlined"
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
@@ -184,8 +272,98 @@ export default function TransferPage() {
                       ),
                       sx: { borderRadius: "16px", bgcolor: "#F8FAFC", "& fieldset": { borderColor: "#E2E8F0" } }
                     }}
-                    placeholder="Ej. usuario@mail.com"
+                    placeholder="Ej. 2, usuario@mail.com o Alias"
                   />
+
+                  {/* Lista de últimas transferencias y contactos */}
+                  <Box sx={{ mt: 3, mb: 1 }}>
+                    <Typography
+                      sx={{
+                        color: "#64748B",
+                        fontSize: "0.85rem",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.75,
+                        mb: 1.5,
+                      }}
+                    >
+                      <HistoryOutlinedIcon sx={{ fontSize: "1.1rem", color: "#0056D2" }} />
+                      Últimos destinatarios
+                    </Typography>
+
+                    {loadingRecipients ? (
+                      <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                        <CircularProgress size={24} />
+                      </Box>
+                    ) : filteredRecipients.length === 0 ? (
+                      <Typography sx={{ fontSize: "0.85rem", color: "#94A3B8", fontStyle: "italic", py: 1 }}>
+                        No se encontraron coincidencias para "{destination}".
+                      </Typography>
+                    ) : (
+                      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.2, maxHeight: 250, overflowY: "auto", pr: 0.5 }}>
+                        {filteredRecipients.map((rec) => {
+                          const isSelected = destination === rec.destination;
+                          return (
+                            <CardActionArea
+                              key={rec.id}
+                              onClick={() => setDestination(rec.destination)}
+                              sx={{
+                                p: 1.5,
+                                borderRadius: "16px",
+                                bgcolor: isSelected ? "#EEF4FF" : "#F8FAFC",
+                                border: isSelected ? "2px solid #0056D2" : "1px solid #E2E8F0",
+                                transition: "all 0.15s ease",
+                                "&:hover": {
+                                  bgcolor: "#EFF6FF",
+                                  borderColor: "#93C5FD",
+                                },
+                              }}
+                            >
+                              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                                  <Avatar
+                                    sx={{
+                                      width: 40,
+                                      height: 40,
+                                      bgcolor: isSelected ? "#0056D2" : "#E2E8F0",
+                                      color: isSelected ? "#FFFFFF" : "#334155",
+                                      fontWeight: 700,
+                                      fontSize: "0.95rem",
+                                    }}
+                                  >
+                                    {rec.avatarText}
+                                  </Avatar>
+                                  <Box sx={{ textAlign: "left" }}>
+                                    <Typography sx={{ fontWeight: 700, fontSize: "0.92rem", color: "#0F172A", lineHeight: 1.2 }}>
+                                      {rec.name}
+                                    </Typography>
+                                    <Typography sx={{ fontSize: "0.78rem", color: "#64748B", mt: 0.25 }}>
+                                      {rec.detail}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+
+                                <Chip
+                                  label={isSelected ? "Seleccionado" : "Elegir"}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: isSelected ? "#0056D2" : "#FFFFFF",
+                                    color: isSelected ? "#FFFFFF" : "#0056D2",
+                                    fontWeight: 700,
+                                    fontSize: "0.75rem",
+                                    border: isSelected ? "none" : "1px solid #BFDBFE",
+                                  }}
+                                />
+                              </Box>
+                            </CardActionArea>
+                          );
+                        })}
+                      </Box>
+                    )}
+                  </Box>
                 </Box>
 
                 <Button
