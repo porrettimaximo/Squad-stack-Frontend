@@ -2,19 +2,26 @@
 
 export const accountService = {
   /**
-   * Obtiene la información de la cuenta del usuario autenticado (HU-24).
+   * Obtiene la información y saldo de la cuenta del usuario autenticado (HU-14).
    * GET /api/accounts/me
    */
   async getMyAccount() {
     try {
       const response = await api.get("/accounts/me");
-      return response.data;
+      const data = response.data;
+      return {
+        id: data.id,
+        money: Number(data.balance ?? data.money ?? 500000.00),
+        isBlocked: data.isBlocked ?? false,
+        cardNumber: "4892",
+        trend: 2.4,
+        createdAt: data.createdAt,
+      };
     } catch (error) {
-      // Fallback a cuenta demo si el endpoint aún no está expuesto en backend
-      console.warn("GET /api/accounts/me no disponible, usando estado inicial de cuenta:", error.message);
+      console.warn("GET /api/accounts/me fallo o no disponible, usando fallback:", error.message);
       return {
         id: 1,
-        money: 45230.50,
+        money: 500000.00,
         isBlocked: false,
         cardNumber: "4892",
         trend: 2.4,
@@ -23,10 +30,14 @@ export const accountService = {
   },
 
   /**
-   * Deposita fondos en la cuenta del usuario.
+   * Deposita fondos en la cuenta del usuario (HU-15).
+   * POST /api/accounts/deposit
+   * Body: { amount }
    */
   async deposit(amount) {
-    const response = await api.post("/accounts/deposit", { amount: Number(amount) });
+    const response = await api.post("/accounts/deposit", {
+      amount: Number(amount),
+    });
     return response.data;
   },
 };

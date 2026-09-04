@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback } from "react";
 import accountService from "../services/accountService";
+import authService from "../services/authService";
 
 export const AccountContext = createContext(null);
 
@@ -22,6 +23,7 @@ export function AccountProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
+      await authService.ensureAuth();
       const data = await accountService.getMyAccount();
       if (data) {
         setAccount((prev) => ({
