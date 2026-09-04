@@ -7,7 +7,7 @@
  * - Interceptor de Response: captura respuestas 401 (Unauthorized) para limpiar sesión.
  */
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5065/api",
+  baseURL: import.meta.env.VITE_API_URL || "https://localhost:7142/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -22,7 +22,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Interceptor 401 Unauthorized
@@ -37,7 +37,13 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
+
+// Servicio de autenticacion
+export const loginApi = async (credentials) => {
+  const response = await api.post("/auth/login", credentials);
+  return response.data;
+};
 
 export default api;
