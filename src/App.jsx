@@ -4,6 +4,7 @@ import theme from "./theme/theme";
 import { AccountProvider } from "./context/AccountContext";
 import DashboardPage from "./pages/Dashboard/DashboardPage";
 import DepositPage from "./pages/Deposit/DepositPage";
+import TransferPage from "./pages/Transfer/TransferPage";
 
 export function App() {
   return (
@@ -16,6 +17,8 @@ export function App() {
             <Route path="/" element={<DashboardPage />} />
             {/* HU-25: Pantalla de depósito de fondos */}
             <Route path="/deposit" element={<DepositPage />} />
+            {/* HU-26: Pantalla de transferencia de fondos */}
+            <Route path="/transfer" element={<TransferPage />} />
             <Route path="*" element={<DashboardPage />} />
           </Routes>
         </BrowserRouter>

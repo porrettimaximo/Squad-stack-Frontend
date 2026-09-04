@@ -1,4 +1,4 @@
-﻿import api from "./api";
+import api from "./api";
 
 export const transactionService = {
   /**
@@ -62,6 +62,20 @@ export const transactionService = {
         icon: "receipt",
       },
     ];
+  },
+
+  /**
+   * Realiza una transferencia a otra cuenta (HU-26).
+   * POST /api/transactions/transfer
+   */
+  async transfer({ destination, amount, concept }) {
+    const response = await api.post("/transactions/transfer", {
+      // Mandamos las props comunes que podría requerir el backend
+      toAccountId: destination, // o cvu/alias dependiendo del backend real
+      amount: Number(amount),
+      concept: concept || "Varios",
+    });
+    return response.data;
   },
 };
 

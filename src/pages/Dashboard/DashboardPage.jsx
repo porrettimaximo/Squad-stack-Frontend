@@ -237,7 +237,7 @@ export function DashboardPage() {
                   />
                   <QuickActions
                     onDeposit={() => navigate("/deposit")}
-                    onTransfer={() => setTransferOpen(true)}
+                    onTransfer={() => navigate("/transfer")}
                     onScan={() => setSnackbar({ open: true, message: "Módulo Escanear QR próximamente disponible.", severity: "info" })}
                     onServices={() => setSnackbar({ open: true, message: "Módulo Pago de Servicios próximamente disponible.", severity: "info" })}
                   />
@@ -248,7 +248,7 @@ export function DashboardPage() {
                   <ImageCarousel
                     height="100%"
                     borderRadius="20px"
-                    onTransfer={() => setTransferOpen(true)}
+                    onTransfer={() => navigate("/transfer")}
                     onInvestments={() => setCurrentTab(1)}
                   />
                 </Box>
@@ -371,7 +371,7 @@ export function DashboardPage() {
             <Box sx={{ mb: 3.5 }}>
               <QuickActions
                 onDeposit={() => navigate("/deposit")}
-                onTransfer={() => setTransferOpen(true)}
+                onTransfer={() => navigate("/transfer")}
                 onScan={() => setSnackbar({ open: true, message: "Módulo Escanear QR próximamente disponible.", severity: "info" })}
                 onServices={() => setSnackbar({ open: true, message: "Módulo Pago de Servicios próximamente disponible.", severity: "info" })}
               />
@@ -379,7 +379,12 @@ export function DashboardPage() {
 
             {/* Carrusel de imágenes */}
             <Box sx={{ borderRadius: "20px", overflow: "hidden", height: 380 }}>
-              <ImageCarousel height="380px" borderRadius="20px" />
+              <ImageCarousel 
+                height="380px" 
+                borderRadius="20px" 
+                onTransfer={() => navigate("/transfer")}
+                onInvestments={() => setCurrentTab(1)}
+              />
             </Box>
           </Box>
 
