@@ -4,20 +4,12 @@ import {
   Card,
   CardContent,
   Typography,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Chip,
   Button,
   Grid,
 } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 import PieChartIcon from "@mui/icons-material/PieChart";
-import TableRowsIcon from "@mui/icons-material/TableRows";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import TrendingDownIcon from "@mui/icons-material/TrendingDown";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 const PALETTE = [
@@ -32,101 +24,37 @@ const PALETTE = [
 ];
 
 export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
-  const [viewMode, setViewMode] = useState("TYPE"); // 'TYPE' | 'CATEGORY'
   const [hoveredSlice, setHoveredSlice] = useState(null);
 
-  // Procesar datos para el gráfico según el modo seleccionado
+  // Procesar datos para el gráfico fijo exclusivamente por motivo / concepto
   const chartData = useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
 
-    if (viewMode === "TYPE") {
-      const acc = {
-        Ingresos: {
-          label: "Ingresos / Cobros",
-          count: 0,
-          total: 0,
-          color: "#10b981",
-          lightColor: "rgba(16, 185, 129, 0.12)",
-          icon: <TrendingUpIcon sx={{ fontSize: 18, color: "#10b981" }} />,
-        },
-        Egresos: {
-          label: "Egresos / Pagos",
-          count: 0,
-          total: 0,
-          color: "#ef4444",
-          lightColor: "rgba(239, 68, 68, 0.12)",
-          icon: <TrendingDownIcon sx={{ fontSize: 18, color: "#ef4444" }} />,
-        },
-        Depósitos: {
-          label: "Depósitos",
-          count: 0,
-          total: 0,
-          color: "#3b82f6",
-          lightColor: "rgba(59, 130, 246, 0.12)",
-          icon: <AccountBalanceWalletIcon sx={{ fontSize: 18, color: "#3b82f6" }} />,
-        },
-      };
+    const acc = {};
+    transactions.forEach((tx) => {
+      const amount = Math.abs(Number(tx.amount) || 0);
+      const cat = tx.reason || tx.concept || tx.category || "Varios / General";
+      if (!acc[cat]) {
+        acc[cat] = { count: 0, total: 0 };
+      }
+      acc[cat].count += 1;
+      acc[cat].total += amount;
+    });
 
-      transactions.forEach((tx) => {
-        const amount = Math.abs(Number(tx.amount) || 0);
-        const type = String(tx.type || tx.movementType || "").toUpperCase();
-        if (type.includes("DEPOSIT") || type.includes("DEPÓSITO") || type.includes("DEPOSITO")) {
-          acc["Depósitos"].count += 1;
-          acc["Depósitos"].total += amount;
-        } else if (
-          type.includes("EGRESO") ||
-          type.includes("OUT") ||
-          type.includes("TRANSFER") ||
-          type.includes("PAGO") ||
-          (tx.direction && tx.direction === "OUT")
-        ) {
-          acc["Egresos"].count += 1;
-          acc["Egresos"].total += amount;
-        } else {
-          acc["Ingresos"].count += 1;
-          acc["Ingresos"].total += amount;
-        }
-      });
-
-      return Object.entries(acc)
-        .filter(([_, data]) => data.total > 0 || data.count > 0)
-        .map(([name, data]) => ({
+    return Object.entries(acc)
+      .sort((a, b) => b[1].total - a[1].total)
+      .map(([name, data], idx) => {
+        const colorPair = PALETTE[idx % PALETTE.length];
+        return {
           name,
-          label: data.label,
+          label: name,
           count: data.count,
           total: data.total,
-          color: data.color,
-          lightColor: data.lightColor,
-          icon: data.icon,
-        }));
-    } else {
-      // Modo CATEGORY (por motivo o concepto)
-      const acc = {};
-      transactions.forEach((tx) => {
-        const amount = Math.abs(Number(tx.amount) || 0);
-        const cat = tx.reason || tx.concept || tx.category || "Varios / General";
-        if (!acc[cat]) {
-          acc[cat] = { count: 0, total: 0 };
-        }
-        acc[cat].count += 1;
-        acc[cat].total += amount;
+          color: colorPair.main,
+          lightColor: colorPair.light,
+        };
       });
-
-      return Object.entries(acc)
-        .sort((a, b) => b[1].total - a[1].total)
-        .map(([name, data], idx) => {
-          const colorPair = PALETTE[idx % PALETTE.length];
-          return {
-            name,
-            label: name,
-            count: data.count,
-            total: data.total,
-            color: colorPair.main,
-            lightColor: colorPair.light,
-          };
-        });
-    }
-  }, [transactions, viewMode]);
+  }, [transactions]);
 
   const totalSum = useMemo(() => {
     return chartData.reduce((sum, item) => sum + item.total, 0);
@@ -213,50 +141,30 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
             <PieChartIcon sx={{ fontSize: 24 }} />
           </Box>
           <Box>
-            <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#0f172a", letterSpacing: "-0.01em" }}>
-              Distribución de Movimientos
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#0f172a", letterSpacing: "-0.01em" }}>
+                Distribución por Concepto
+              </Typography>
+              <Chip
+                label="Por Concepto"
+                size="small"
+                sx={{
+                  height: 22,
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  bgcolor: "#EFF6FF",
+                  color: "#0056D2",
+                  borderRadius: "6px",
+                }}
+              />
+            </Box>
             <Typography sx={{ color: "#64748b", fontSize: "0.82rem" }}>
-              Visualización gráfica de operaciones realizadas
+              Visualización gráfica de operaciones agrupadas por motivo y concepto
             </Typography>
           </Box>
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-          {/* Desplegable para alternar vista */}
-          <FormControl size="small" sx={{ minWidth: 170 }}>
-            <InputLabel id="pie-mode-label" sx={{ fontSize: "0.82rem", fontWeight: 600 }}>
-              Ver desglose por
-            </InputLabel>
-            <Select
-              labelId="pie-mode-label"
-              value={viewMode}
-              label="Ver desglose por"
-              onChange={(e) => {
-                setViewMode(e.target.value);
-                setHoveredSlice(null);
-              }}
-              sx={{
-                borderRadius: "12px",
-                bgcolor: "#ffffff",
-                fontSize: "0.84rem",
-                fontWeight: 700,
-                color: "#1e293b",
-                height: 40,
-                boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
-                "& fieldset": { borderColor: "#e2e8f0" },
-                "&:hover fieldset": { borderColor: "#0056D2 !important" },
-              }}
-            >
-              <MenuItem value="TYPE" sx={{ fontSize: "0.84rem", fontWeight: 600 }}>
-                📊 Por Tipo
-              </MenuItem>
-              <MenuItem value="CATEGORY" sx={{ fontSize: "0.84rem", fontWeight: 600 }}>
-                🏷️ Por Concepto
-              </MenuItem>
-            </Select>
-          </FormControl>
-
           {/* Botón para ver la tabla completa de historial */}
           {onGoToTable && (
             <Button
