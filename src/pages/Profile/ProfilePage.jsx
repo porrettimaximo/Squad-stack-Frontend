@@ -52,6 +52,9 @@ export function ProfilePage() {
   // Modo edición para datos personales
   const [isEditing, setIsEditing] = useState(false);
 
+  // Modo edición para seguridad y contraseña
+  const [isEditingPassword, setIsEditingPassword] = useState(false);
+
   // Datos del perfil (modo visualización)
   const [profileData, setProfileData] = useState({
     id: null,
@@ -161,13 +164,33 @@ export function ProfilePage() {
     setIsEditing(true);
   };
 
-  // Cancelar edición
+  // Cancelar edición de datos personales
   const handleCancelEdit = () => {
     setEditFormData({
       firstName: profileData.firstName,
       lastName: profileData.lastName,
     });
     setIsEditing(false);
+  };
+
+  // Iniciar edición de contraseña
+  const handleStartEditPassword = () => {
+    setPasswordData({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+    setIsEditingPassword(true);
+  };
+
+  // Cancelar edición de contraseña
+  const handleCancelEditPassword = () => {
+    setPasswordData({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+    setIsEditingPassword(false);
   };
 
   // Manejador de cambios en formulario de edición
@@ -334,6 +357,8 @@ export function ProfilePage() {
         newPassword: "",
         confirmPassword: "",
       });
+
+      setIsEditingPassword(false);
 
       setSnackbar({
         open: true,
@@ -854,182 +879,346 @@ export function ProfilePage() {
                 }}
               >
                 <CardContent sx={{ p: { xs: 2.5, sm: 3.5 }, flex: 1, display: "flex", flexDirection: "column" }}>
-                  {/* Título de Sección */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.2, mb: 1 }}>
-                    <Box
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: "10px",
-                        bgcolor: "#EFF6FF",
-                        color: "#0056D2",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <SecurityIcon sx={{ fontSize: 20 }} />
+                  {/* Título de Sección con estado de visualización o edición */}
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+                      <Box
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: "10px",
+                          bgcolor: "#EFF6FF",
+                          color: "#0056D2",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <SecurityIcon sx={{ fontSize: 20 }} />
+                      </Box>
+                      <Box>
+                        <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#0F172A" }}>
+                          Seguridad y Contraseña
+                        </Typography>
+                        <Typography sx={{ fontSize: "0.8rem", color: "#64748B" }}>
+                          {isEditingPassword ? "Validá tu contraseña actual para establecer una nueva" : "Protección de acceso y credenciales de cuenta"}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Box>
-                      <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#0F172A" }}>
-                        Seguridad y Contraseña
-                      </Typography>
-                      <Typography sx={{ fontSize: "0.8rem", color: "#64748B" }}>
-                        Validá tu contraseña actual para establecer una nueva
-                      </Typography>
-                    </Box>
+
+                    {isEditingPassword && (
+                      <Chip
+                        label="Modo Edición"
+                        size="small"
+                        sx={{
+                          bgcolor: "#EFF6FF",
+                          color: "#0056D2",
+                          fontWeight: 700,
+                          fontSize: "0.72rem",
+                          borderRadius: "6px",
+                        }}
+                      />
+                    )}
                   </Box>
 
                   <Divider sx={{ my: 2 }} />
 
-                  {/* Formulario de Contraseña */}
-                  <Box component="form" onSubmit={handleSavePassword} sx={{ display: "flex", flexDirection: "column", gap: 2.2, flex: 1 }}>
-                    {/* Campo Contraseña Actual */}
-                    <Box>
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
-                        Contraseña Actual *
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        type={showCurrentPassword ? "text" : "password"}
-                        name="currentPassword"
-                        placeholder="Ingresá tu contraseña actual"
-                        value={passwordData.currentPassword}
-                        onChange={handlePasswordChange}
-                        disabled={savingPassword}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <KeyIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
-                            </InputAdornment>
-                          ),
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                size="small"
-                                onClick={() => setShowCurrentPassword((prev) => !prev)}
-                                edge="end"
-                              >
-                                {showCurrentPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                          sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.9rem" },
-                        }}
-                      />
-                    </Box>
-
-                    {/* Campo Nueva Contraseña */}
-                    <Box>
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
-                        Nueva Contraseña *
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        type={showNewPassword ? "text" : "password"}
-                        name="newPassword"
-                        placeholder="Mínimo 6 caracteres"
-                        value={passwordData.newPassword}
-                        onChange={handlePasswordChange}
-                        disabled={savingPassword}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <LockOutlinedIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
-                            </InputAdornment>
-                          ),
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                size="small"
-                                onClick={() => setShowNewPassword((prev) => !prev)}
-                                edge="end"
-                              >
-                                {showNewPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                          sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.9rem" },
-                        }}
-                      />
-                    </Box>
-
-                    {/* Campo Confirmar Nueva Contraseña */}
-                    <Box>
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
-                        Confirmar Nueva Contraseña *
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        type={showConfirmPassword ? "text" : "password"}
-                        name="confirmPassword"
-                        placeholder="Repetí la nueva contraseña"
-                        value={passwordData.confirmPassword}
-                        onChange={handlePasswordChange}
-                        disabled={savingPassword}
-                        error={Boolean(
-                          passwordData.confirmPassword &&
-                          passwordData.newPassword &&
-                          passwordData.confirmPassword !== passwordData.newPassword
-                        )}
-                        helperText={
-                          passwordData.confirmPassword &&
-                          passwordData.newPassword &&
-                          passwordData.confirmPassword !== passwordData.newPassword
-                            ? "Las contraseñas no coinciden"
-                            : ""
-                        }
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <LockOutlinedIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
-                            </InputAdornment>
-                          ),
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                size="small"
-                                onClick={() => setShowConfirmPassword((prev) => !prev)}
-                                edge="end"
-                              >
-                                {showConfirmPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                          sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.9rem" },
-                        }}
-                      />
-                    </Box>
-
-                    {/* Botón Cambiar Contraseña */}
-                    <Box sx={{ mt: "auto", pt: 1.5 }}>
-                      <Button
-                        type="submit"
-                        fullWidth
-                        variant="outlined"
-                        disabled={savingPassword}
-                        startIcon={savingPassword ? <CircularProgress size={18} color="inherit" /> : <KeyIcon />}
-                        sx={{
-                          height: 44,
-                          borderRadius: "12px",
-                          borderColor: "#0056D2",
-                          color: "#0056D2",
-                          textTransform: "none",
-                          fontWeight: 700,
-                          fontSize: "0.9rem",
-                          "&:hover": {
-                            borderColor: "#0047B3",
-                            bgcolor: "#EEF4FF",
-                          },
-                        }}
+                  {/* ─── ANIMACIÓN: VISTA DE SEGURIDAD O FORMULARIO EDITABLE DE CONTRASEÑA ─── */}
+                  <AnimatePresence mode="wait">
+                    {!isEditingPassword ? (
+                      /* 1. MODO VISUALIZACIÓN: ESTADO DE CONTRASEÑA + BOTÓN 'CAMBIAR CONTRASEÑA' */
+                      <motion.div
+                        key="password-view-mode"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2 }}
+                        style={{ display: "flex", flexDirection: "column", flex: 1 }}
                       >
-                        {savingPassword ? "Validando contraseña..." : "Actualizar contraseña"}
-                      </Button>
-                    </Box>
-                  </Box>
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.8, flex: 1 }}>
+                          {/* Fila 1: Contraseña Actual Cifrada */}
+                          <Box
+                            sx={{
+                              p: 1.5,
+                              borderRadius: "12px",
+                              bgcolor: "#F8FAFC",
+                              border: "1px solid #E2E8F0",
+                            }}
+                          >
+                            <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                              Contraseña
+                            </Typography>
+                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 0.3 }}>
+                              <Typography sx={{ fontSize: "1.1rem", fontWeight: 800, color: "#0F172A", letterSpacing: "0.2em" }}>
+                                ••••••••••••
+                              </Typography>
+                              <Chip
+                                label="Protegida"
+                                size="small"
+                                sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#EEF4FF", color: "#0056D2", borderRadius: "5px" }}
+                              />
+                            </Box>
+                          </Box>
+
+                          {/* Fila 2: Nivel de Seguridad */}
+                          <Box
+                            sx={{
+                              p: 1.5,
+                              borderRadius: "12px",
+                              bgcolor: "#F8FAFC",
+                              border: "1px solid #E2E8F0",
+                            }}
+                          >
+                            <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                              Cifrado y Seguridad
+                            </Typography>
+                            <Typography sx={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A", mt: 0.3 }}>
+                              BCrypt con Salt (Estándar Seguro)
+                            </Typography>
+                          </Box>
+
+                          {/* Fila 3: Validación de Acceso */}
+                          <Box
+                            sx={{
+                              p: 1.5,
+                              borderRadius: "12px",
+                              bgcolor: "#F8FAFC",
+                              border: "1px solid #E2E8F0",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <Box>
+                              <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                                Protección de Cuenta
+                              </Typography>
+                              <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#0F172A", mt: 0.3 }}>
+                                Requerimiento de clave actual activo
+                              </Typography>
+                            </Box>
+                            <Chip
+                              label="Activo"
+                              size="small"
+                              sx={{
+                                bgcolor: "#DCFCE7",
+                                color: "#15803D",
+                                fontWeight: 700,
+                                fontSize: "0.72rem",
+                                borderRadius: "6px",
+                              }}
+                            />
+                          </Box>
+                        </Box>
+
+                        {/* Botón Prominente: 'Cambiar contraseña' */}
+                        <Box sx={{ mt: 3, pt: 1 }}>
+                          <Button
+                            fullWidth
+                            variant="contained"
+                            onClick={handleStartEditPassword}
+                            startIcon={<KeyIcon />}
+                            disabled={initialLoading}
+                            sx={{
+                              height: 44,
+                              borderRadius: "12px",
+                              background: "linear-gradient(135deg, #0056D2 0%, #1d4ed8 100%)",
+                              textTransform: "none",
+                              fontWeight: 700,
+                              fontSize: "0.9rem",
+                              boxShadow: "0 4px 12px rgba(0, 86, 210, 0.25)",
+                              "&:hover": {
+                                background: "linear-gradient(135deg, #0047B3 0%, #1e40af 100%)",
+                              },
+                            }}
+                          >
+                            Cambiar contraseña
+                          </Button>
+                        </Box>
+                      </motion.div>
+                    ) : (
+                      /* 2. MODO EDICIÓN: FORMULARIO TRANSFORMADO CON BOTONES ACTUALIZAR Y CANCELAR */
+                      <motion.div
+                        key="password-edit-mode"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2 }}
+                        style={{ display: "flex", flexDirection: "column", flex: 1 }}
+                      >
+                        <Box component="form" onSubmit={handleSavePassword} sx={{ display: "flex", flexDirection: "column", gap: 2.2, flex: 1 }}>
+                          {/* Campo Contraseña Actual */}
+                          <Box>
+                            <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
+                              Contraseña Actual *
+                            </Typography>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              type={showCurrentPassword ? "text" : "password"}
+                              name="currentPassword"
+                              placeholder="Ingresá tu contraseña actual"
+                              value={passwordData.currentPassword}
+                              onChange={handlePasswordChange}
+                              disabled={savingPassword}
+                              autoFocus
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <KeyIcon sx={{ color: "#0056D2", fontSize: 20 }} />
+                                  </InputAdornment>
+                                ),
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => setShowCurrentPassword((prev) => !prev)}
+                                      edge="end"
+                                    >
+                                      {showCurrentPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
+                                    </IconButton>
+                                  </InputAdornment>
+                                ),
+                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                              }}
+                            />
+                          </Box>
+
+                          {/* Campo Nueva Contraseña */}
+                          <Box>
+                            <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
+                              Nueva Contraseña *
+                            </Typography>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              type={showNewPassword ? "text" : "password"}
+                              name="newPassword"
+                              placeholder="Mínimo 6 caracteres"
+                              value={passwordData.newPassword}
+                              onChange={handlePasswordChange}
+                              disabled={savingPassword}
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <LockOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
+                                  </InputAdornment>
+                                ),
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => setShowNewPassword((prev) => !prev)}
+                                      edge="end"
+                                    >
+                                      {showNewPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
+                                    </IconButton>
+                                  </InputAdornment>
+                                ),
+                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                              }}
+                            />
+                          </Box>
+
+                          {/* Campo Confirmar Nueva Contraseña */}
+                          <Box>
+                            <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
+                              Confirmar Nueva Contraseña *
+                            </Typography>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              type={showConfirmPassword ? "text" : "password"}
+                              name="confirmPassword"
+                              placeholder="Repetí la nueva contraseña"
+                              value={passwordData.confirmPassword}
+                              onChange={handlePasswordChange}
+                              disabled={savingPassword}
+                              error={Boolean(
+                                passwordData.confirmPassword &&
+                                passwordData.newPassword &&
+                                passwordData.confirmPassword !== passwordData.newPassword
+                              )}
+                              helperText={
+                                passwordData.confirmPassword &&
+                                passwordData.newPassword &&
+                                passwordData.confirmPassword !== passwordData.newPassword
+                                  ? "Las contraseñas no coinciden"
+                                  : ""
+                              }
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <LockOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
+                                  </InputAdornment>
+                                ),
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                                      edge="end"
+                                    >
+                                      {showConfirmPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
+                                    </IconButton>
+                                  </InputAdornment>
+                                ),
+                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                              }}
+                            />
+                          </Box>
+
+                          {/* Botones de Acción: Actualizar y Cancelar */}
+                          <Box sx={{ mt: "auto", pt: 2, display: "flex", gap: 1.5 }}>
+                            <Button
+                              type="submit"
+                              fullWidth
+                              variant="contained"
+                              disabled={savingPassword}
+                              startIcon={savingPassword ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
+                              sx={{
+                                height: 44,
+                                borderRadius: "12px",
+                                background: "linear-gradient(135deg, #0056D2 0%, #1d4ed8 100%)",
+                                textTransform: "none",
+                                fontWeight: 700,
+                                fontSize: "0.9rem",
+                                boxShadow: "0 4px 12px rgba(0, 86, 210, 0.25)",
+                                "&:hover": {
+                                  background: "linear-gradient(135deg, #0047B3 0%, #1e40af 100%)",
+                                },
+                              }}
+                            >
+                              {savingPassword ? "Validando..." : "Actualizar contraseña"}
+                            </Button>
+
+                            <Button
+                              variant="outlined"
+                              onClick={handleCancelEditPassword}
+                              disabled={savingPassword}
+                              startIcon={<CloseIcon />}
+                              sx={{
+                                height: 44,
+                                borderRadius: "12px",
+                                borderColor: "#CBD5E1",
+                                color: "#475569",
+                                textTransform: "none",
+                                fontWeight: 700,
+                                fontSize: "0.9rem",
+                                px: 2.5,
+                                "&:hover": {
+                                  borderColor: "#94A3B8",
+                                  bgcolor: "#F8FAFC",
+                                },
+                              }}
+                            >
+                              Cancelar
+                            </Button>
+                          </Box>
+                        </Box>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </CardContent>
               </Card>
             </motion.div>
