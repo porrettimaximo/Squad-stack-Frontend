@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -22,6 +22,11 @@ import {
   CircularProgress,
   IconButton,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
@@ -30,6 +35,12 @@ import NorthEastIcon from "@mui/icons-material/NorthEast";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import CloseIcon from "@mui/icons-material/Close";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { motion } from "framer-motion";
 
 import AppLayout from "../../components/layout/AppLayout";
@@ -58,6 +69,50 @@ export function HistoryPage() {
   // Estados de datos y carga
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Estado del modal de comprobante
+  const [selectedTx, setSelectedTx] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  // Pool completo para estadísticas
+  const allPool = useMemo(() => {
+    return localTransactions.length > 0
+      ? localTransactions
+      : transactionService.getDemoTransactions();
+  }, [localTransactions]);
+
+  // Métricas de resumen (KPIs)
+  const stats = useMemo(() => {
+    let totalIncome = 0;
+    let totalExpense = 0;
+    let depositsCount = 0;
+    let incomesCount = 0;
+    let expensesCount = 0;
+
+    allPool.forEach((tx) => {
+      const amt = Number(tx.amount) || 0;
+      if (tx.type === 1) {
+        totalIncome += amt;
+        depositsCount++;
+      } else if (tx.type === 2) {
+        totalIncome += amt;
+        incomesCount++;
+      } else {
+        totalExpense += amt;
+        expensesCount++;
+      }
+    });
+
+    return {
+      totalCount: allPool.length,
+      depositsCount,
+      incomesCount,
+      expensesCount,
+      totalIncome,
+      totalExpense,
+      netBalance: totalIncome - totalExpense,
+    };
+  }, [allPool]);
 
   // Carga de historial desde la API o fallback local
   const loadHistory = useCallback(async () => {
@@ -106,6 +161,14 @@ export function HistoryPage() {
     setPage(1);
   };
 
+  const handleCopyId = (id) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(`TX-${String(id).padStart(4, "0")}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <AppLayout maxWidth={1180}>
       <Box sx={{ width: "100%" }}>
@@ -114,8 +177,8 @@ export function HistoryPage() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
             <Box
               sx={{
-                width: 42,
-                height: 42,
+                width: 44,
+                height: 44,
                 borderRadius: "12px",
                 bgcolor: "#EEF4FF",
                 color: "#0056D2",
@@ -124,18 +187,190 @@ export function HistoryPage() {
                 justifyContent: "center",
               }}
             >
-              <ReceiptLongOutlinedIcon sx={{ fontSize: 24 }} />
+              <ReceiptLongOutlinedIcon sx={{ fontSize: 26 }} />
             </Box>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: "#0F172A", fontSize: { xs: "1.6rem", md: "2rem" } }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, color: "#0F172A", fontSize: { xs: "1.6rem", md: "2rem" }, letterSpacing: "-0.02em" }}>
               Historial de Movimientos
             </Typography>
           </Box>
           <Typography sx={{ color: "#64748B", fontSize: "0.95rem" }}>
-            Explorá tus transacciones, depósitos y transferencias con filtros avanzados y paginación.
+            Explorá el historial de todas las transacciones, depósitos y transferencias con filtros y comprobantes.
           </Typography>
         </Box>
 
-        {/* ─── BARRA DE FILTROS ─── */}
+        {/* ─── TARJETAS DE RESUMEN (KPIs) ─── */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(4, 1fr)" },
+            gap: 2,
+            mb: 3.5,
+          }}
+        >
+          {/* Card 1: Total Movimientos */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.2,
+              borderRadius: "16px",
+              bgcolor: "#FFFFFF",
+              border: "1px solid #E2E8F0",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <Avatar sx={{ bgcolor: "#EEF4FF", color: "#0056D2", width: 44, height: 44 }}>
+              <ReceiptLongOutlinedIcon sx={{ fontSize: 22 }} />
+            </Avatar>
+            <Box>
+              <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600, display: "block" }}>
+                Total Operaciones
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: "#0F172A", lineHeight: 1.2 }}>
+                {stats.totalCount}
+              </Typography>
+            </Box>
+          </Paper>
+
+          {/* Card 2: Total Ingresos */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.2,
+              borderRadius: "16px",
+              bgcolor: "#FFFFFF",
+              border: "1px solid #E2E8F0",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <Avatar sx={{ bgcolor: "#DCFCE7", color: "#16A34A", width: 44, height: 44 }}>
+              <TrendingUpIcon sx={{ fontSize: 22 }} />
+            </Avatar>
+            <Box>
+              <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600, display: "block" }}>
+                Total Ingresos
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: "#16A34A", lineHeight: 1.2 }}>
+                +{formatCurrency(stats.totalIncome)}
+              </Typography>
+            </Box>
+          </Paper>
+
+          {/* Card 3: Total Egresos */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.2,
+              borderRadius: "16px",
+              bgcolor: "#FFFFFF",
+              border: "1px solid #E2E8F0",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <Avatar sx={{ bgcolor: "#FEE2E2", color: "#DC2626", width: 44, height: 44 }}>
+              <TrendingDownIcon sx={{ fontSize: 22 }} />
+            </Avatar>
+            <Box>
+              <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600, display: "block" }}>
+                Total Egresos
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: "#DC2626", lineHeight: 1.2 }}>
+                -{formatCurrency(stats.totalExpense)}
+              </Typography>
+            </Box>
+          </Paper>
+
+          {/* Card 4: Balance Neto */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.2,
+              borderRadius: "16px",
+              bgcolor: "#FFFFFF",
+              border: "1px solid #E2E8F0",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <Avatar sx={{ bgcolor: "#F1F5F9", color: "#0F172A", width: 44, height: 44 }}>
+              <AccountBalanceWalletIcon sx={{ fontSize: 22 }} />
+            </Avatar>
+            <Box>
+              <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600, display: "block" }}>
+                Balance Neto
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 800,
+                  color: stats.netBalance >= 0 ? "#0F172A" : "#DC2626",
+                  lineHeight: 1.2,
+                }}
+              >
+                {formatCurrency(stats.netBalance)}
+              </Typography>
+            </Box>
+          </Paper>
+        </Box>
+
+        {/* ─── PESTAÑAS DE FILTRO RÁPIDO ─── */}
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+          {[
+            { key: "all", label: "Todos", count: stats.totalCount },
+            { key: "1", label: "Depósitos", count: stats.depositsCount },
+            { key: "2", label: "Ingresos", count: stats.incomesCount },
+            { key: "3", label: "Egresos", count: stats.expensesCount },
+          ].map((tab) => {
+            const isSelected = typeFilter === tab.key;
+            return (
+              <Button
+                key={tab.key}
+                variant={isSelected ? "contained" : "outlined"}
+                onClick={() => {
+                  setTypeFilter(tab.key);
+                  setPage(1);
+                }}
+                sx={{
+                  borderRadius: "10px",
+                  px: 2,
+                  py: 0.6,
+                  textTransform: "none",
+                  fontWeight: 700,
+                  fontSize: "0.85rem",
+                  bgcolor: isSelected ? "#0056D2" : "#FFFFFF",
+                  borderColor: isSelected ? "#0056D2" : "#CBD5E1",
+                  color: isSelected ? "#FFFFFF" : "#475569",
+                  "&:hover": {
+                    bgcolor: isSelected ? "#0047B3" : "#F8FAFC",
+                    borderColor: isSelected ? "#0047B3" : "#94A3B8",
+                  },
+                }}
+              >
+                {tab.label}
+                <Chip
+                  label={tab.count}
+                  size="small"
+                  sx={{
+                    ml: 1,
+                    height: 20,
+                    fontSize: "0.72rem",
+                    fontWeight: 800,
+                    bgcolor: isSelected ? "rgba(255, 255, 255, 0.25)" : "#F1F5F9",
+                    color: isSelected ? "#FFFFFF" : "#64748B",
+                  }}
+                />
+              </Button>
+            );
+          })}
+        </Box>
+
+        {/* ─── BARRA DE FILTROS AVANZADOS ─── */}
         <Paper
           elevation={0}
           sx={{
@@ -150,7 +385,7 @@ export function HistoryPage() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
             <FilterListIcon sx={{ color: "#0056D2", fontSize: 20 }} />
             <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#0F172A" }}>
-              Filtros de búsqueda
+              Filtros avanzados
             </Typography>
           </Box>
 
@@ -311,20 +546,32 @@ export function HistoryPage() {
           ) : (
             <>
               <TableContainer>
-                <Table sx={{ minWidth: 650 }}>
+                <Table sx={{ minWidth: 700 }}>
                   <TableHead sx={{ bgcolor: "#F8FAFC" }}>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.8rem", textTransform: "uppercase" }}>
+                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                        # ID
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
                         Operación / Concepto
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.8rem", textTransform: "uppercase" }}>
+                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                        Destinatario / Contraparte
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
                         Tipo
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.8rem", textTransform: "uppercase" }}>
+                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
                         Fecha
                       </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.8rem", textTransform: "uppercase" }}>
+                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                        Estado
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
                         Monto
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                        Detalle
                       </TableCell>
                     </TableRow>
                   </TableHead>
@@ -355,16 +602,28 @@ export function HistoryPage() {
                         chipColor = "#15803D";
                       }
 
+                      const txCode = `TX-${String(tx.id).padStart(4, "0")}`;
+                      const counterpartDisplay =
+                        tx.counterpart ||
+                        (tx.toAccountId ? `Cuenta #${tx.toAccountId}` : "Cuenta Propia");
+
                       return (
                         <TableRow
                           key={tx.id}
                           hover
                           sx={{
                             "&:last-child td, &:last-child th": { border: 0 },
+                            cursor: "pointer",
                             transition: "background-color 0.15s ease",
                           }}
+                          onClick={() => setSelectedTx(tx)}
                         >
-                          {/* Concepto y Avatar */}
+                          {/* 1. ID Comprobante */}
+                          <TableCell sx={{ color: "#64748B", fontWeight: 700, fontSize: "0.8rem", fontFamily: "monospace" }}>
+                            {txCode}
+                          </TableCell>
+
+                          {/* 2. Operación y Concepto */}
                           <TableCell>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                               <Avatar
@@ -382,13 +641,18 @@ export function HistoryPage() {
                                   {tx.title}
                                 </Typography>
                                 <Typography sx={{ fontSize: "0.78rem", color: "#64748B" }}>
-                                  {tx.toAccountId ? `Hacia cuenta #${tx.toAccountId}` : "Operación directa"}
+                                  {tx.subtitle || tx.category}
                                 </Typography>
                               </Box>
                             </Box>
                           </TableCell>
 
-                          {/* Tipo (Chip) */}
+                          {/* 3. Contraparte / Destinatario */}
+                          <TableCell sx={{ color: "#334155", fontSize: "0.85rem", fontWeight: 600 }}>
+                            {counterpartDisplay}
+                          </TableCell>
+
+                          {/* 4. Tipo (Chip) */}
                           <TableCell>
                             <Chip
                               label={chipLabel}
@@ -403,12 +667,28 @@ export function HistoryPage() {
                             />
                           </TableCell>
 
-                          {/* Fecha */}
+                          {/* 5. Fecha */}
                           <TableCell sx={{ color: "#475569", fontSize: "0.85rem", fontWeight: 500 }}>
                             {tx.formattedDate || formatTransactionDate(tx.date || tx.rawDate)}
                           </TableCell>
 
-                          {/* Monto */}
+                          {/* 6. Estado */}
+                          <TableCell>
+                            <Chip
+                              icon={<CheckCircleOutlinedIcon sx={{ fontSize: "14px !important", color: "#16A34A !important" }} />}
+                              label={tx.status || "Completada"}
+                              size="small"
+                              sx={{
+                                bgcolor: "#DCFCE7",
+                                color: "#15803D",
+                                fontWeight: 700,
+                                fontSize: "0.72rem",
+                                borderRadius: "8px",
+                              }}
+                            />
+                          </TableCell>
+
+                          {/* 7. Monto */}
                           <TableCell align="right">
                             <Typography
                               sx={{
@@ -419,6 +699,23 @@ export function HistoryPage() {
                             >
                               {isIncome ? "+" : "-"}{formatCurrency(tx.amount)}
                             </Typography>
+                          </TableCell>
+
+                          {/* 8. Botón Ver Detalle */}
+                          <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+                            <Tooltip title="Ver comprobante digital">
+                              <IconButton
+                                size="small"
+                                onClick={() => setSelectedTx(tx)}
+                                sx={{
+                                  color: "#0056D2",
+                                  bgcolor: "#EEF4FF",
+                                  "&:hover": { bgcolor: "#D9E8FF" },
+                                }}
+                              >
+                                <VisibilityOutlinedIcon sx={{ fontSize: 18 }} />
+                              </IconButton>
+                            </Tooltip>
                           </TableCell>
                         </TableRow>
                       );
@@ -452,6 +749,141 @@ export function HistoryPage() {
             </>
           )}
         </Paper>
+
+        {/* ─── MODAL DE COMPROBANTE DIGITAL ─── */}
+        {selectedTx && (
+          <Dialog
+            open={Boolean(selectedTx)}
+            onClose={() => setSelectedTx(null)}
+            maxWidth="xs"
+            fullWidth
+            PaperProps={{
+              sx: {
+                borderRadius: "20px",
+                p: 1,
+              },
+            }}
+          >
+            <DialogTitle sx={{ m: 0, p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <ReceiptLongOutlinedIcon sx={{ color: "#0056D2" }} />
+                <Typography variant="h6" sx={{ fontWeight: 800, color: "#0F172A", fontSize: "1.1rem" }}>
+                  Comprobante Digital
+                </Typography>
+              </Box>
+              <IconButton onClick={() => setSelectedTx(null)} size="small">
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+
+            <DialogContent dividers sx={{ p: 3 }}>
+              {/* Badge de Monto */}
+              <Box sx={{ textAlign: "center", my: 1 }}>
+                <Chip
+                  icon={<CheckCircleOutlinedIcon sx={{ fontSize: "16px !important", color: "#16A34A !important" }} />}
+                  label="Operación Exitosa"
+                  size="small"
+                  sx={{ bgcolor: "#DCFCE7", color: "#15803D", fontWeight: 700, mb: 1 }}
+                />
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 800,
+                    color: selectedTx.type === 1 || selectedTx.type === 2 ? "#16A34A" : "#0F172A",
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  {selectedTx.type === 1 || selectedTx.type === 2 ? "+" : "-"}
+                  {formatCurrency(selectedTx.amount)}
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#64748B", mt: 0.5 }}>
+                  {selectedTx.title}
+                </Typography>
+              </Box>
+
+              <Divider sx={{ my: 2.5 }} />
+
+              {/* Fila: ID Transacción */}
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
+                  Número de Operación
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: "monospace", color: "#0F172A" }}>
+                    TX-{String(selectedTx.id).padStart(4, "0")}
+                  </Typography>
+                  <Tooltip title={copied ? "¡Copiado!" : "Copiar ID"}>
+                    <IconButton size="small" onClick={() => handleCopyId(selectedTx.id)}>
+                      <ContentCopyIcon sx={{ fontSize: 14, color: copied ? "#16A34A" : "#64748B" }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Box>
+
+              {/* Fila: Fecha y Hora */}
+              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
+                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
+                  Fecha y Hora
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: "#0F172A" }}>
+                  {selectedTx.formattedDate || formatTransactionDate(selectedTx.date || selectedTx.rawDate)}
+                </Typography>
+              </Box>
+
+              {/* Fila: Tipo */}
+              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
+                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
+                  Tipo de Operación
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: "#0056D2" }}>
+                  {selectedTx.type === 1
+                    ? "Depósito de Fondos"
+                    : selectedTx.type === 2
+                    ? "Transferencia Recibida"
+                    : "Transferencia Enviada"}
+                </Typography>
+              </Box>
+
+              {/* Fila: Contraparte / Destino */}
+              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
+                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
+                  Contraparte / Destinatario
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: "#0F172A" }}>
+                  {selectedTx.counterpart || (selectedTx.toAccountId ? `Cuenta #${selectedTx.toAccountId}` : "Cuenta Propia")}
+                </Typography>
+              </Box>
+
+              {/* Fila: Estado */}
+              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
+                  Estado
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: "#16A34A" }}>
+                  {selectedTx.status || "Completada"}
+                </Typography>
+              </Box>
+            </DialogContent>
+
+            <DialogActions sx={{ p: 2 }}>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={() => setSelectedTx(null)}
+                sx={{
+                  bgcolor: "#0056D2",
+                  borderRadius: "12px",
+                  py: 1,
+                  fontWeight: 700,
+                  textTransform: "none",
+                  "&:hover": { bgcolor: "#0047B3" },
+                }}
+              >
+                Cerrar comprobante
+              </Button>
+            </DialogActions>
+          </Dialog>
+        )}
       </Box>
     </AppLayout>
   );

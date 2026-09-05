@@ -42,7 +42,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
       icon: <AdminPanelSettingsOutlinedIcon />,
       path: "/admin/users",
     },
-    { id: "historial", label: "Historial", icon: <HistoryOutlinedIcon />, path: "/" },
+    { id: "historial", label: "Historial", icon: <HistoryOutlinedIcon />, path: "/history" },
     { id: "tarjetas", label: "Tarjetas", icon: <CreditCardOutlinedIcon />, path: "/" },
     { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon />, path: "/" },
     {

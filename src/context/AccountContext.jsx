@@ -94,11 +94,14 @@ export function AccountProvider({ children }) {
     const newTx = {
       id: Date.now(),
       title: "Depósito de Fondos",
-      subtitle: `Hoy ${timeStr} · INGRESO`,
+      subtitle: `Hoy ${timeStr} · DEPÓSITO`,
       amount: num,
       type: 1,
-      category: "INGRESO",
+      category: "DEPÓSITO",
       isIncome: true,
+      date: now.toISOString(),
+      counterpart: "Cuenta Propia (CVU)",
+      status: "Completada",
     };
 
     setTransactions((prev) => [newTx, ...prev]);
@@ -133,6 +136,9 @@ export function AccountProvider({ children }) {
       category: "EGRESO",
       isIncome: false,
       toAccountId: destination,
+      date: now.toISOString(),
+      counterpart: destination,
+      status: "Completada",
     };
 
     setTransactions((prev) => [newTx, ...prev]);
