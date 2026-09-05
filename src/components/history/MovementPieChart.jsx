@@ -112,23 +112,23 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
         }}
       />
 
-      {/* Cabecera de la Tarjeta con Título, Selector y Botón hacia la Tabla */}
+      {/* Cabecera de la Tarjeta con Título y Botón hacia la Tabla */}
       <Box
         sx={{
-          p: { xs: 2.5, md: 3 },
+          p: { xs: 2, sm: 2.5, md: 3 },
           borderBottom: "1px solid #f1f5f9",
           display: "flex",
-          alignItems: "center",
+          alignItems: { xs: "stretch", sm: "center" },
           justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 2,
+          flexDirection: { xs: "column", sm: "row" },
+          gap: { xs: 2, sm: 2.5 },
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Box
             sx={{
-              width: 44,
-              height: 44,
+              width: { xs: 40, sm: 44 },
+              height: { xs: 40, sm: 44 },
               borderRadius: "14px",
               background: "linear-gradient(135deg, #0056D2 0%, #2563eb 100%)",
               color: "#ffffff",
@@ -136,21 +136,22 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
               alignItems: "center",
               justifyContent: "center",
               boxShadow: "0 8px 16px -4px rgba(0, 86, 210, 0.35)",
+              flexShrink: 0,
             }}
           >
-            <PieChartIcon sx={{ fontSize: 24 }} />
+            <PieChartIcon sx={{ fontSize: { xs: 22, sm: 24 } }} />
           </Box>
-          <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#0f172a", letterSpacing: "-0.01em" }}>
+          <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+              <Typography sx={{ fontWeight: 800, fontSize: { xs: "1.02rem", sm: "1.1rem" }, color: "#0f172a", letterSpacing: "-0.01em" }}>
                 Distribución por Concepto
               </Typography>
               <Chip
                 label="Por Concepto"
                 size="small"
                 sx={{
-                  height: 22,
-                  fontSize: "0.72rem",
+                  height: 20,
+                  fontSize: "0.68rem",
                   fontWeight: 700,
                   bgcolor: "#EFF6FF",
                   color: "#0056D2",
@@ -158,27 +159,30 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
                 }}
               />
             </Box>
-            <Typography sx={{ color: "#64748b", fontSize: "0.82rem" }}>
+            <Typography sx={{ color: "#64748b", fontSize: { xs: "0.76rem", sm: "0.82rem" }, mt: 0.2 }}>
               Visualización gráfica de operaciones agrupadas por motivo y concepto
             </Typography>
           </Box>
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+        <Box sx={{ display: "flex", alignItems: "center", width: { xs: "100%", sm: "auto" } }}>
           {/* Botón para ver la tabla completa de historial */}
           {onGoToTable && (
             <Button
               variant="contained"
               onClick={onGoToTable}
               endIcon={<ArrowForwardIcon sx={{ fontSize: 18 }} />}
+              fullWidth
               sx={{
-                height: 40,
+                width: { xs: "100%", sm: "auto" },
+                height: 42,
                 borderRadius: "12px",
                 background: "linear-gradient(135deg, #0056D2 0%, #1d4ed8 100%)",
                 textTransform: "none",
                 fontWeight: 700,
                 fontSize: "0.85rem",
-                px: 2.2,
+                px: { xs: 2, sm: 2.5 },
+                whiteSpace: "nowrap",
                 boxShadow: "0 4px 14px rgba(0, 86, 210, 0.25)",
                 "&:hover": {
                   background: "linear-gradient(135deg, #0047B3 0%, #1e40af 100%)",
@@ -195,7 +199,7 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
       </Box>
 
       {/* Contenido Principal con el Gráfico y los Datos */}
-      <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
+      <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
         {chartData.length === 0 ? (
           <Box sx={{ py: 8, textAlign: "center" }}>
             <Typography variant="body1" sx={{ color: "#94a3b8", fontWeight: 600 }}>
@@ -205,12 +209,12 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
         ) : (
           <Grid container spacing={{ xs: 3, md: 4 }} alignItems="center">
             {/* Lado Izquierdo: Pizza / Donut SVG Interactivo */}
-            <Grid item xs={12} md={5} sx={{ display: "flex", justifyContent: "center", position: "relative" }}>
+            <Grid item xs={12} md={5} sx={{ display: "flex", justifyContent: "center", position: "relative", my: { xs: 1, md: 0 } }}>
               <Box
                 sx={{
                   position: "relative",
-                  width: { xs: 220, sm: 260 },
-                  height: { xs: 220, sm: 260 },
+                  width: { xs: 210, sm: 250, md: 260 },
+                  height: { xs: 210, sm: 250, md: 260 },
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -256,6 +260,7 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
                           opacity: hoveredSlice !== null && !isHovered ? 0.45 : 1,
                           filter: isHovered ? "brightness(1.08) drop-shadow(0 0 8px " + slice.color + "66)" : "none",
                         }}
+                        onClick={() => setHoveredSlice(prev => prev === index ? null : index)}
                         onMouseEnter={() => setHoveredSlice(index)}
                         onMouseLeave={() => setHoveredSlice(null)}
                       />
@@ -364,9 +369,14 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
             {/* Lado Derecho: Tarjetas / Leyendas con desglose interactivo */}
             <Grid item xs={12} md={7}>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#475569", mb: 0.5 }}>
-                  Detalle de participaciones:
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: { xs: 0.5, sm: 0 } }}>
+                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#334155" }}>
+                    Detalle de participaciones:
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600 }}>
+                    {slices.length} {slices.length === 1 ? "concepto" : "conceptos"}
+                  </Typography>
+                </Box>
 
                 <Box
                   sx={{
@@ -380,72 +390,114 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
                     return (
                       <Box
                         key={idx}
+                        onClick={() => setHoveredSlice(prev => prev === idx ? null : idx)}
                         onMouseEnter={() => setHoveredSlice(idx)}
                         onMouseLeave={() => setHoveredSlice(null)}
                         sx={{
                           display: "flex",
-                          alignItems: "center",
+                          flexDirection: "column",
                           justifyContent: "space-between",
-                          p: 1.6,
-                          borderRadius: "14px",
-                          bgcolor: isHovered ? "#ffffff" : "#f8fafc",
+                          p: { xs: 1.5, sm: 1.8 },
+                          borderRadius: "16px",
+                          bgcolor: isHovered ? "#ffffff" : "#ffffff",
                           border: "1.5px solid",
-                          borderColor: isHovered ? item.color : "#e2e8f0",
+                          borderColor: isHovered ? item.color : "rgba(226, 232, 240, 0.9)",
                           boxShadow: isHovered
-                            ? "0 8px 20px -4px " + item.color + "33"
-                            : "0 2px 6px rgba(0,0,0,0.02)",
+                            ? `0 10px 24px -4px ${item.color}35, 0 2px 8px rgba(0,0,0,0.04)`
+                            : "0 2px 6px -1px rgba(15, 23, 42, 0.04)",
                           cursor: "pointer",
-                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          transition: "all 0.22s cubic-bezier(0.4, 0, 0.2, 1)",
                           transform: isHovered ? "translateY(-2px)" : "none",
+                          position: "relative",
+                          overflow: "hidden",
+                          gap: 1.4,
                         }}
                       >
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
-                          <Box
-                            sx={{
-                              width: 14,
-                              height: 14,
-                              borderRadius: "4px",
-                              bgcolor: item.color,
-                              flexShrink: 0,
-                              boxShadow: "0 2px 4px " + item.color + "66",
-                            }}
-                          />
-                          <Box sx={{ minWidth: 0 }}>
-                            <Typography
-                              sx={{
-                                fontSize: "0.84rem",
-                                fontWeight: 700,
-                                color: "#1e293b",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                maxWidth: 140,
-                              }}
-                            >
-                              {item.label}
-                            </Typography>
-                            <Typography sx={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 500 }}>
-                              {item.count} {item.count === 1 ? "movimiento" : "movimientos"}
-                            </Typography>
-                          </Box>
-                        </Box>
+                        {/* Acento superior sutil con color al hacer hover o estar activo */}
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: 3.5,
+                            bgcolor: isHovered ? item.color : "transparent",
+                            transition: "background-color 0.2s ease",
+                          }}
+                        />
 
-                        <Box sx={{ textAlign: "right", ml: 1, flexShrink: 0 }}>
-                          <Typography sx={{ fontSize: "0.88rem", fontWeight: 800, color: "#0f172a" }}>
-                            ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                          </Typography>
+                        {/* Fila 1: Indicador con halo + Nombre + Badge de Porcentaje */}
+                        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.2, minWidth: 0 }}>
+                            <Box
+                              sx={{
+                                width: 12,
+                                height: 12,
+                                borderRadius: "50%",
+                                bgcolor: item.color,
+                                flexShrink: 0,
+                                boxShadow: `0 0 0 3px ${item.lightColor}`,
+                              }}
+                            />
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography
+                                sx={{
+                                  fontSize: "0.85rem",
+                                  fontWeight: 700,
+                                  color: "#0f172a",
+                                  lineHeight: 1.25,
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  maxWidth: { xs: 180, sm: 130, md: 150 },
+                                }}
+                              >
+                                {item.label}
+                              </Typography>
+                              <Typography sx={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 500, mt: 0.2 }}>
+                                {item.count} {item.count === 1 ? "movimiento" : "movimientos"}
+                              </Typography>
+                            </Box>
+                          </Box>
+
                           <Chip
                             size="small"
                             label={`${item.percentage}%`}
                             sx={{
-                              height: 18,
-                              fontSize: "0.68rem",
+                              height: 20,
+                              fontSize: "0.7rem",
                               fontWeight: 800,
                               bgcolor: item.lightColor,
                               color: item.color,
-                              mt: 0.4,
+                              borderRadius: "6px",
+                              flexShrink: 0,
                             }}
                           />
+                        </Box>
+
+                        {/* Fila 2: Total acumulado + Barra de progreso visual */}
+                        <Box sx={{ mt: "auto" }}>
+                          <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", mb: 0.8 }}>
+                            <Typography sx={{ fontSize: "0.68rem", color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                              Total
+                            </Typography>
+                            <Typography sx={{ fontSize: "0.95rem", fontWeight: 800, color: "#0f172a" }}>
+                              ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                            </Typography>
+                          </Box>
+
+                          {/* Mini Barra de Progreso Visual */}
+                          <Box sx={{ width: "100%", height: 5, bgcolor: "#f1f5f9", borderRadius: 3, overflow: "hidden" }}>
+                            <Box
+                              sx={{
+                                width: `${Math.min(100, Math.max(4, item.percentage))}%`,
+                                height: "100%",
+                                bgcolor: item.color,
+                                borderRadius: 3,
+                                transition: "width 0.4s ease",
+                              }}
+                            />
+                          </Box>
                         </Box>
                       </Box>
                     );

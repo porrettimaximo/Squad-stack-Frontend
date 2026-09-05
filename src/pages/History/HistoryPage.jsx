@@ -169,12 +169,13 @@ export function HistoryPage() {
               style={{ width: "100%" }}
             >
               {/* Botón para volver al Gráfico */}
-              <Box sx={{ mb: 2.5, display: "flex", alignItems: "center", justifyContent: "flex-start" }}>
+              <Box sx={{ mb: 2.5, display: "flex", alignItems: "center" }}>
                 <Button
                   variant="outlined"
                   startIcon={<ArrowBackIcon />}
                   onClick={handleBackToChart}
                   sx={{
+                    width: { xs: "100%", sm: "auto" },
                     borderRadius: "12px",
                     textTransform: "none",
                     fontWeight: 700,
@@ -182,8 +183,8 @@ export function HistoryPage() {
                     borderColor: "#CBD5E1",
                     color: "#0056D2",
                     bgcolor: "#FFFFFF",
-                    px: 2.2,
-                    py: 0.85,
+                    px: 2.5,
+                    py: 0.9,
                     boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
                     "&:hover": {
                       borderColor: "#0056D2",
@@ -199,8 +200,8 @@ export function HistoryPage() {
             <Paper
               elevation={0}
               sx={{
-                p: 1.8,
-                borderRadius: "16px",
+                p: { xs: 1.5, sm: 2 },
+                borderRadius: { xs: "14px", sm: "16px" },
                 bgcolor: "#FFFFFF",
                 border: "1px solid #E2E8F0",
                 mb: 2.5,
@@ -288,9 +289,10 @@ export function HistoryPage() {
             </Box>
 
             {/* 5. Botón Limpiar */}
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, justifyContent: "flex-end" }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, justifyContent: "flex-end", width: { xs: "100%", md: "auto" } }}>
               <Tooltip title="Restablecer todos los filtros">
                 <Button
+                  fullWidth
                   variant="outlined"
                   startIcon={<RestartAltIcon />}
                   onClick={handleClearFilters}
@@ -318,7 +320,7 @@ export function HistoryPage() {
         <Paper
           elevation={0}
           sx={{
-            borderRadius: "20px",
+            borderRadius: { xs: "14px", sm: "20px" },
             bgcolor: "#FFFFFF",
             border: "1px solid #E2E8F0",
             overflow: "hidden",
@@ -380,7 +382,7 @@ export function HistoryPage() {
             </Box>
           ) : (
             <>
-              <TableContainer>
+              <TableContainer sx={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
                 <Table sx={{ minWidth: 700 }}>
                   <TableHead sx={{ bgcolor: "#F8FAFC" }}>
                     <TableRow>
@@ -568,8 +570,14 @@ export function HistoryPage() {
                   borderTop: "1px solid #E2E8F0",
                   color: "#64748B",
                   "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
-                    fontSize: "0.85rem",
+                    fontSize: { xs: "0.78rem", sm: "0.85rem" },
                     fontWeight: 600,
+                  },
+                  "& .MuiTablePagination-toolbar": {
+                    flexWrap: "wrap",
+                    justifyContent: { xs: "center", sm: "flex-end" },
+                    gap: { xs: 0.5, sm: 0 },
+                    p: { xs: 1, sm: 2 },
                   },
                 }}
               />
