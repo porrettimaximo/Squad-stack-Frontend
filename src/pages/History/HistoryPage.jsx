@@ -44,6 +44,7 @@ import AppLayout from "../../components/layout/AppLayout";
 import { useAccount } from "../../hooks/useAccount";
 import transactionService from "../../services/transactionService";
 import { formatCurrency, formatTransactionDate } from "../../utils/formatters";
+import MovementPieChart from "../../components/history/MovementPieChart";
 
 /**
  * HU-27: Pantalla de Historial con filtros y paginación.
@@ -128,7 +129,7 @@ export function HistoryPage() {
   };
 
   return (
-    <AppLayout maxWidth={1180} showNavbarTabs={false}>
+    <AppLayout maxWidth={1380} showNavbarTabs={false}>
       <Box sx={{ width: "100%" }}>
         {/* Cabecera de la Sección */}
         <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -165,18 +166,34 @@ export function HistoryPage() {
           </Box>
         </Box>
 
-        {/* ─── BARRA DE FILTROS ─── */}
-        <Paper
-          elevation={0}
+        {/* ─── CONTENIDO PRINCIPAL: 2 COLUMNAS (PIZZA IZQUIERDA, TABLA DERECHA) ─── */}
+        <Box
           sx={{
-            p: 1.8,
-            borderRadius: "16px",
-            bgcolor: "#FFFFFF",
-            border: "1px solid #E2E8F0",
-            mb: 2.5,
-            boxShadow: "0 2px 10px -2px rgba(15, 23, 42, 0.03)",
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", lg: "340px 1fr" },
+            gap: 2.5,
+            alignItems: "flex-start",
           }}
         >
+          {/* Columna Izquierda: Gráfico de Pizza con Desplegable */}
+          <Box sx={{ width: "100%", position: { lg: "sticky" }, top: { lg: 20 } }}>
+            <MovementPieChart transactions={localTransactions && localTransactions.length > 0 ? localTransactions : (items.length > 0 ? items : [])} />
+          </Box>
+
+          {/* Columna Derecha: Filtros y Tabla */}
+          <Box sx={{ width: "100%", minWidth: 0 }}>
+            {/* ─── BARRA DE FILTROS ─── */}
+            <Paper
+              elevation={0}
+              sx={{
+                p: 1.8,
+                borderRadius: "16px",
+                bgcolor: "#FFFFFF",
+                border: "1px solid #E2E8F0",
+                mb: 2.5,
+                boxShadow: "0 2px 10px -2px rgba(15, 23, 42, 0.03)",
+              }}
+            >
           <Box
             sx={{
               display: "grid",
@@ -355,9 +372,6 @@ export function HistoryPage() {
                   <TableHead sx={{ bgcolor: "#F8FAFC" }}>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
-                        # ID
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
                         Operación / Concepto
                       </TableCell>
                       <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
@@ -423,12 +437,7 @@ export function HistoryPage() {
                           }}
                           onClick={() => setSelectedTx(tx)}
                         >
-                          {/* 1. ID Comprobante */}
-                          <TableCell sx={{ color: "#64748B", fontWeight: 700, fontSize: "0.8rem", fontFamily: "monospace" }}>
-                            {txCode}
-                          </TableCell>
-
-                          {/* 2. Operación y Concepto */}
+                          {/* 1. Operación y Concepto */}
                           <TableCell>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                               <Avatar
@@ -554,6 +563,8 @@ export function HistoryPage() {
             </>
           )}
         </Paper>
+          </Box>
+        </Box>
 
         {/* ─── MODAL DE COMPROBANTE DIGITAL ─── */}
         {selectedTx && (
