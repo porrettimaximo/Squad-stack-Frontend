@@ -128,7 +128,7 @@ export function HistoryPage() {
   };
 
   return (
-    <AppLayout maxWidth={1180}>
+    <AppLayout maxWidth={1180} showNavbarTabs={false}>
       <Box sx={{ width: "100%" }}>
         {/* Cabecera de la Sección */}
         <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1.5 }}>

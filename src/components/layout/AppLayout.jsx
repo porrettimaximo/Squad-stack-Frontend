@@ -16,6 +16,7 @@ export function AppLayout({
   activeSidebarItem,
   currentTab = 0,
   onTabChange,
+  showNavbarTabs,
   onBack,
   backLabel = "Volver",
   maxWidth = 1240,
@@ -26,11 +27,15 @@ export function AppLayout({
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const { user } = useAccount();
 
+  // Ocultar pestañas de navegación superior en historial
+  const isHistoryRoute = location.pathname.startsWith("/history") || location.pathname.startsWith("/historial");
+  const shouldShowTabs = showNavbarTabs !== undefined ? showNavbarTabs : !isHistoryRoute;
+
   // Determinar ítem activo según la ruta actual si no viene explícito
   let currentActiveItem = activeSidebarItem;
   let currentMobileIndex = 0;
 
-  if (location.pathname.startsWith("/history") || location.pathname.startsWith("/historial")) {
+  if (isHistoryRoute) {
     currentActiveItem = "historial";
     currentMobileIndex = 1;
   } else if (location.pathname === "/") {
@@ -80,6 +85,7 @@ export function AppLayout({
             currentTab={currentTab}
             onTabChange={onTabChange}
             userName={userName}
+            showTabs={shouldShowTabs}
           />
         )}
 
