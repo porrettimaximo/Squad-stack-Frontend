@@ -106,7 +106,9 @@ export const transactionService = {
           const q = search.toLowerCase().trim();
           items = items.filter(
             (item) =>
-              item.title.toLowerCase().includes(q) ||
+              item.title?.toLowerCase().includes(q) ||
+              item.category?.toLowerCase().includes(q) ||
+              item.subtitle?.toLowerCase().includes(q) ||
               item.counterpart?.toLowerCase().includes(q)
           );
         }
@@ -131,13 +133,12 @@ export const transactionService = {
     }
 
     if (dateFrom) {
-      const from = new Date(dateFrom);
+      const from = new Date(dateFrom.includes("T") ? dateFrom : `${dateFrom}T00:00:00`);
       pool = pool.filter((t) => (t.date ? new Date(t.date) >= from : true));
     }
 
     if (dateTo) {
-      const to = new Date(dateTo);
-      to.setHours(23, 59, 59, 999);
+      const to = new Date(dateTo.includes("T") ? dateTo : `${dateTo}T23:59:59.999`);
       pool = pool.filter((t) => (t.date ? new Date(t.date) <= to : true));
     }
 
@@ -146,6 +147,9 @@ export const transactionService = {
       pool = pool.filter(
         (t) =>
           t.title?.toLowerCase().includes(q) ||
+          t.category?.toLowerCase().includes(q) ||
+          t.concept?.toLowerCase().includes(q) ||
+          t.reason?.toLowerCase().includes(q) ||
           t.subtitle?.toLowerCase().includes(q) ||
           t.counterpart?.toLowerCase().includes(q)
       );
@@ -223,11 +227,11 @@ export const transactionService = {
       {
         id: 4,
         title: "Netflix Suscripción",
-        subtitle: "30 Ago 21:00 · SERVICIOS",
+        subtitle: "04 Sep 21:00 · SERVICIOS",
         type: 3,
         amount: 8500.00,
         category: "SERVICIOS",
-        date: "2026-08-30T21:00:00Z",
+        date: "2026-09-04T21:00:00Z",
         toAccountId: null,
         counterpart: "Netflix Argentina",
         status: "Completada",
@@ -259,11 +263,11 @@ export const transactionService = {
       {
         id: 7,
         title: "Mercado Libre",
-        subtitle: "24 Ago 14:30 · COMPRAS",
+        subtitle: "03 Sep 14:30 · COMPRAS",
         type: 3,
         amount: 1250.00,
         category: "COMPRAS",
-        date: "2026-08-24T14:30:00Z",
+        date: "2026-09-03T14:30:00Z",
         toAccountId: null,
         counterpart: "Mercado Libre S.R.L.",
         status: "Completada",
@@ -271,11 +275,11 @@ export const transactionService = {
       {
         id: 8,
         title: "Starbucks Café",
-        subtitle: "23 Ago 08:30 · COMIDA",
+        subtitle: "02 Sep 08:30 · COMIDA",
         type: 3,
         amount: 850.00,
         category: "COMIDA",
-        date: "2026-08-23T08:30:00Z",
+        date: "2026-09-02T08:30:00Z",
         toAccountId: null,
         counterpart: "Starbucks Coffee",
         status: "Completada",
@@ -331,11 +335,11 @@ export const transactionService = {
       {
         id: 13,
         title: "Carga de combustible YPF",
-        subtitle: "08 Ago 19:40 · COMBUSTIBLE",
+        subtitle: "02 Sep 19:40 · COMBUSTIBLE",
         type: 3,
         amount: 18500.00,
         category: "COMBUSTIBLE",
-        date: "2026-08-08T19:40:00Z",
+        date: "2026-09-02T19:40:00Z",
         toAccountId: null,
         counterpart: "YPF Estación Central",
         status: "Completada",
@@ -391,11 +395,11 @@ export const transactionService = {
       {
         id: 18,
         title: "Farmacity Recoleta",
-        subtitle: "20 Jul 11:45 · SALUD",
+        subtitle: "01 Sep 11:45 · SALUD",
         type: 3,
         amount: 6350.00,
         category: "SALUD",
-        date: "2026-07-20T11:45:00Z",
+        date: "2026-09-01T11:45:00Z",
         toAccountId: null,
         counterpart: "Farmacity S.A.",
         status: "Completada",

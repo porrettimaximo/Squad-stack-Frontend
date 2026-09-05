@@ -55,7 +55,22 @@ export function HistoryPage() {
   const { transactions: localTransactions } = useAccount();
   const [viewMode, setViewMode] = useState("chart"); // 'chart' | 'table'
 
-  const handleGoToTable = () => {
+  const handleGoToTableWithFilter = ({ dateFrom: filterDateFrom, dateTo: filterDateTo } = {}) => {
+    setSearch("");
+    if (filterDateFrom !== undefined) setDateFrom(filterDateFrom || "");
+    if (filterDateTo !== undefined) setDateTo(filterDateTo || "");
+    setTypeFilter("all");
+    setPage(1);
+    setViewMode("table");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSelectCategory = ({ concept, dateFrom: filterDateFrom, dateTo: filterDateTo }) => {
+    setSearch(concept || "");
+    setDateFrom(filterDateFrom || "");
+    setDateTo(filterDateTo || "");
+    setTypeFilter("all");
+    setPage(1);
     setViewMode("table");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -156,7 +171,8 @@ export function HistoryPage() {
             >
               <MovementPieChart
                 transactions={localTransactions && localTransactions.length > 0 ? localTransactions : (items.length > 0 ? items : [])}
-                onGoToTable={handleGoToTable}
+                onGoToTable={handleGoToTableWithFilter}
+                onSelectCategory={handleSelectCategory}
               />
             </motion.div>
           ) : (

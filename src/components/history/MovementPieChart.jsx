@@ -7,10 +7,17 @@ import {
   Chip,
   Button,
   Grid,
+  FormControl,
+  Select,
+  MenuItem,
+  InputAdornment,
+  TextField,
+  Tooltip,
 } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 import PieChartIcon from "@mui/icons-material/PieChart";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
 const PALETTE = [
   { main: "#10b981", light: "rgba(16, 185, 129, 0.12)", border: "#059669" }, // Esmeralda / Ingresos
@@ -23,15 +30,131 @@ const PALETTE = [
   { main: "#14b8a6", light: "rgba(20, 184, 166, 0.12)", border: "#0d9488" },   // Teal
 ];
 
-export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
-  const [hoveredSlice, setHoveredSlice] = useState(null);
+const capitalize = (str) => (str ? str.charAt(0).toUpperCase() + str.slice(1) : "");
 
-  // Procesar datos para el gráfico fijo exclusivamente por motivo / concepto
-  const chartData = useMemo(() => {
+export const MovementPieChart = ({
+  transactions = [],
+  onGoToTable,
+  onSelectCategory,
+}) => {
+  const [hoveredSlice, setHoveredSlice] = useState(null);
+  const [selectedPeriod, setSelectedPeriod] = useState("current");
+  const [customDateFrom, setCustomDateFrom] = useState("");
+  const [customDateTo, setCustomDateTo] = useState("");
+
+  // Opciones dinámicas de meses (Mes actual + 5 meses previos + Todos + Personalizado)
+  const monthOptions = useMemo(() => {
+    const options = [];
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const curMonth = now.getMonth();
+    const curName = capitalize(now.toLocaleDateString("es-AR", { month: "long" }));
+
+    options.push({
+      key: "current",
+      label: `${curName} ${curYear} (Este mes)`,
+    });
+
+    for (let i = 1; i <= 5; i++) {
+      const d = new Date(curYear, curMonth - i, 1);
+      const y = d.getFullYear();
+      const m = d.getMonth();
+      const name = capitalize(d.toLocaleDateString("es-AR", { month: "long" }));
+      const key = `${y}-${String(m + 1).padStart(2, "0")}`;
+      options.push({
+        key,
+        label: `${name} ${y}`,
+      });
+    }
+
+    options.push({
+      key: "all",
+      label: "Todos los meses / Histórico",
+    });
+
+    options.push({
+      key: "custom",
+      label: "Personalizado (Rango de fechas)...",
+    });
+
+    return options;
+  }, []);
+
+  // Rango activo de fechas según el período seleccionado
+  const activeDateRange = useMemo(() => {
+    const now = new Date();
+    if (selectedPeriod === "current") {
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      const mStr = String(month + 1).padStart(2, "0");
+      return {
+        dateFrom: `${year}-${mStr}-01`,
+        dateTo: `${year}-${mStr}-${String(lastDay).padStart(2, "0")}`,
+        label: `${capitalize(now.toLocaleDateString("es-AR", { month: "long" }))} ${year}`,
+      };
+    }
+    if (selectedPeriod === "all") {
+      return {
+        dateFrom: "",
+        dateTo: "",
+        label: "Histórico Total",
+      };
+    }
+    if (selectedPeriod === "custom") {
+      return {
+        dateFrom: customDateFrom,
+        dateTo: customDateTo,
+        label: customDateFrom && customDateTo ? `${customDateFrom} a ${customDateTo}` : "Personalizado",
+      };
+    }
+
+    // Formato "YYYY-MM"
+    const [yStr, mStr] = selectedPeriod.split("-");
+    const y = Number(yStr);
+    const m = Number(mStr);
+    const d = new Date(y, m - 1, 1);
+    const lastDay = new Date(y, m, 0).getDate();
+    const name = capitalize(d.toLocaleDateString("es-AR", { month: "long" }));
+    return {
+      dateFrom: `${y}-${mStr}-01`,
+      dateTo: `${y}-${mStr}-${String(lastDay).padStart(2, "0")}`,
+      label: `${name} ${y}`,
+    };
+  }, [selectedPeriod, customDateFrom, customDateTo]);
+
+  // Filtrado de transacciones según el período activo
+  const filteredTransactions = useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
+    if (selectedPeriod === "all") return transactions;
+
+    const { dateFrom, dateTo } = activeDateRange;
+    if (!dateFrom && !dateTo) return transactions;
+
+    return transactions.filter((tx) => {
+      const raw = tx.date || tx.rawDate;
+      if (!raw) return true;
+      const txDate = new Date(raw);
+      if (isNaN(txDate.getTime())) return true;
+
+      if (dateFrom) {
+        const from = new Date(`${dateFrom}T00:00:00`);
+        if (txDate < from) return false;
+      }
+      if (dateTo) {
+        const to = new Date(`${dateTo}T23:59:59.999`);
+        if (txDate > to) return false;
+      }
+      return true;
+    });
+  }, [transactions, selectedPeriod, activeDateRange]);
+
+  // Procesar datos para el gráfico Donut por concepto
+  const chartData = useMemo(() => {
+    if (!filteredTransactions || filteredTransactions.length === 0) return [];
 
     const acc = {};
-    transactions.forEach((tx) => {
+    filteredTransactions.forEach((tx) => {
       const amount = Math.abs(Number(tx.amount) || 0);
       const cat = tx.reason || tx.concept || tx.category || "Varios / General";
       if (!acc[cat]) {
@@ -54,7 +177,7 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
           lightColor: colorPair.light,
         };
       });
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const totalSum = useMemo(() => {
     return chartData.reduce((sum, item) => sum + item.total, 0);
@@ -85,6 +208,17 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
 
   const activeSlice = hoveredSlice !== null ? slices[hoveredSlice] : null;
 
+  // Manejador al hacer clic en una categoría
+  const handleCategoryClick = (categoryName) => {
+    if (onSelectCategory) {
+      onSelectCategory({
+        concept: categoryName,
+        dateFrom: activeDateRange.dateFrom,
+        dateTo: activeDateRange.dateTo,
+      });
+    }
+  };
+
   return (
     <Card
       elevation={0}
@@ -112,16 +246,16 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
         }}
       />
 
-      {/* Cabecera de la Tarjeta con Título y Botón hacia la Tabla */}
+      {/* Cabecera de la Tarjeta con Título, Selector de Mes y Botón hacia la Tabla */}
       <Box
         sx={{
           p: { xs: 2, sm: 2.5, md: 3 },
           borderBottom: "1px solid #f1f5f9",
           display: "flex",
-          alignItems: { xs: "stretch", sm: "center" },
+          alignItems: { xs: "stretch", md: "center" },
           justifyContent: "space-between",
-          flexDirection: { xs: "column", sm: "row" },
-          gap: { xs: 2, sm: 2.5 },
+          flexDirection: { xs: "column", md: "row" },
+          gap: { xs: 2, md: 2.5 },
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -165,15 +299,69 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
           </Box>
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", width: { xs: "100%", sm: "auto" } }}>
+        {/* Acciones de Cabecera: Selector de Mes y Botón a la Tabla */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            flexWrap: { xs: "wrap", sm: "nowrap" },
+            width: { xs: "100%", md: "auto" },
+          }}
+        >
+          {/* Selector de Mes */}
+          <FormControl size="small" sx={{ flex: { xs: 1, sm: "initial" }, minWidth: { xs: "100%", sm: 220 } }}>
+            <Select
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              startAdornment={
+                <InputAdornment position="start" sx={{ ml: 0.5, mr: -0.2 }}>
+                  <CalendarMonthIcon sx={{ color: "#0056D2", fontSize: 19 }} />
+                </InputAdornment>
+              }
+              sx={{
+                height: 42,
+                borderRadius: "12px",
+                bgcolor: "#F8FAFC",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                color: "#1E293B",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#E2E8F0",
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#0056D2",
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#0056D2",
+                },
+              }}
+            >
+              {monthOptions.map((opt) => (
+                <MenuItem
+                  key={opt.key}
+                  value={opt.key}
+                  sx={{
+                    fontSize: "0.85rem",
+                    fontWeight: opt.key === "current" ? 700 : 500,
+                    color: opt.key === "current" ? "#0056D2" : "#1E293B",
+                  }}
+                >
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           {/* Botón para ver la tabla completa de historial */}
           {onGoToTable && (
             <Button
               variant="contained"
-              onClick={onGoToTable}
+              onClick={() => onGoToTable({ dateFrom: activeDateRange.dateFrom, dateTo: activeDateRange.dateTo })}
               endIcon={<ArrowForwardIcon sx={{ fontSize: 18 }} />}
-              fullWidth
               sx={{
+                flex: { xs: 1, sm: "initial" },
                 width: { xs: "100%", sm: "auto" },
                 height: 42,
                 borderRadius: "12px",
@@ -198,13 +386,73 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
         </Box>
       </Box>
 
+      {/* Rango de Fechas Personalizado (Desplegable animado si elige "Personalizado") */}
+      <AnimatePresence>
+        {selectedPeriod === "custom" && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ overflow: "hidden" }}
+          >
+            <Box
+              sx={{
+                px: { xs: 2, sm: 3 },
+                py: 1.5,
+                bgcolor: "#F8FAFC",
+                borderBottom: "1px solid #E2E8F0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                flexWrap: "wrap",
+              }}
+            >
+              <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#475569" }}>
+                Filtrar por rango específico:
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                <TextField
+                  size="small"
+                  type="date"
+                  label="Desde"
+                  value={customDateFrom}
+                  onChange={(e) => setCustomDateFrom(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ bgcolor: "#FFFFFF", borderRadius: "10px", width: 160 }}
+                />
+                <TextField
+                  size="small"
+                  type="date"
+                  label="Hasta"
+                  value={customDateTo}
+                  onChange={(e) => setCustomDateTo(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ bgcolor: "#FFFFFF", borderRadius: "10px", width: 160 }}
+                />
+              </Box>
+            </Box>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Contenido Principal con el Gráfico y los Datos */}
       <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
-        {chartData.length === 0 ? (
-          <Box sx={{ py: 8, textAlign: "center" }}>
-            <Typography variant="body1" sx={{ color: "#94a3b8", fontWeight: 600 }}>
-              No hay transacciones registradas para analizar en el gráfico.
+        {filteredTransactions.length === 0 ? (
+          <Box sx={{ py: 8, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
+            <CalendarMonthIcon sx={{ fontSize: 44, color: "#94A3B8" }} />
+            <Typography variant="body1" sx={{ color: "#64748b", fontWeight: 600 }}>
+              No se encontraron movimientos registrados en este período.
             </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setSelectedPeriod("all")}
+              sx={{ borderRadius: "8px", textTransform: "none", color: "#0056D2", borderColor: "#CBD5E1", mt: 0.5 }}
+            >
+              Ver todos los meses
+            </Button>
           </Box>
         ) : (
           <Grid container spacing={{ xs: 3, md: 4 }} alignItems="center">
@@ -260,7 +508,7 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
                           opacity: hoveredSlice !== null && !isHovered ? 0.45 : 1,
                           filter: isHovered ? "brightness(1.08) drop-shadow(0 0 8px " + slice.color + "66)" : "none",
                         }}
-                        onClick={() => setHoveredSlice(prev => prev === index ? null : index)}
+                        onClick={() => handleCategoryClick(slice.name)}
                         onMouseEnter={() => setHoveredSlice(index)}
                         onMouseLeave={() => setHoveredSlice(null)}
                       />
@@ -343,7 +591,11 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
                             letterSpacing: "0.05em",
                           }}
                         >
-                          Volumen Total
+                          {selectedPeriod === "current"
+                            ? "Volumen Este Mes"
+                            : selectedPeriod === "all"
+                            ? "Volumen Total"
+                            : `Volumen ${activeDateRange.label}`}
                         </Typography>
                         <Typography
                           sx={{
@@ -357,7 +609,7 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
                           ${totalSum.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </Typography>
                         <Typography sx={{ fontSize: "0.72rem", color: "#94a3b8", fontWeight: 600 }}>
-                          {transactions.length} operaciones
+                          {filteredTransactions.length} operaciones
                         </Typography>
                       </motion.div>
                     )}
@@ -369,12 +621,12 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
             {/* Lado Derecho: Tarjetas / Leyendas con desglose interactivo en 4x2 */}
             <Grid item xs={12} lg={8.2} xl={8.5}>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: { xs: 0.5, sm: 0 } }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: { xs: 0.5, sm: 0 }, flexWrap: "wrap", gap: 1 }}>
                   <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#334155" }}>
                     Detalle de participaciones:
                   </Typography>
                   <Typography sx={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600 }}>
-                    {slices.length} {slices.length === 1 ? "concepto" : "conceptos"} (4x2)
+                    Hacé clic en una tarjeta para filtrar la tabla
                   </Typography>
                 </Box>
 
@@ -392,120 +644,124 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
                   {slices.map((item, idx) => {
                     const isHovered = hoveredSlice === idx;
                     return (
-                      <Box
+                      <Tooltip
                         key={idx}
-                        onClick={() => setHoveredSlice(prev => prev === idx ? null : idx)}
-                        onMouseEnter={() => setHoveredSlice(idx)}
-                        onMouseLeave={() => setHoveredSlice(null)}
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "space-between",
-                          p: { xs: 1.4, sm: 1.5, md: 1.2, lg: 1.4 },
-                          borderRadius: "14px",
-                          bgcolor: isHovered ? "#ffffff" : "#ffffff",
-                          border: "1.5px solid",
-                          borderColor: isHovered ? item.color : "rgba(226, 232, 240, 0.9)",
-                          boxShadow: isHovered
-                            ? `0 10px 22px -4px ${item.color}35, 0 2px 6px rgba(0,0,0,0.04)`
-                            : "0 2px 6px -1px rgba(15, 23, 42, 0.04)",
-                          cursor: "pointer",
-                          transition: "all 0.22s cubic-bezier(0.4, 0, 0.2, 1)",
-                          transform: isHovered ? "translateY(-2px)" : "none",
-                          position: "relative",
-                          overflow: "hidden",
-                          gap: 1.1,
-                          minHeight: { xs: "auto", md: 96 },
-                        }}
+                        title={`Ver movimientos de ${item.name} en el historial`}
+                        arrow
+                        placement="top"
                       >
-                        {/* Acento superior sutil con color al hacer hover o estar activo */}
                         <Box
+                          onClick={() => handleCategoryClick(item.name)}
+                          onMouseEnter={() => setHoveredSlice(idx)}
+                          onMouseLeave={() => setHoveredSlice(null)}
                           sx={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            height: 3,
-                            bgcolor: isHovered ? item.color : "transparent",
-                            transition: "background-color 0.2s ease",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            p: { xs: 1.4, sm: 1.5, md: 1.2, lg: 1.4 },
+                            borderRadius: "14px",
+                            bgcolor: "#ffffff",
+                            border: "1.5px solid",
+                            borderColor: isHovered ? item.color : "rgba(226, 232, 240, 0.9)",
+                            boxShadow: isHovered
+                              ? `0 10px 22px -4px ${item.color}35, 0 2px 6px rgba(0,0,0,0.04)`
+                              : "0 2px 6px -1px rgba(15, 23, 42, 0.04)",
+                            cursor: "pointer",
+                            transition: "all 0.22s cubic-bezier(0.4, 0, 0.2, 1)",
+                            transform: isHovered ? "translateY(-2px)" : "none",
+                            position: "relative",
+                            overflow: "hidden",
+                            gap: 1.1,
+                            minHeight: { xs: "auto", md: 96 },
                           }}
-                        />
-
-                        {/* Fila 1: Indicador con halo + Nombre + Badge de Porcentaje */}
-                        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 0.6 }}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0, flex: 1 }}>
-                            <Box
-                              sx={{
-                                width: 10,
-                                height: 10,
-                                borderRadius: "50%",
-                                bgcolor: item.color,
-                                flexShrink: 0,
-                                boxShadow: `0 0 0 2.5px ${item.lightColor}`,
-                              }}
-                            />
-                            <Box sx={{ minWidth: 0, flex: 1 }}>
-                              <Typography
-                                sx={{
-                                  fontSize: { xs: "0.82rem", sm: "0.84rem", md: "0.78rem", lg: "0.82rem" },
-                                  fontWeight: 700,
-                                  color: "#0f172a",
-                                  lineHeight: 1.2,
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                }}
-                                title={item.label}
-                              >
-                                {item.label}
-                              </Typography>
-                              <Typography sx={{ fontSize: "0.68rem", color: "#64748b", fontWeight: 500, mt: 0.2 }}>
-                                {item.count} {item.count === 1 ? "mov." : "movs."}
-                              </Typography>
-                            </Box>
-                          </Box>
-
-                          <Chip
-                            size="small"
-                            label={`${item.percentage}%`}
+                        >
+                          {/* Acento superior sutil con color al hacer hover o estar activo */}
+                          <Box
                             sx={{
-                              height: 18,
-                              fontSize: "0.65rem",
-                              fontWeight: 800,
-                              bgcolor: item.lightColor,
-                              color: item.color,
-                              borderRadius: "5px",
-                              flexShrink: 0,
-                              px: 0.2,
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              height: 3,
+                              bgcolor: isHovered ? item.color : "transparent",
+                              transition: "background-color 0.2s ease",
                             }}
                           />
-                        </Box>
 
-                        {/* Fila 2: Total acumulado + Barra de progreso visual */}
-                        <Box sx={{ mt: "auto" }}>
-                          <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", mb: 0.6 }}>
-                            <Typography sx={{ fontSize: "0.64rem", color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.02em" }}>
-                              Total
-                            </Typography>
-                            <Typography sx={{ fontSize: { xs: "0.88rem", sm: "0.92rem", md: "0.84rem", lg: "0.9rem" }, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.01em" }}>
-                              ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-                            </Typography>
-                          </Box>
-
-                          {/* Mini Barra de Progreso Visual */}
-                          <Box sx={{ width: "100%", height: 4, bgcolor: "#f1f5f9", borderRadius: 2, overflow: "hidden" }}>
-                            <Box
+                          {/* Fila 1: Indicador con halo + Nombre + Badge de Porcentaje */}
+                          <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 0.6 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0, flex: 1 }}>
+                              <Box
+                                sx={{
+                                  width: 10,
+                                  height: 10,
+                                  borderRadius: "50%",
+                                  bgcolor: item.color,
+                                  flexShrink: 0,
+                                  boxShadow: `0 0 0 2.5px ${item.lightColor}`,
+                                }}
+                              />
+                              <Box sx={{ minWidth: 0, flex: 1 }}>
+                                <Typography
+                                  sx={{
+                                    fontSize: { xs: "0.82rem", sm: "0.84rem", md: "0.78rem", lg: "0.82rem" },
+                                    fontWeight: 700,
+                                    color: isHovered ? item.color : "#1e293b",
+                                    lineHeight: 1.2,
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    transition: "color 0.2s ease",
+                                  }}
+                                >
+                                  {item.name}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            <Chip
+                              size="small"
+                              label={`${item.percentage}%`}
                               sx={{
-                                width: `${Math.min(100, Math.max(4, item.percentage))}%`,
-                                height: "100%",
-                                bgcolor: item.color,
-                                borderRadius: 2,
-                                transition: "width 0.4s ease",
+                                height: 19,
+                                fontSize: "0.66rem",
+                                fontWeight: 800,
+                                bgcolor: item.lightColor,
+                                color: item.color,
+                                borderRadius: "6px",
+                                px: 0.4,
+                                flexShrink: 0,
                               }}
                             />
                           </Box>
+
+                          {/* Fila 2: Monto Total + Acción / Contador */}
+                          <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", mt: "auto" }}>
+                            <Typography
+                              sx={{
+                                fontSize: { xs: "0.95rem", sm: "1rem", md: "0.9rem", lg: "0.98rem" },
+                                fontWeight: 800,
+                                color: "#0f172a",
+                                letterSpacing: "-0.01em",
+                              }}
+                            >
+                              ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: { xs: "0.7rem", md: "0.68rem", lg: "0.72rem" },
+                                color: isHovered ? item.color : "#94a3b8",
+                                fontWeight: isHovered ? 700 : 500,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.3,
+                                transition: "color 0.2s ease",
+                              }}
+                            >
+                              {isHovered ? "Ver tabla →" : `${item.count} ops`}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
+                      </Tooltip>
                     );
                   })}
                 </Box>
