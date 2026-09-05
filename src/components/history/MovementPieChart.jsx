@@ -541,17 +541,28 @@ export const MovementPieChart = ({
             </Button>
           </Box>
         ) : (
-          <Grid container spacing={{ xs: 2.5, md: 3.5 }} alignItems="center">
-            {/* LADO IZQUIERDO: LA GRÁFICA A UN COSTADO */}
-            <Grid item xs={12} md={4.8} lg={4.2} sx={{ display: "flex", justifyContent: "center" }}>
+          <Grid container spacing={{ xs: 2.5, md: 3.5 }} sx={{ alignItems: "center", justifyContent: "center" }}>
+            {/* LADO IZQUIERDO: LA GRÁFICA PERFECTAMENTE CENTRADA EN SU SECCIÓN */}
+            <Grid
+              size={{ xs: 12, md: 5, lg: 4.5 }}
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                width: "100%",
+                my: "auto",
+              }}
+            >
               <Box
                 sx={{
                   position: "relative",
-                  width: { xs: 220, sm: 240, md: 250 },
-                  height: { xs: 220, sm: 240, md: 250 },
+                  width: { xs: 230, sm: 250, md: 260 },
+                  height: { xs: 230, sm: 250, md: 260 },
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  mx: "auto",
+                  my: "auto",
                 }}
               >
                 <svg
@@ -559,48 +570,49 @@ export const MovementPieChart = ({
                   height="100%"
                   viewBox="0 0 220 220"
                   style={{
-                    transform: "rotate(-90deg)",
+                    display: "block",
                     overflow: "visible",
-                    filter: "drop-shadow(0 8px 18px rgba(0,0,0,0.06))",
                   }}
                 >
-                  {/* Anillo de fondo suave */}
-                  <circle
-                    cx="110"
-                    cy="110"
-                    r="80"
-                    fill="none"
-                    stroke="#f1f5f9"
-                    strokeWidth="32"
-                  />
+                  <g transform="rotate(-90 110 110)">
+                    {/* Anillo de fondo suave */}
+                    <circle
+                      cx="110"
+                      cy="110"
+                      r="80"
+                      fill="none"
+                      stroke="#f1f5f9"
+                      strokeWidth="32"
+                    />
 
-                  {/* Arcos de las porciones: fill="none" y pointerEvents="stroke" */}
-                  {slices.map((slice, index) => {
-                    const isHovered = hoveredSlice === index;
-                    return (
-                      <circle
-                        key={slice.id}
-                        cx="110"
-                        cy="110"
-                        r="80"
-                        fill="none"
-                        stroke={slice.color}
-                        strokeWidth={isHovered ? 38 : 31}
-                        strokeDasharray={slice.strokeDasharray}
-                        strokeDashoffset={slice.strokeDashoffset}
-                        style={{
-                          pointerEvents: "stroke",
-                          transition: "stroke-width 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease, filter 0.22s ease",
-                          cursor: "pointer",
-                          opacity: hoveredSlice !== null && !isHovered ? 0.42 : 1,
-                          filter: isHovered ? "brightness(1.08) drop-shadow(0 0 8px " + slice.color + "77)" : "none",
-                        }}
-                        onClick={() => handleCategoryClick(slice.name)}
-                        onMouseEnter={() => setHoveredSlice(index)}
-                        onMouseLeave={() => setHoveredSlice(null)}
-                      />
-                    );
-                  })}
+                    {/* Arcos de las porciones: fill="none" y pointerEvents="stroke" */}
+                    {slices.map((slice, index) => {
+                      const isHovered = hoveredSlice === index;
+                      return (
+                        <circle
+                          key={slice.id}
+                          cx="110"
+                          cy="110"
+                          r="80"
+                          fill="none"
+                          stroke={slice.color}
+                          strokeWidth={isHovered ? 38 : 31}
+                          strokeDasharray={slice.strokeDasharray}
+                          strokeDashoffset={slice.strokeDashoffset}
+                          style={{
+                            pointerEvents: "stroke",
+                            transition: "stroke-width 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease, filter 0.22s ease",
+                            cursor: "pointer",
+                            opacity: hoveredSlice !== null && !isHovered ? 0.42 : 1,
+                            filter: isHovered ? `brightness(1.08) drop-shadow(0 0 8px ${slice.color}77)` : "none",
+                          }}
+                          onClick={() => handleCategoryClick(slice.name)}
+                          onMouseEnter={() => setHoveredSlice(index)}
+                          onMouseLeave={() => setHoveredSlice(null)}
+                        />
+                      );
+                    })}
+                  </g>
                 </svg>
 
                 {/* Centro Dinámico de la Pizza con 'Movimientos de la cuenta' y Total */}
@@ -634,6 +646,14 @@ export const MovementPieChart = ({
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.92 }}
                         transition={{ duration: 0.12 }}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "100%",
+                          textAlign: "center",
+                        }}
                       >
                         <Typography
                           sx={{
@@ -679,6 +699,14 @@ export const MovementPieChart = ({
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.18 }}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "100%",
+                          textAlign: "center",
+                        }}
                       >
                         <Typography
                           sx={{
@@ -714,7 +742,7 @@ export const MovementPieChart = ({
             </Grid>
 
             {/* LADO DERECHO: DETALLES DE MOVIMIENTO (Solo motivos/conceptos: Salud, Combustible, etc.) */}
-            <Grid item xs={12} md={7.2} lg={7.8}>
+            <Grid size={{ xs: 12, md: 7, lg: 7.5 }}>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 <Box
                   sx={{
