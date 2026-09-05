@@ -6,6 +6,7 @@ import Sidebar from "./Sidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import MobileBottomNav from "./MobileBottomNav";
 import { useAccount } from "../../hooks/useAccount";
+import { useAuth } from "../../context/AuthContext";
 
 /**
  * AppLayout: Contenedor estructural unificado de la aplicación (Desktop + Mobile).
@@ -26,6 +27,7 @@ export function AppLayout({
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const { user } = useAccount();
+  const { logout } = useAuth();
 
   // Ocultar pestañas de navegación superior en historial y perfil
   const isHistoryRoute = location.pathname.startsWith("/history") || location.pathname.startsWith("/historial");
@@ -51,6 +53,7 @@ export function AppLayout({
     if (item === "inicio") navigate("/");
     else if (item === "historial") navigate("/history");
     else if (item === "perfil") navigate("/profile");
+    else if (item === "admin") navigate("/admin");
   };
 
   const handleMobileNavChange = (e, index) => {
@@ -58,6 +61,11 @@ export function AppLayout({
     else if (index === 1) navigate("/history");
     else if (index === 2) navigate("/profile");
     else if (index === 3) navigate("/profile");
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
   };
 
   const userName = user?.name || "Alejandro Silva";
@@ -69,7 +77,7 @@ export function AppLayout({
         <Sidebar
           activeItem={currentActiveItem}
           onItemClick={handleSidebarClick}
-          onLogout={() => console.info("Logout")}
+          onLogout={handleLogout}
         />
       )}
 

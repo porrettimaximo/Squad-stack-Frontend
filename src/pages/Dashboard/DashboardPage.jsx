@@ -12,6 +12,7 @@ import {
 import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
 
 import { useAccount } from "../../hooks/useAccount";
+import { useAuth } from "../../context/AuthContext";
 import Sidebar from "../../components/layout/Sidebar";
 import DashboardNavbar from "../../components/layout/DashboardNavbar";
 import MobileBottomNav from "../../components/layout/MobileBottomNav";
@@ -31,10 +32,16 @@ export function DashboardPage() {
   const isDesktop = useMediaQuery(muiTheme.breakpoints.up("md"));
 
   const { user, account, loading } = useAccount();
+  const { logout } = useAuth();
   const [currentTab, setCurrentTab] = useState(0);
   const [activeSidebarItem, setActiveSidebarItem] = useState("inicio");
   const [activeMobileNav, setActiveMobileNav] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   const userName = user?.name || "Alejandro Silva";
 
@@ -48,9 +55,9 @@ export function DashboardPage() {
             activeItem={activeSidebarItem}
             onItemClick={(item) => {
               setActiveSidebarItem(item);
-              setSnackbar({ open: true, message: `Navegando a ${item.toUpperCase()}...` });
+              if (item === "admin") navigate("/admin");
             }}
-            onLogout={() => setSnackbar({ open: true, message: "Sesión finalizada." })}
+            onLogout={handleLogout}
           />
 
           {/* Área Central de Contenido */}

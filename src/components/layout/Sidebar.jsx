@@ -22,6 +22,8 @@ import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
 import iconoImg from "../../assets/iconoPrincipal.png";
 import iconoSmall from "../../assets/icono.png";
 
@@ -32,12 +34,27 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
   const [collapsed, setCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogoutAction = () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      logout();
+      navigate("/login");
+    }
+  };
+
+  const isAdmin = user?.role?.toLowerCase() === "admin";
 
   const mainNav = [
     { id: "inicio", label: "Inicio", icon: <HomeOutlinedIcon />, path: "/" },
     { id: "historial", label: "Historial", icon: <HistoryOutlinedIcon />, path: "/history" },
     { id: "tarjetas", label: "Tarjetas", icon: <CreditCardOutlinedIcon />, path: "/" },
     { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon />, path: "/profile" },
+    ...(isAdmin
+      ? [{ id: "admin", label: "Usuarios Admin", icon: <AdminPanelSettingsOutlinedIcon />, path: "/admin" }]
+      : []),
     {
       id: "configuracion",
       label: "Configuración",
@@ -292,7 +309,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
           <Button
             fullWidth
             variant="outlined"
-            onClick={onLogout}
+            onClick={handleLogoutAction}
             title={collapsed ? "Cerrar sesión" : ""}
             sx={{
               color: "#D0D9E5",
