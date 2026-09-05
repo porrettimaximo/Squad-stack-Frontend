@@ -122,15 +122,15 @@ export function ProfilePage() {
       } catch (error) {
         console.warn("No se pudo obtener el perfil de /users/me, usando datos en contexto:", error?.message);
         if (isMounted) {
-          const names = (user?.name || "Alejandro Silva").split(" ");
-          const fallbackFirst = user?.firstName || names[0] || "Alejandro";
-          const fallbackLast = user?.lastName || names.slice(1).join(" ") || "Silva";
+          const names = (user?.name || "").split(" ");
+          const fallbackFirst = user?.firstName || names[0] || (user?.email ? user.email.split("@")[0] : "Usuario");
+          const fallbackLast = user?.lastName || (names.length > 1 ? names.slice(1).join(" ") : "");
 
           setProfileData({
-            id: user?.id || 1,
+            id: user?.id || null,
             firstName: fallbackFirst,
             lastName: fallbackLast,
-            email: user?.email || "alejandro.silva@digitalars.com",
+            email: user?.email || "",
             createdAt: user?.createdAt || new Date().toISOString(),
             isActive: true,
           });

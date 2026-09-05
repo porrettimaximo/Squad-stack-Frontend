@@ -11,7 +11,7 @@ export const transactionService = {
         params: { page: 1, pageSize },
       });
 
-      if (response.data?.items && response.data.items.length > 0) {
+      if (response.data?.items) {
         return response.data.items.map((tx) => {
           const isIncome = tx.type === 1 || tx.type === 2;
           const categoryName = tx.type === 1 ? "DEPÓSITO" : tx.type === 2 ? "INGRESO" : "EGRESO";
@@ -41,8 +41,12 @@ export const transactionService = {
         });
       }
 
+      const token = localStorage.getItem("token");
+      if (token) return [];
       return this.getDemoTransactions().slice(0, pageSize);
     } catch {
+      const token = localStorage.getItem("token");
+      if (token) return [];
       return this.getDemoTransactions().slice(0, pageSize);
     }
   },
@@ -69,7 +73,7 @@ export const transactionService = {
 
     try {
       const response = await api.get("/transactions/me", { params });
-      if (response.data?.items && response.data.items.length > 0) {
+      if (response.data && Array.isArray(response.data.items)) {
         let items = response.data.items.map((tx) => {
           const isIncome = tx.type === 1 || tx.type === 2;
           const categoryName = tx.type === 1 ? "DEPÓSITO" : tx.type === 2 ? "INGRESO" : "EGRESO";
@@ -124,10 +128,21 @@ export const transactionService = {
         };
       }
     } catch {
-      // Fallback a filtrado en memoria
+      // Fallback a filtrado en memoria solo si no hay sesión
     }
 
-    // Modo autónomo / memoria con historial completo
+    const token = localStorage.getItem("token");
+    if (token) {
+      return {
+        items: localTransactions.length > 0 ? localTransactions : [],
+        page,
+        pageSize,
+        totalItems: localTransactions.length,
+        totalPages: Math.max(1, Math.ceil(localTransactions.length / pageSize)),
+      };
+    }
+
+    // Modo autónomo / memoria con historial completo únicamente sin sesión
     let pool = localTransactions.length > 0 ? [...localTransactions] : this.getDemoTransactions();
 
     if (type !== null && type !== "" && type !== "all") {
