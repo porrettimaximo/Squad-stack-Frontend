@@ -21,9 +21,9 @@ const PALETTE = [
   { main: "#8b5cf6", light: "rgba(139, 92, 246, 0.12)", border: "#7c3aed" },   // Violeta / Servicios
   { main: "#ec4899", light: "rgba(236, 72, 153, 0.12)", border: "#db2777" },   // Rosa / Compras
   { main: "#10b981", light: "rgba(16, 185, 129, 0.12)", border: "#059669" },   // Esmeralda / Comida
-  { main: "#3b82f6", light: "rgba(59, 130, 246, 0.12)", border: "#2563eb" },   // Azul eléctrico / Transferencias
-  { main: "#14b8a6", light: "rgba(20, 184, 166, 0.12)", border: "#0d9488" },   // Teal / Depósitos
-  { main: "#f97316", light: "rgba(249, 115, 22, 0.12)", border: "#ea580c" },   // Naranja / Otros
+  { main: "#3b82f6", light: "rgba(59, 130, 246, 0.12)", border: "#2563eb" },   // Azul eléctrico
+  { main: "#14b8a6", light: "rgba(20, 184, 166, 0.12)", border: "#0d9488" },   // Teal
+  { main: "#f97316", light: "rgba(249, 115, 22, 0.12)", border: "#ea580c" },   // Naranja
 ];
 
 const formatYMD = (d) => {
@@ -77,7 +77,7 @@ export const MovementPieChart = ({
     };
   }, [filterMode, customDateFrom, customDateTo]);
 
-  // Filtrado de transacciones
+  // Filtrado de transacciones por fecha
   const filteredTransactions = useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
     const { dateFrom, dateTo } = activeDateRange;
@@ -101,25 +101,51 @@ export const MovementPieChart = ({
     });
   }, [transactions, activeDateRange]);
 
-  // Procesar datos para el gráfico Donut agrupado por concepto real (Salud, Combustible, etc., NO ingreso/egreso)
+  // Filtrar exclusivamente movimientos que tengan un Concepto / Motivo comercial
+  // Excluyendo depósitos y transferencias genéricas (que se muestran en la tabla general)
+  const conceptTransactions = useMemo(() => {
+    return filteredTransactions.filter((tx) => {
+      const cat = (tx.category || tx.reason || tx.concept || "").toUpperCase();
+      const title = (tx.title || "").toLowerCase();
+
+      // Excluir depósitos y transferencias
+      if (
+        cat === "DEPÓSITOS" ||
+        cat === "DEPÓSITO" ||
+        cat === "DEPOSITOS" ||
+        cat === "DEPOSITO" ||
+        cat === "TRANSFERENCIAS" ||
+        cat === "TRANSFERENCIA" ||
+        cat === "INGRESO" ||
+        cat === "EGRESO"
+      ) {
+        return false;
+      }
+
+      if (
+        title.includes("transferencia") ||
+        title.includes("depósito") ||
+        title.includes("deposito")
+      ) {
+        return false;
+      }
+
+      if (tx.type === 1) {
+        return false;
+      }
+
+      return Boolean(cat && cat !== "VARIOS");
+    });
+  }, [filteredTransactions]);
+
+  // Procesar datos para el gráfico Donut agrupado por concepto real (Salud, Combustible, Servicios, Compras, Comida, etc.)
   const chartData = useMemo(() => {
-    if (!filteredTransactions || filteredTransactions.length === 0) return [];
+    if (!conceptTransactions || conceptTransactions.length === 0) return [];
 
     const acc = {};
-    filteredTransactions.forEach((tx) => {
+    conceptTransactions.forEach((tx) => {
       const amount = Math.abs(Number(tx.amount) || 0);
-
-      // Normalizar categoría para asegurar que NO figure 'INGRESO' ni 'EGRESO'
-      let cat = tx.category || tx.reason || tx.concept || "Varios";
-      if (cat.toUpperCase() === "INGRESO" || cat.toUpperCase() === "EGRESO") {
-        if (tx.title?.toLowerCase().includes("transferencia") || tx.toAccountId) {
-          cat = "TRANSFERENCIAS";
-        } else if (tx.title?.toLowerCase().includes("depósito") || tx.title?.toLowerCase().includes("deposito")) {
-          cat = "DEPÓSITOS";
-        } else {
-          cat = "VARIOS";
-        }
-      }
+      const cat = tx.category || tx.reason || tx.concept || "Varios";
 
       if (!acc[cat]) {
         acc[cat] = { count: 0, total: 0 };
@@ -141,7 +167,7 @@ export const MovementPieChart = ({
           lightColor: colorPair.light,
         };
       });
-  }, [filteredTransactions]);
+  }, [conceptTransactions]);
 
   const totalSum = useMemo(() => {
     return chartData.reduce((sum, item) => sum + item.total, 0);
@@ -266,7 +292,7 @@ export const MovementPieChart = ({
                 ${totalSum.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </Typography>
               <Chip
-                label={`${filteredTransactions.length} operaciones`}
+                label={`${conceptTransactions.length} operaciones`}
                 size="small"
                 sx={{
                   height: 20,
@@ -497,13 +523,13 @@ export const MovementPieChart = ({
         )}
       </AnimatePresence>
 
-      {/* Contenido: GRÁFICA A UN COSTADO (IZQUIERDA) Y DETALLES A LA DERECHA */}
+      {/* Contenido: GRÁFICA A UN COSTADO (IZQUIERDA) Y DETALLES DE MOVIMIENTO A LA DERECHA */}
       <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
-        {filteredTransactions.length === 0 ? (
+        {conceptTransactions.length === 0 ? (
           <Box sx={{ py: 6, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 1.2 }}>
             <CalendarMonthIcon sx={{ fontSize: 40, color: "#94A3B8" }} />
             <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 600 }}>
-              No se encontraron movimientos registrados en este período.
+              No se encontraron movimientos con concepto registrado en este período.
             </Typography>
             <Button
               variant="outlined"
@@ -548,7 +574,7 @@ export const MovementPieChart = ({
                     strokeWidth="32"
                   />
 
-                  {/* Arcos de las porciones: fill="none" y pointerEvents="stroke" para que SOLO el trazo detecte el cursor */}
+                  {/* Arcos de las porciones: fill="none" y pointerEvents="stroke" */}
                   {slices.map((slice, index) => {
                     const isHovered = hoveredSlice === index;
                     return (
@@ -678,7 +704,7 @@ export const MovementPieChart = ({
                           ${totalSum.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </Typography>
                         <Typography sx={{ fontSize: "0.68rem", color: "#94a3b8", fontWeight: 600 }}>
-                          {filteredTransactions.length} operaciones
+                          {conceptTransactions.length} operaciones
                         </Typography>
                       </motion.div>
                     )}
@@ -687,7 +713,7 @@ export const MovementPieChart = ({
               </Box>
             </Grid>
 
-            {/* LADO DERECHO: LOS DETALLES A LA DERECHA (Salud, Combustible, etc., sin Ingreso/Egreso) */}
+            {/* LADO DERECHO: DETALLES DE MOVIMIENTO (Solo motivos/conceptos: Salud, Combustible, etc.) */}
             <Grid item xs={12} md={7.2} lg={7.8}>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 <Box
@@ -700,11 +726,11 @@ export const MovementPieChart = ({
                     gap: 1,
                   }}
                 >
-                  <Typography sx={{ fontSize: "0.86rem", fontWeight: 700, color: "#1e293b" }}>
-                    Detalle de participaciones:
+                  <Typography sx={{ fontSize: "0.92rem", fontWeight: 800, color: "#1e293b", letterSpacing: "-0.01em" }}>
+                    Detalles de movimiento
                   </Typography>
                   <Typography sx={{ fontSize: "0.74rem", color: "#64748b", fontWeight: 600 }}>
-                    Hacé clic en una tarjeta para filtrar la tabla
+                    Hacé clic en un motivo para filtrar la tabla
                   </Typography>
                 </Box>
 
