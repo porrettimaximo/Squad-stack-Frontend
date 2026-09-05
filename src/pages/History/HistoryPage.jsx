@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Box,
   Typography,
@@ -52,6 +52,13 @@ import MovementPieChart from "../../components/history/MovementPieChart";
  */
 export function HistoryPage() {
   const { transactions: localTransactions } = useAccount();
+  const tableSectionRef = useRef(null);
+
+  const handleScrollToTable = () => {
+    if (tableSectionRef.current) {
+      tableSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   // Estados de filtros
   const [typeFilter, setTypeFilter] = useState("all");
@@ -166,22 +173,16 @@ export function HistoryPage() {
           </Box>
         </Box>
 
-        {/* ─── CONTENIDO PRINCIPAL: 2 COLUMNAS (PIZZA IZQUIERDA, TABLA DERECHA) ─── */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", lg: "340px 1fr" },
-            gap: 2.5,
-            alignItems: "flex-start",
-          }}
-        >
-          {/* Columna Izquierda: Gráfico de Pizza con Desplegable */}
-          <Box sx={{ width: "100%", position: { lg: "sticky" }, top: { lg: 20 } }}>
-            <MovementPieChart transactions={localTransactions && localTransactions.length > 0 ? localTransactions : (items.length > 0 ? items : [])} />
-          </Box>
+        {/* ─── 1. GRÁFICO INTERACTIVO DE MOVIMIENTOS (AL ENTRAR CON BOTÓN HACIA LA TABLA) ─── */}
+        <Box sx={{ mb: 3.5, width: "100%" }}>
+          <MovementPieChart
+            transactions={localTransactions && localTransactions.length > 0 ? localTransactions : (items.length > 0 ? items : [])}
+            onGoToTable={handleScrollToTable}
+          />
+        </Box>
 
-          {/* Columna Derecha: Filtros y Tabla */}
-          <Box sx={{ width: "100%", minWidth: 0 }}>
+        {/* ─── 2. SECCIÓN DE FILTROS Y TABLA DE MOVIMIENTOS ─── */}
+        <Box ref={tableSectionRef} id="tabla-movimientos" sx={{ width: "100%", scrollMarginTop: "24px" }}>
             {/* ─── BARRA DE FILTROS ─── */}
             <Paper
               elevation={0}
@@ -563,7 +564,6 @@ export function HistoryPage() {
             </>
           )}
         </Paper>
-          </Box>
         </Box>
 
         {/* ─── MODAL DE COMPROBANTE DIGITAL ─── */}
