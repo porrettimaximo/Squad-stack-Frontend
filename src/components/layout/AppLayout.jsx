@@ -27,9 +27,10 @@ export function AppLayout({
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const { user } = useAccount();
 
-  // Ocultar pestañas de navegación superior en historial
+  // Ocultar pestañas de navegación superior en historial y perfil
   const isHistoryRoute = location.pathname.startsWith("/history") || location.pathname.startsWith("/historial");
-  const shouldShowTabs = showNavbarTabs !== undefined ? showNavbarTabs : !isHistoryRoute;
+  const isProfileRoute = location.pathname.startsWith("/profile") || location.pathname.startsWith("/perfil");
+  const shouldShowTabs = showNavbarTabs !== undefined ? showNavbarTabs : (!isHistoryRoute && !isProfileRoute);
 
   // Determinar ítem activo según la ruta actual si no viene explícito
   let currentActiveItem = activeSidebarItem;
@@ -38,6 +39,9 @@ export function AppLayout({
   if (isHistoryRoute) {
     currentActiveItem = "historial";
     currentMobileIndex = 1;
+  } else if (isProfileRoute) {
+    currentActiveItem = "perfil";
+    currentMobileIndex = 2;
   } else if (location.pathname === "/") {
     currentActiveItem = "inicio";
     currentMobileIndex = 0;
@@ -46,11 +50,13 @@ export function AppLayout({
   const handleSidebarClick = (item) => {
     if (item === "inicio") navigate("/");
     else if (item === "historial") navigate("/history");
+    else if (item === "perfil") navigate("/profile");
   };
 
   const handleMobileNavChange = (e, index) => {
     if (index === 0) navigate("/");
     else if (index === 1) navigate("/history");
+    else if (index === 2) navigate("/profile");
   };
 
   const userName = user?.name || "Alejandro Silva";

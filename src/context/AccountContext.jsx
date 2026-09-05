@@ -1,12 +1,16 @@
 import React, { createContext, useState, useCallback, useEffect } from "react";
 import accountService from "../services/accountService";
 import transactionService from "../services/transactionService";
+import userService from "../services/userService";
 
 export const AccountContext = createContext(null);
 
 const INITIAL_USER = {
   name: "Alejandro Silva",
+  firstName: "Alejandro",
+  lastName: "Silva",
   email: "alejandro.silva@digitalars.com",
+  role: "User",
   cardNumber: "4892",
 };
 
@@ -23,11 +27,79 @@ const INITIAL_ACCOUNT = {
  * se sincroniza con el backend cuando esté disponible con sesión activa.
  */
 export function AccountProvider({ children }) {
-  const [user, setUser] = useState(INITIAL_USER);
+  const [user, setUser] = useState(() => {
+    try {
+      const cached = localStorage.getItem("user");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        return {
+          ...INITIAL_USER,
+          ...parsed,
+          name: parsed.name || `${parsed.firstName || ""} ${parsed.lastName || ""}`.trim() || INITIAL_USER.name,
+        };
+      }
+    } catch {}
+    return INITIAL_USER;
+  });
+
   const [account, setAccount] = useState(INITIAL_ACCOUNT);
   const [transactions, setTransactions] = useState(() => transactionService.getDemoTransactions());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Sincronización del perfil propio del usuario autenticado (/users/me)
+  const refreshUserProfile = useCallback(async () => {
+    try {
+      const data = await userService.getMyProfile();
+      if (data) {
+        setUser((prev) => {
+          const firstName = data.firstName || prev.firstName || "";
+          const lastName = data.lastName || prev.lastName || "";
+          const fullName = `${firstName} ${lastName}`.trim() || prev.name;
+          const updated = {
+            ...prev,
+            id: data.id,
+            firstName,
+            lastName,
+            name: fullName,
+            email: data.email || prev.email,
+            role: data.role || prev.role || "User",
+            createdAt: data.createdAt,
+            isActive: data.isActive,
+          };
+          try {
+            localStorage.setItem("user", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+      }
+    } catch {
+      // Modo autónomo / offline: preserva el estado en memoria
+    }
+  }, []);
+
+  /**
+   * Actualiza los datos del usuario en memoria y en localStorage de forma reactiva inmediata.
+   */
+  const updateUserProfile = useCallback((updatedData) => {
+    if (!updatedData) return;
+    setUser((prev) => {
+      const firstName = updatedData.firstName !== undefined ? updatedData.firstName : (prev.firstName || "");
+      const lastName = updatedData.lastName !== undefined ? updatedData.lastName : (prev.lastName || "");
+      const fullName = `${firstName} ${lastName}`.trim() || prev.name;
+      const updated = {
+        ...prev,
+        ...updatedData,
+        firstName,
+        lastName,
+        name: fullName,
+      };
+      try {
+        localStorage.setItem("user", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  }, []);
 
   // Sincronización silenciosa con el backend si está activo
   const refreshAccount = useCallback(async () => {
@@ -57,6 +129,13 @@ export function AccountProvider({ children }) {
       // Modo autónomo / offline: preserva transacciones
     }
   }, []);
+
+  // Carga inicial silenciosa
+  useEffect(() => {
+    refreshUserProfile();
+    refreshAccount();
+    refreshTransactions();
+  }, [refreshUserProfile, refreshAccount, refreshTransactions]);
 
   /**
    * Actualiza el saldo en memoria de inmediato.
@@ -156,6 +235,8 @@ export function AccountProvider({ children }) {
         setTransactions,
         loading,
         error,
+        refreshUserProfile,
+        updateUserProfile,
         refreshAccount,
         refreshTransactions,
         updateBalance,

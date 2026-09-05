@@ -37,7 +37,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
     { id: "inicio", label: "Inicio", icon: <HomeOutlinedIcon />, path: "/" },
     { id: "historial", label: "Historial", icon: <HistoryOutlinedIcon />, path: "/history" },
     { id: "tarjetas", label: "Tarjetas", icon: <CreditCardOutlinedIcon />, path: "/" },
-    { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon />, path: "/" },
+    { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon />, path: "/profile" },
     {
       id: "configuracion",
       label: "Configuración",

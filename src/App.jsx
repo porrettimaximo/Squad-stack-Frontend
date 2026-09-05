@@ -6,6 +6,7 @@ import DashboardPage from "./pages/Dashboard/DashboardPage";
 import DepositPage from "./pages/Deposit/DepositPage";
 import TransferPage from "./pages/Transfer/TransferPage";
 import HistoryPage from "./pages/History/HistoryPage";
+import ProfilePage from "./pages/Profile/ProfilePage";
 
 export function App() {
   return (
@@ -27,6 +28,10 @@ export function App() {
             {/* HU-27: Historial con filtros y paginación */}
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/historial" element={<HistoryPage />} />
+
+            {/* HU-28: Pantalla de perfil de usuario */}
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/perfil" element={<ProfilePage />} />
 
             {/* Fallback */}
             <Route path="*" element={<DashboardPage />} />
