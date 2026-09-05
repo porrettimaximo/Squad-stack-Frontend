@@ -6,6 +6,7 @@ import {
   Typography,
   Chip,
   Button,
+  Grid,
   TextField,
   Tooltip,
 } from "@mui/material";
@@ -15,14 +16,14 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
 const PALETTE = [
-  { main: "#10b981", light: "rgba(16, 185, 129, 0.12)", border: "#059669" }, // Esmeralda / Ingresos
-  { main: "#ef4444", light: "rgba(239, 68, 68, 0.12)", border: "#dc2626" },   // Carmín / Egresos
-  { main: "#3b82f6", light: "rgba(59, 130, 246, 0.12)", border: "#2563eb" },   // Azul eléctrico / Depósitos
-  { main: "#f59e0b", light: "rgba(245, 158, 11, 0.12)", border: "#d97706" },   // Ámbar
-  { main: "#8b5cf6", light: "rgba(139, 92, 246, 0.12)", border: "#7c3aed" },   // Violeta
-  { main: "#ec4899", light: "rgba(236, 72, 153, 0.12)", border: "#db2777" },   // Rosa
-  { main: "#06b6d4", light: "rgba(6, 182, 212, 0.12)", border: "#0891b2" },    // Cyan
-  { main: "#14b8a6", light: "rgba(20, 184, 166, 0.12)", border: "#0d9488" },   // Teal
+  { main: "#06b6d4", light: "rgba(6, 182, 212, 0.12)", border: "#0891b2" },    // Cyan / Salud
+  { main: "#f59e0b", light: "rgba(245, 158, 11, 0.12)", border: "#d97706" },   // Ámbar / Combustible
+  { main: "#8b5cf6", light: "rgba(139, 92, 246, 0.12)", border: "#7c3aed" },   // Violeta / Servicios
+  { main: "#ec4899", light: "rgba(236, 72, 153, 0.12)", border: "#db2777" },   // Rosa / Compras
+  { main: "#10b981", light: "rgba(16, 185, 129, 0.12)", border: "#059669" },   // Esmeralda / Comida
+  { main: "#3b82f6", light: "rgba(59, 130, 246, 0.12)", border: "#2563eb" },   // Azul eléctrico / Transferencias
+  { main: "#14b8a6", light: "rgba(20, 184, 166, 0.12)", border: "#0d9488" },   // Teal / Depósitos
+  { main: "#f97316", light: "rgba(249, 115, 22, 0.12)", border: "#ea580c" },   // Naranja / Otros
 ];
 
 const formatYMD = (d) => {
@@ -100,14 +101,26 @@ export const MovementPieChart = ({
     });
   }, [transactions, activeDateRange]);
 
-  // Procesar datos para el gráfico Donut por concepto
+  // Procesar datos para el gráfico Donut agrupado por concepto real (Salud, Combustible, etc., NO ingreso/egreso)
   const chartData = useMemo(() => {
     if (!filteredTransactions || filteredTransactions.length === 0) return [];
 
     const acc = {};
     filteredTransactions.forEach((tx) => {
       const amount = Math.abs(Number(tx.amount) || 0);
-      const cat = tx.reason || tx.concept || tx.category || "Varios / General";
+
+      // Normalizar categoría para asegurar que NO figure 'INGRESO' ni 'EGRESO'
+      let cat = tx.category || tx.reason || tx.concept || "Varios";
+      if (cat.toUpperCase() === "INGRESO" || cat.toUpperCase() === "EGRESO") {
+        if (tx.title?.toLowerCase().includes("transferencia") || tx.toAccountId) {
+          cat = "TRANSFERENCIAS";
+        } else if (tx.title?.toLowerCase().includes("depósito") || tx.title?.toLowerCase().includes("deposito")) {
+          cat = "DEPÓSITOS";
+        } else {
+          cat = "VARIOS";
+        }
+      }
+
       if (!acc[cat]) {
         acc[cat] = { count: 0, total: 0 };
       }
@@ -196,7 +209,7 @@ export const MovementPieChart = ({
         }}
       />
 
-      {/* Cabecera: Métrica a la izquierda y Botones chicos a la derecha */}
+      {/* Cabecera: 'Movimientos de la cuenta' con Total a la izquierda y Botones chicos a la derecha */}
       <Box
         sx={{
           px: { xs: 2, sm: 2.5 },
@@ -209,12 +222,12 @@ export const MovementPieChart = ({
           gap: 1.5,
         }}
       >
-        {/* Métrica a la izquierda */}
+        {/* Métrica 'Movimientos de la cuenta' a la izquierda */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.4 }}>
           <Box
             sx={{
-              width: 38,
-              height: 38,
+              width: 40,
+              height: 40,
               borderRadius: "12px",
               background: "linear-gradient(135deg, #0056D2 0%, #2563eb 100%)",
               color: "#ffffff",
@@ -225,12 +238,12 @@ export const MovementPieChart = ({
               flexShrink: 0,
             }}
           >
-            <PieChartIcon sx={{ fontSize: 20 }} />
+            <PieChartIcon sx={{ fontSize: 22 }} />
           </Box>
           <Box sx={{ minWidth: 0 }}>
             <Typography
               sx={{
-                fontSize: "0.7rem",
+                fontSize: "0.72rem",
                 fontWeight: 700,
                 color: "#64748B",
                 textTransform: "uppercase",
@@ -238,7 +251,7 @@ export const MovementPieChart = ({
                 lineHeight: 1.2,
               }}
             >
-              Total {filterMode === "last30" ? "Últimos 30 días" : "Período Seleccionado"}
+              Movimientos de la cuenta
             </Typography>
             <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.8, mt: 0.1 }}>
               <Typography
@@ -253,15 +266,15 @@ export const MovementPieChart = ({
                 ${totalSum.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </Typography>
               <Chip
-                label={`${filteredTransactions.length} ops`}
+                label={`${filteredTransactions.length} operaciones`}
                 size="small"
                 sx={{
-                  height: 19,
-                  fontSize: "0.68rem",
+                  height: 20,
+                  fontSize: "0.7rem",
                   fontWeight: 700,
                   bgcolor: "#EFF6FF",
                   color: "#0056D2",
-                  borderRadius: "5px",
+                  borderRadius: "6px",
                   px: 0.3,
                 }}
               />
@@ -279,7 +292,7 @@ export const MovementPieChart = ({
             width: { xs: "100%", sm: "auto" },
           }}
         >
-          {/* Selector de 2 botones más chicos */}
+          {/* Selector de 2 botones chicos */}
           <Box
             sx={{
               display: "flex",
@@ -484,8 +497,8 @@ export const MovementPieChart = ({
         )}
       </AnimatePresence>
 
-      {/* Contenido: 1) SOLO EL GRÁFICO (MÁS CHICO COMO ESTABA ANTES) Y 2) DETALLES ABAJO */}
-      <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+      {/* Contenido: GRÁFICA A UN COSTADO (IZQUIERDA) Y DETALLES A LA DERECHA */}
+      <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
         {filteredTransactions.length === 0 ? (
           <Box sx={{ py: 6, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 1.2 }}>
             <CalendarMonthIcon sx={{ fontSize: 40, color: "#94A3B8" }} />
@@ -502,17 +515,9 @@ export const MovementPieChart = ({
             </Button>
           </Box>
         ) : (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-            {/* SECCIÓN 1: SOLO EL GRÁFICO (MÁS CHICO Y CENTRADO, SIN CAPTURAR HOVER EN EL MEDIO) */}
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                py: { xs: 1, sm: 1.5 },
-                position: "relative",
-              }}
-            >
+          <Grid container spacing={{ xs: 2.5, md: 3.5 }} alignItems="center">
+            {/* LADO IZQUIERDO: LA GRÁFICA A UN COSTADO */}
+            <Grid item xs={12} md={4.8} lg={4.2} sx={{ display: "flex", justifyContent: "center" }}>
               <Box
                 sx={{
                   position: "relative",
@@ -572,8 +577,7 @@ export const MovementPieChart = ({
                   })}
                 </svg>
 
-                {/* Centro Dinámico de la Pizza:
-                    Se agrega onMouseEnter y onMouseMove para deseleccionar activamente si el cursor entra al centro */}
+                {/* Centro Dinámico de la Pizza con 'Movimientos de la cuenta' y Total */}
                 <Box
                   onMouseEnter={() => setHoveredSlice(null)}
                   onMouseMove={() => { if (hoveredSlice !== null) setHoveredSlice(null); }}
@@ -591,7 +595,7 @@ export const MovementPieChart = ({
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
-                    pointerEvents: "auto", // Captura el cursor en el centro para evitar seleccionar porciones
+                    pointerEvents: "auto",
                     cursor: "default",
                     userSelect: "none",
                   }}
@@ -652,18 +656,18 @@ export const MovementPieChart = ({
                       >
                         <Typography
                           sx={{
-                            fontSize: "0.68rem",
+                            fontSize: "0.66rem",
                             fontWeight: 700,
                             color: "#64748b",
                             textTransform: "uppercase",
-                            letterSpacing: "0.05em",
+                            letterSpacing: "0.04em",
                           }}
                         >
-                          Volumen Total
+                          Movimientos de la cuenta
                         </Typography>
                         <Typography
                           sx={{
-                            fontSize: { xs: "1.1rem", sm: "1.25rem" },
+                            fontSize: { xs: "1.05rem", sm: "1.2rem" },
                             fontWeight: 900,
                             color: "#0f172a",
                             lineHeight: 1.15,
@@ -673,7 +677,7 @@ export const MovementPieChart = ({
                         >
                           ${totalSum.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </Typography>
-                        <Typography sx={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: 600 }}>
+                        <Typography sx={{ fontSize: "0.68rem", color: "#94a3b8", fontWeight: 600 }}>
                           {filteredTransactions.length} operaciones
                         </Typography>
                       </motion.div>
@@ -681,166 +685,167 @@ export const MovementPieChart = ({
                   </AnimatePresence>
                 </Box>
               </Box>
-            </Box>
+            </Grid>
 
-            {/* SECCIÓN 2: DETALLES DE PARTICIPACIONES (4x2) ABAJO */}
-            <Box sx={{ borderTop: "1px solid #f1f5f9", pt: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  mb: 1.5,
-                  px: { xs: 0.5, sm: 0 },
-                  flexWrap: "wrap",
-                  gap: 1,
-                }}
-              >
-                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#1e293b" }}>
-                  Detalle de participaciones:
-                </Typography>
-                <Typography sx={{ fontSize: "0.74rem", color: "#64748b", fontWeight: 600 }}>
-                  Hacé clic en una tarjeta para filtrar la tabla
-                </Typography>
-              </Box>
+            {/* LADO DERECHO: LOS DETALLES A LA DERECHA (Salud, Combustible, etc., sin Ingreso/Egreso) */}
+            <Grid item xs={12} md={7.2} lg={7.8}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    px: { xs: 0.5, sm: 0 },
+                    flexWrap: "wrap",
+                    gap: 1,
+                  }}
+                >
+                  <Typography sx={{ fontSize: "0.86rem", fontWeight: 700, color: "#1e293b" }}>
+                    Detalle de participaciones:
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.74rem", color: "#64748b", fontWeight: 600 }}>
+                    Hacé clic en una tarjeta para filtrar la tabla
+                  </Typography>
+                </Box>
 
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: {
-                    xs: "1fr",
-                    sm: "repeat(2, 1fr)",
-                    md: "repeat(4, 1fr)",
-                  },
-                  gap: 1.2,
-                }}
-              >
-                {slices.map((item, idx) => {
-                  const isHovered = hoveredSlice === idx;
-                  return (
-                    <Tooltip
-                      key={idx}
-                      title={`Ver movimientos de ${item.name} en el historial`}
-                      arrow
-                      placement="top"
-                    >
-                      <Box
-                        onClick={() => handleCategoryClick(item.name)}
-                        onMouseEnter={() => setHoveredSlice(idx)}
-                        onMouseLeave={() => setHoveredSlice(null)}
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "space-between",
-                          p: { xs: 1.3, sm: 1.4, md: 1.2, lg: 1.4 },
-                          borderRadius: "14px",
-                          bgcolor: "#ffffff",
-                          border: "1.5px solid",
-                          borderColor: isHovered ? item.color : "rgba(226, 232, 240, 0.9)",
-                          boxShadow: isHovered
-                            ? `0 8px 18px -4px ${item.color}30, 0 2px 6px rgba(0,0,0,0.03)`
-                            : "0 2px 5px -1px rgba(15, 23, 42, 0.03)",
-                          cursor: "pointer",
-                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                          transform: isHovered ? "translateY(-2px)" : "none",
-                          position: "relative",
-                          overflow: "hidden",
-                          gap: 1,
-                          minHeight: { xs: "auto", md: 92 },
-                        }}
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      sm: "repeat(2, 1fr)",
+                      lg: "repeat(3, 1fr)",
+                    },
+                    gap: 1.2,
+                  }}
+                >
+                  {slices.map((item, idx) => {
+                    const isHovered = hoveredSlice === idx;
+                    return (
+                      <Tooltip
+                        key={idx}
+                        title={`Ver movimientos de ${item.name} en el historial`}
+                        arrow
+                        placement="top"
                       >
-                        {/* Acento superior con color al hover */}
                         <Box
+                          onClick={() => handleCategoryClick(item.name)}
+                          onMouseEnter={() => setHoveredSlice(idx)}
+                          onMouseLeave={() => setHoveredSlice(null)}
                           sx={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            height: 3,
-                            bgcolor: isHovered ? item.color : "transparent",
-                            transition: "background-color 0.15s ease",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            p: { xs: 1.3, sm: 1.4, md: 1.3, lg: 1.4 },
+                            borderRadius: "14px",
+                            bgcolor: "#ffffff",
+                            border: "1.5px solid",
+                            borderColor: isHovered ? item.color : "rgba(226, 232, 240, 0.9)",
+                            boxShadow: isHovered
+                              ? `0 8px 18px -4px ${item.color}30, 0 2px 6px rgba(0,0,0,0.03)`
+                              : "0 2px 5px -1px rgba(15, 23, 42, 0.03)",
+                            cursor: "pointer",
+                            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                            transform: isHovered ? "translateY(-2px)" : "none",
+                            position: "relative",
+                            overflow: "hidden",
+                            gap: 1,
+                            minHeight: { xs: "auto", md: 88 },
                           }}
-                        />
-
-                        {/* Fila 1: Indicador con halo + Nombre + Porcentaje */}
-                        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 0.6 }}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, minWidth: 0, flex: 1 }}>
-                            <Box
-                              sx={{
-                                width: 9,
-                                height: 9,
-                                borderRadius: "50%",
-                                bgcolor: item.color,
-                                flexShrink: 0,
-                                boxShadow: `0 0 0 2.5px ${item.lightColor}`,
-                              }}
-                            />
-                            <Box sx={{ minWidth: 0, flex: 1 }}>
-                              <Typography
-                                sx={{
-                                  fontSize: { xs: "0.82rem", sm: "0.84rem", md: "0.78rem", lg: "0.82rem" },
-                                  fontWeight: 700,
-                                  color: isHovered ? item.color : "#1e293b",
-                                  lineHeight: 1.2,
-                                  whiteSpace: "nowrap",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  transition: "color 0.15s ease",
-                                }}
-                              >
-                                {item.name}
-                              </Typography>
-                            </Box>
-                          </Box>
-                          <Chip
-                            size="small"
-                            label={`${item.percentage}%`}
+                        >
+                          {/* Acento superior con color al hover */}
+                          <Box
                             sx={{
-                              height: 18,
-                              fontSize: "0.66rem",
-                              fontWeight: 800,
-                              bgcolor: item.lightColor,
-                              color: item.color,
-                              borderRadius: "5px",
-                              px: 0.3,
-                              flexShrink: 0,
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              height: 3,
+                              bgcolor: isHovered ? item.color : "transparent",
+                              transition: "background-color 0.15s ease",
                             }}
                           />
-                        </Box>
 
-                        {/* Fila 2: Monto Total + Acción / Contador */}
-                        <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", mt: "auto" }}>
-                          <Typography
-                            sx={{
-                              fontSize: { xs: "0.92rem", sm: "0.98rem", md: "0.88rem", lg: "0.95rem" },
-                              fontWeight: 800,
-                              color: "#0f172a",
-                              letterSpacing: "-0.01em",
-                            }}
-                          >
-                            ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                          </Typography>
-                          <Typography
-                            sx={{
-                              fontSize: "0.68rem",
-                              color: isHovered ? item.color : "#94a3b8",
-                              fontWeight: isHovered ? 700 : 500,
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 0.2,
-                              transition: "color 0.15s ease",
-                            }}
-                          >
-                            {isHovered ? "Ver tabla →" : `${item.count} ops`}
-                          </Typography>
+                          {/* Fila 1: Indicador con halo + Nombre + Porcentaje */}
+                          <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 0.6 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, minWidth: 0, flex: 1 }}>
+                              <Box
+                                sx={{
+                                  width: 9,
+                                  height: 9,
+                                  borderRadius: "50%",
+                                  bgcolor: item.color,
+                                  flexShrink: 0,
+                                  boxShadow: `0 0 0 2.5px ${item.lightColor}`,
+                                }}
+                              />
+                              <Box sx={{ minWidth: 0, flex: 1 }}>
+                                <Typography
+                                  sx={{
+                                    fontSize: { xs: "0.82rem", sm: "0.84rem", md: "0.78rem", lg: "0.82rem" },
+                                    fontWeight: 700,
+                                    color: isHovered ? item.color : "#1e293b",
+                                    lineHeight: 1.2,
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    transition: "color 0.15s ease",
+                                  }}
+                                >
+                                  {item.name}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            <Chip
+                              size="small"
+                              label={`${item.percentage}%`}
+                              sx={{
+                                height: 18,
+                                fontSize: "0.66rem",
+                                fontWeight: 800,
+                                bgcolor: item.lightColor,
+                                color: item.color,
+                                borderRadius: "5px",
+                                px: 0.3,
+                                flexShrink: 0,
+                              }}
+                            />
+                          </Box>
+
+                          {/* Fila 2: Monto Total + Acción / Contador */}
+                          <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", mt: "auto" }}>
+                            <Typography
+                              sx={{
+                                fontSize: { xs: "0.92rem", sm: "0.98rem", md: "0.88rem", lg: "0.95rem" },
+                                fontWeight: 800,
+                                color: "#0f172a",
+                                letterSpacing: "-0.01em",
+                              }}
+                            >
+                              ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: { xs: "0.68rem", color: "#94a3b8" },
+                                color: isHovered ? item.color : "#94a3b8",
+                                fontWeight: isHovered ? 700 : 500,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.2,
+                                transition: "color 0.15s ease",
+                              }}
+                            >
+                              {isHovered ? "Ver tabla →" : `${item.count} ops`}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    </Tooltip>
-                  );
-                })}
+                      </Tooltip>
+                    );
+                  })}
+                </Box>
               </Box>
-            </Box>
-          </Box>
+            </Grid>
+          </Grid>
         )}
       </CardContent>
     </Card>
