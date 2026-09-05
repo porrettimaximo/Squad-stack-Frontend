@@ -5,6 +5,7 @@ import { AccountProvider } from "./context/AccountContext";
 import DashboardPage from "./pages/Dashboard/DashboardPage";
 import DepositPage from "./pages/Deposit/DepositPage";
 import TransferPage from "./pages/Transfer/TransferPage";
+import HistoryPage from "./pages/History/HistoryPage";
 
 export function App() {
   return (
@@ -19,6 +20,9 @@ export function App() {
             <Route path="/deposit" element={<DepositPage />} />
             {/* HU-26: Pantalla de transferencia de fondos */}
             <Route path="/transfer" element={<TransferPage />} />
+            {/* HU-27: Historial con filtros y paginación */}
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/historial" element={<HistoryPage />} />
             <Route path="*" element={<DashboardPage />} />
           </Routes>
         </BrowserRouter>

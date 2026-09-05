@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Box, Button, useMediaQuery, useTheme } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Sidebar from "./Sidebar";
@@ -8,23 +9,44 @@ import { useAccount } from "../../hooks/useAccount";
 
 /**
  * AppLayout: Contenedor estructural unificado de la aplicación (Desktop + Mobile).
- * Elimina la duplicación de código de layout en DashboardPage, DepositPage y TransferPage.
+ * Conecta la barra lateral y la barra inferior móvil con la navegación del router.
  */
 export function AppLayout({
   children,
-  activeSidebarItem = "inicio",
+  activeSidebarItem,
   currentTab = 0,
   onTabChange,
   onBack,
   backLabel = "Volver",
   maxWidth = 1240,
 }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const { user } = useAccount();
 
-  const [activeItem, setActiveItem] = useState(activeSidebarItem);
-  const [mobileNavIndex, setMobileNavIndex] = useState(0);
+  // Determinar ítem activo según la ruta actual si no viene explícito
+  let currentActiveItem = activeSidebarItem;
+  let currentMobileIndex = 0;
+
+  if (location.pathname.startsWith("/history") || location.pathname.startsWith("/historial")) {
+    currentActiveItem = "historial";
+    currentMobileIndex = 1;
+  } else if (location.pathname === "/") {
+    currentActiveItem = "inicio";
+    currentMobileIndex = 0;
+  }
+
+  const handleSidebarClick = (item) => {
+    if (item === "inicio") navigate("/");
+    else if (item === "historial") navigate("/history");
+  };
+
+  const handleMobileNavChange = (e, index) => {
+    if (index === 0) navigate("/");
+    else if (index === 1) navigate("/history");
+  };
 
   const userName = user?.name || "Alejandro Silva";
 
@@ -33,8 +55,8 @@ export function AppLayout({
       {/* 1. Vista Desktop: Barra Lateral */}
       {isDesktop && (
         <Sidebar
-          activeItem={activeItem}
-          onItemClick={(item) => setActiveItem(item)}
+          activeItem={currentActiveItem}
+          onItemClick={handleSidebarClick}
           onLogout={() => console.info("Logout")}
         />
       )}
@@ -92,8 +114,8 @@ export function AppLayout({
       {/* 3. Vista Mobile: Barra de Navegación Inferior */}
       {!isDesktop && (
         <MobileBottomNav
-          activeIndex={mobileNavIndex}
-          onChange={(index) => setMobileNavIndex(index)}
+          activeNav={currentMobileIndex}
+          onChange={handleMobileNavChange}
         />
       )}
     </Box>
