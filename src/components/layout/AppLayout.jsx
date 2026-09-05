@@ -57,6 +57,7 @@ export function AppLayout({
     if (index === 0) navigate("/");
     else if (index === 1) navigate("/history");
     else if (index === 2) navigate("/profile");
+    else if (index === 3) navigate("/profile");
   };
 
   const userName = user?.name || "Alejandro Silva";
