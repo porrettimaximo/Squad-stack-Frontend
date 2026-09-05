@@ -28,13 +28,11 @@ import SaveIcon from "@mui/icons-material/Save";
 import KeyIcon from "@mui/icons-material/Key";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import CloseIcon from "@mui/icons-material/Close";
-import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import { motion, AnimatePresence } from "framer-motion";
 
 import AppLayout from "../../components/layout/AppLayout";
 import { useAccount } from "../../hooks/useAccount";
 import userService from "../../services/userService";
-import { formatTransactionDate } from "../../utils/formatters";
 
 /**
  * HU-28: Pantalla de perfil de usuario.
@@ -482,27 +480,11 @@ export function ProfilePage() {
                     display: "flex",
                     alignItems: "center",
                     gap: 0.6,
-                    mb: 0.8,
                   }}
                 >
                   <EmailOutlinedIcon sx={{ fontSize: 16 }} />
                   {profileData.email || "cargando..."}
                 </Typography>
-
-                {profileData.createdAt && (
-                  <Typography
-                    sx={{
-                      fontSize: "0.78rem",
-                      color: "rgba(255, 255, 255, 0.75)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                    }}
-                  >
-                    <CalendarMonthOutlinedIcon sx={{ fontSize: 15 }} />
-                    Miembro desde: {formatTransactionDate(profileData.createdAt)}
-                  </Typography>
-                )}
               </Box>
             </Box>
           </Card>
@@ -648,7 +630,7 @@ export function ProfilePage() {
                             </Box>
                           </Box>
 
-                          {/* Fila 4: Fecha de Registro y Estado */}
+                          {/* Fila 4: Estado de la Cuenta */}
                           <Box
                             sx={{
                               p: 1.5,
@@ -662,10 +644,10 @@ export function ProfilePage() {
                           >
                             <Box>
                               <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                                Fecha de Registro
+                                Estado de la Cuenta
                               </Typography>
                               <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#0F172A", mt: 0.3 }}>
-                                {profileData.createdAt ? formatTransactionDate(profileData.createdAt) : "—"}
+                                Usuario Activo y Habilitado
                               </Typography>
                             </Box>
                             <Chip
