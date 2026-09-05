@@ -61,7 +61,9 @@ export const transactionService = {
     localTransactions = [],
   } = {}) {
     const params = { page, pageSize };
-    if (type !== null && type !== "" && type !== "all") params.type = Number(type);
+    if (type !== null && type !== "" && type !== "all") {
+      params.type = type;
+    }
     if (dateFrom) params.dateFrom = dateFrom;
     if (dateTo) params.dateTo = dateTo;
 
@@ -129,7 +131,13 @@ export const transactionService = {
     let pool = localTransactions.length > 0 ? [...localTransactions] : this.getDemoTransactions();
 
     if (type !== null && type !== "" && type !== "all") {
-      pool = pool.filter((t) => t.type === Number(type));
+      if (type === "income" || type === "ingreso" || type === 1 || type === 2 || type === "1" || type === "2") {
+        pool = pool.filter((t) => t.type === 1 || t.type === 2 || t.isIncome);
+      } else if (type === "expense" || type === "egreso" || type === 3 || type === "3") {
+        pool = pool.filter((t) => t.type === 3 || (!t.isIncome && t.type !== 1 && t.type !== 2));
+      } else {
+        pool = pool.filter((t) => t.type === Number(type));
+      }
     }
 
     if (dateFrom) {

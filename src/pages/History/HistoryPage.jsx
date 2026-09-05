@@ -265,9 +265,8 @@ export function HistoryPage() {
                   sx={{ borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.88rem", height: 40 }}
                 >
                   <MenuItem value="all">Todos los tipos</MenuItem>
-                  <MenuItem value="1">Depósitos</MenuItem>
-                  <MenuItem value="2">Ingresos / Recibidos</MenuItem>
-                  <MenuItem value="3">Egresos / Transferencias</MenuItem>
+                  <MenuItem value="income">Ingresos</MenuItem>
+                  <MenuItem value="expense">Egresos</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -427,30 +426,18 @@ export function HistoryPage() {
                   </TableHead>
                   <TableBody>
                     {items.map((tx) => {
-                      const isIncome = tx.type === 1 || tx.type === 2;
+                      const isIncome = tx.type === 1 || tx.type === 2 || tx.isIncome || tx.category === "INGRESO" || tx.category === "DEPÓSITO";
 
-                      let icon = <NorthEastIcon sx={{ fontSize: 18 }} />;
-                      let iconBg = "#FEE2E2";
-                      let iconColor = "#DC2626";
-                      let chipLabel = "EGRESO";
-                      let chipBg = "#FEE2E2";
-                      let chipColor = "#B91C1C";
-
-                      if (tx.type === 1) {
-                        icon = <AccountBalanceWalletIcon sx={{ fontSize: 18 }} />;
-                        iconBg = "#E0F2FE";
-                        iconColor = "#0284C7";
-                        chipLabel = "DEPÓSITO";
-                        chipBg = "#E0F2FE";
-                        chipColor = "#0369A1";
-                      } else if (tx.type === 2) {
-                        icon = <SouthWestIcon sx={{ fontSize: 18 }} />;
-                        iconBg = "#DCFCE7";
-                        iconColor = "#16A34A";
-                        chipLabel = "INGRESO";
-                        chipBg = "#DCFCE7";
-                        chipColor = "#15803D";
-                      }
+                      const icon = isIncome ? (
+                        <SouthWestIcon sx={{ fontSize: 18 }} />
+                      ) : (
+                        <NorthEastIcon sx={{ fontSize: 18 }} />
+                      );
+                      const iconBg = isIncome ? "#DCFCE7" : "#FEE2E2";
+                      const iconColor = isIncome ? "#16A34A" : "#DC2626";
+                      const chipLabel = isIncome ? "INGRESO" : "EGRESO";
+                      const chipBg = isIncome ? "#DCFCE7" : "#FEE2E2";
+                      const chipColor = isIncome ? "#15803D" : "#B91C1C";
 
                       const txCode = `TX-${String(tx.id).padStart(4, "0")}`;
                       const counterpartDisplay =
@@ -485,9 +472,9 @@ export function HistoryPage() {
                                 <Typography sx={{ fontWeight: 700, fontSize: "0.92rem", color: "#0F172A" }}>
                                   {tx.title}
                                 </Typography>
-                                <Typography sx={{ fontSize: "0.78rem", color: "#64748B" }}>
-                                  {tx.subtitle || tx.category}
-                                </Typography>
+                                 <Typography sx={{ fontSize: "0.78rem", color: "#64748B" }}>
+                                   {(tx.subtitle || tx.category || "").replace("DEPÓSITO", "INGRESO")}
+                                 </Typography>
                               </Box>
                             </Box>
                           </TableCell>
@@ -689,12 +676,14 @@ export function HistoryPage() {
                 <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
                   Tipo de Operación
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: "#0056D2" }}>
-                  {selectedTx.type === 1
-                    ? "Depósito de Fondos"
-                    : selectedTx.type === 2
-                    ? "Transferencia Recibida"
-                    : "Transferencia Enviada"}
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 700,
+                    color: selectedTx.type === 1 || selectedTx.type === 2 || selectedTx.isIncome ? "#16A34A" : "#DC2626",
+                  }}
+                >
+                  {selectedTx.type === 1 || selectedTx.type === 2 || selectedTx.isIncome ? "Ingreso" : "Egreso"}
                 </Typography>
               </Box>
 
