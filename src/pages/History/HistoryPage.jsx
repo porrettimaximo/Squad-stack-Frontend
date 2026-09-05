@@ -182,88 +182,105 @@ export function HistoryPage() {
               display: "grid",
               gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1.4fr 1.15fr 1fr 1fr auto" },
               gap: 1.5,
-              alignItems: "center",
+              alignItems: "flex-end",
             }}
           >
             {/* 1. Búsqueda por concepto */}
-            <TextField
-              size="small"
-              placeholder="Buscar por concepto..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-                sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.88rem" },
-              }}
-            />
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+              <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#64748B" }}>
+                Concepto / Operación
+              </Typography>
+              <TextField
+                size="small"
+                placeholder="Buscar por concepto..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                  sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.88rem", height: 40 },
+                }}
+              />
+            </Box>
 
             {/* 2. Tipo de movimiento */}
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel id="type-filter-label">Tipo de Movimiento</InputLabel>
-              <Select
-                labelId="type-filter-label"
-                value={typeFilter}
-                label="Tipo de Movimiento"
-                onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
-                sx={{ borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.88rem" }}
-              >
-                <MenuItem value="all">Todos los tipos</MenuItem>
-                <MenuItem value="1">Depósitos</MenuItem>
-                <MenuItem value="2">Ingresos / Recibidos</MenuItem>
-                <MenuItem value="3">Egresos / Transferencias</MenuItem>
-              </Select>
-            </FormControl>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+              <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#64748B" }}>
+                Tipo de Movimiento
+              </Typography>
+              <FormControl size="small">
+                <Select
+                  value={typeFilter}
+                  onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
+                  sx={{ borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.88rem", height: 40 }}
+                >
+                  <MenuItem value="all">Todos los tipos</MenuItem>
+                  <MenuItem value="1">Depósitos</MenuItem>
+                  <MenuItem value="2">Ingresos / Recibidos</MenuItem>
+                  <MenuItem value="3">Egresos / Transferencias</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
 
             {/* 3. Fecha Desde */}
-            <TextField
-              size="small"
-              type="date"
-              label="Desde"
-              value={dateFrom}
-              onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem" },
-              }}
-            />
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+              <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#64748B" }}>
+                Desde
+              </Typography>
+              <TextField
+                size="small"
+                type="date"
+                value={dateFrom}
+                onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+                InputProps={{
+                  sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem", height: 40 },
+                }}
+              />
+            </Box>
 
             {/* 4. Fecha Hasta */}
-            <TextField
-              size="small"
-              type="date"
-              label="Hasta"
-              value={dateTo}
-              onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem" },
-              }}
-            />
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+              <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#64748B" }}>
+                Hasta
+              </Typography>
+              <TextField
+                size="small"
+                type="date"
+                value={dateTo}
+                onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+                InputProps={{
+                  sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem", height: 40 },
+                }}
+              />
+            </Box>
 
             {/* 5. Botón Limpiar */}
-            <Tooltip title="Restablecer todos los filtros">
-              <Button
-                variant="outlined"
-                startIcon={<RestartAltIcon />}
-                onClick={handleClearFilters}
-                sx={{
-                  borderRadius: "10px",
-                  borderColor: "#CBD5E1",
-                  color: "#475569",
-                  textTransform: "none",
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
-                  py: 0.8,
-                  "&:hover": { bgcolor: "#F8FAFC", borderColor: "#94A3B8" },
-                }}
-              >
-                Limpiar
-              </Button>
-            </Tooltip>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, justifyContent: "flex-end" }}>
+              <Tooltip title="Restablecer todos los filtros">
+                <Button
+                  variant="outlined"
+                  startIcon={<RestartAltIcon />}
+                  onClick={handleClearFilters}
+                  sx={{
+                    height: 40,
+                    borderRadius: "10px",
+                    borderColor: "#CBD5E1",
+                    color: "#475569",
+                    textTransform: "none",
+                    fontWeight: 600,
+                    fontSize: "0.85rem",
+                    px: 2,
+                    whiteSpace: "nowrap",
+                    "&:hover": { bgcolor: "#F8FAFC", borderColor: "#94A3B8" },
+                  }}
+                >
+                  Limpiar
+                </Button>
+              </Tooltip>
+            </Box>
           </Box>
         </Paper>
 
