@@ -15,6 +15,7 @@ import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import CreditCardOutlinedIcon from "@mui/icons-material/CreditCardOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import HeadsetMicOutlinedIcon from "@mui/icons-material/HeadsetMicOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
@@ -22,6 +23,7 @@ import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import iconoImg from "../../assets/iconoPrincipal.png";
 import iconoSmall from "../../assets/icono.png";
 
@@ -32,10 +34,28 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
   const [collapsed, setCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const isAdmin = user?.role === "Admin" || user?.role === "admin";
 
   const mainNav = [
     { id: "inicio", label: "Inicio", icon: <HomeOutlinedIcon />, path: "/" },
-    { id: "historial", label: "Historial", icon: <HistoryOutlinedIcon />, path: "/history" },
+    ...(isAdmin
+      ? [
+          {
+            id: "admin-users",
+            label: "Usuarios",
+            icon: <AdminPanelSettingsOutlinedIcon />,
+            path: "/admin/users",
+          },
+        ]
+      : []),
+    {
+      id: "historial",
+      label: "Historial",
+      icon: <HistoryOutlinedIcon />,
+      path: "/history",
+    },
     { id: "tarjetas", label: "Tarjetas", icon: <CreditCardOutlinedIcon />, path: "/" },
     { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon />, path: "/" },
     {
@@ -66,6 +86,14 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
     if (item.path) {
       navigate(item.path);
     }
+  };
+
+  const handleLogoutClick = () => {
+    if (onLogout) {
+      onLogout();
+    }
+    logout();
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -292,7 +320,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
           <Button
             fullWidth
             variant="outlined"
-            onClick={onLogout}
+            onClick={handleLogoutClick}
             title={collapsed ? "Cerrar sesión" : ""}
             sx={{
               color: "#D0D9E5",
