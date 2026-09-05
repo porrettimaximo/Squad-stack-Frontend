@@ -6,11 +6,6 @@ import {
   Typography,
   Chip,
   Button,
-  Grid,
-  FormControl,
-  Select,
-  MenuItem,
-  InputAdornment,
   TextField,
   Tooltip,
 } from "@mui/material";
@@ -30,7 +25,12 @@ const PALETTE = [
   { main: "#14b8a6", light: "rgba(20, 184, 166, 0.12)", border: "#0d9488" },   // Teal
 ];
 
-const capitalize = (str) => (str ? str.charAt(0).toUpperCase() + str.slice(1) : "");
+const formatYMD = (d) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
 
 export const MovementPieChart = ({
   transactions = [],
@@ -38,96 +38,47 @@ export const MovementPieChart = ({
   onSelectCategory,
 }) => {
   const [hoveredSlice, setHoveredSlice] = useState(null);
-  const [selectedPeriod, setSelectedPeriod] = useState("current");
-  const [customDateFrom, setCustomDateFrom] = useState("");
-  const [customDateTo, setCustomDateTo] = useState("");
+  // Modos de filtro: 'last30' (Últimos 30 días) o 'custom' (Personalizado)
+  const [filterMode, setFilterMode] = useState("last30");
 
-  // Opciones dinámicas de meses (Mes actual + 5 meses previos + Todos + Personalizado)
-  const monthOptions = useMemo(() => {
-    const options = [];
+  // Fechas iniciales para el modo personalizado (por defecto últimos 30 días)
+  const defaultDates = useMemo(() => {
     const now = new Date();
-    const curYear = now.getFullYear();
-    const curMonth = now.getMonth();
-    const curName = capitalize(now.toLocaleDateString("es-AR", { month: "long" }));
-
-    options.push({
-      key: "current",
-      label: `${curName} ${curYear} (Este mes)`,
-    });
-
-    for (let i = 1; i <= 5; i++) {
-      const d = new Date(curYear, curMonth - i, 1);
-      const y = d.getFullYear();
-      const m = d.getMonth();
-      const name = capitalize(d.toLocaleDateString("es-AR", { month: "long" }));
-      const key = `${y}-${String(m + 1).padStart(2, "0")}`;
-      options.push({
-        key,
-        label: `${name} ${y}`,
-      });
-    }
-
-    options.push({
-      key: "all",
-      label: "Todos los meses / Histórico",
-    });
-
-    options.push({
-      key: "custom",
-      label: "Personalizado (Rango de fechas)...",
-    });
-
-    return options;
+    const past30 = new Date(now);
+    past30.setDate(past30.getDate() - 30);
+    return {
+      from: formatYMD(past30),
+      to: formatYMD(now),
+    };
   }, []);
 
-  // Rango activo de fechas según el período seleccionado
+  const [customDateFrom, setCustomDateFrom] = useState(defaultDates.from);
+  const [customDateTo, setCustomDateTo] = useState(defaultDates.to);
+
+  // Rango activo de fechas según el modo seleccionado
   const activeDateRange = useMemo(() => {
-    const now = new Date();
-    if (selectedPeriod === "current") {
-      const year = now.getFullYear();
-      const month = now.getMonth();
-      const lastDay = new Date(year, month + 1, 0).getDate();
-      const mStr = String(month + 1).padStart(2, "0");
+    if (filterMode === "last30") {
+      const now = new Date();
+      const past30 = new Date(now);
+      past30.setDate(past30.getDate() - 30);
       return {
-        dateFrom: `${year}-${mStr}-01`,
-        dateTo: `${year}-${mStr}-${String(lastDay).padStart(2, "0")}`,
-        label: `${capitalize(now.toLocaleDateString("es-AR", { month: "long" }))} ${year}`,
-      };
-    }
-    if (selectedPeriod === "all") {
-      return {
-        dateFrom: "",
-        dateTo: "",
-        label: "Histórico Total",
-      };
-    }
-    if (selectedPeriod === "custom") {
-      return {
-        dateFrom: customDateFrom,
-        dateTo: customDateTo,
-        label: customDateFrom && customDateTo ? `${customDateFrom} a ${customDateTo}` : "Personalizado",
+        dateFrom: formatYMD(past30),
+        dateTo: formatYMD(now),
+        label: "Últimos 30 días",
       };
     }
 
-    // Formato "YYYY-MM"
-    const [yStr, mStr] = selectedPeriod.split("-");
-    const y = Number(yStr);
-    const m = Number(mStr);
-    const d = new Date(y, m - 1, 1);
-    const lastDay = new Date(y, m, 0).getDate();
-    const name = capitalize(d.toLocaleDateString("es-AR", { month: "long" }));
+    // Modo personalizado
     return {
-      dateFrom: `${y}-${mStr}-01`,
-      dateTo: `${y}-${mStr}-${String(lastDay).padStart(2, "0")}`,
-      label: `${name} ${y}`,
+      dateFrom: customDateFrom || "",
+      dateTo: customDateTo || "",
+      label: customDateFrom && customDateTo ? `${customDateFrom} a ${customDateTo}` : "Personalizado",
     };
-  }, [selectedPeriod, customDateFrom, customDateTo]);
+  }, [filterMode, customDateFrom, customDateTo]);
 
-  // Filtrado de transacciones según el período activo
+  // Filtrado de transacciones según el rango activo
   const filteredTransactions = useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
-    if (selectedPeriod === "all") return transactions;
-
     const { dateFrom, dateTo } = activeDateRange;
     if (!dateFrom && !dateTo) return transactions;
 
@@ -147,9 +98,9 @@ export const MovementPieChart = ({
       }
       return true;
     });
-  }, [transactions, selectedPeriod, activeDateRange]);
+  }, [transactions, activeDateRange]);
 
-  // Procesar datos para el gráfico Donut por concepto
+  // Procesar datos para el gráfico Donut agrupado por concepto
   const chartData = useMemo(() => {
     if (!filteredTransactions || filteredTransactions.length === 0) return [];
 
@@ -183,11 +134,11 @@ export const MovementPieChart = ({
     return chartData.reduce((sum, item) => sum + item.total, 0);
   }, [chartData]);
 
-  // Construir arcos SVG interactivos para el gráfico de Pizza Donut
+  // Construir arcos SVG interactivos para el gráfico Donut en gran escala
   const slices = useMemo(() => {
     if (totalSum === 0) return [];
     let cumulativePercent = 0;
-    const radius = 80;
+    const radius = 95;
     const circumference = 2 * Math.PI * radius;
 
     return chartData.map((item, idx) => {
@@ -208,7 +159,7 @@ export const MovementPieChart = ({
 
   const activeSlice = hoveredSlice !== null ? slices[hoveredSlice] : null;
 
-  // Manejador al hacer clic en una categoría
+  // Manejador de clic en una categoría para saltar a la tabla con filtros precargados
   const handleCategoryClick = (categoryName) => {
     if (onSelectCategory) {
       onSelectCategory({
@@ -236,17 +187,17 @@ export const MovementPieChart = ({
       <Box
         sx={{
           position: "absolute",
-          top: -80,
-          right: -80,
-          width: 240,
-          height: 240,
+          top: -100,
+          right: -100,
+          width: 300,
+          height: 300,
           borderRadius: "50%",
           background: "radial-gradient(circle, rgba(0, 86, 210, 0.08) 0%, rgba(255, 255, 255, 0) 70%)",
           pointerEvents: "none",
         }}
       />
 
-      {/* Cabecera de la Tarjeta con Título, Selector de Mes y Botón hacia la Tabla */}
+      {/* Cabecera: Total destacado a la izquierda + Botones de período y acceso a tabla a la derecha */}
       <Box
         sx={{
           p: { xs: 2, sm: 2.5, md: 3 },
@@ -258,34 +209,54 @@ export const MovementPieChart = ({
           gap: { xs: 2, md: 2.5 },
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        {/* Total General Destacado (Reemplaza el título 'Distribución por concepto') */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.8 }}>
           <Box
             sx={{
-              width: { xs: 40, sm: 44 },
-              height: { xs: 40, sm: 44 },
-              borderRadius: "14px",
+              width: { xs: 46, sm: 50 },
+              height: { xs: 46, sm: 50 },
+              borderRadius: "16px",
               background: "linear-gradient(135deg, #0056D2 0%, #2563eb 100%)",
               color: "#ffffff",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 8px 16px -4px rgba(0, 86, 210, 0.35)",
+              boxShadow: "0 8px 18px -4px rgba(0, 86, 210, 0.35)",
               flexShrink: 0,
             }}
           >
-            <PieChartIcon sx={{ fontSize: { xs: 22, sm: 24 } }} />
+            <PieChartIcon sx={{ fontSize: { xs: 24, sm: 28 } }} />
           </Box>
           <Box sx={{ minWidth: 0 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-              <Typography sx={{ fontWeight: 800, fontSize: { xs: "1.02rem", sm: "1.1rem" }, color: "#0f172a", letterSpacing: "-0.01em" }}>
-                Distribución por Concepto
+            <Typography
+              sx={{
+                fontSize: { xs: "0.72rem", sm: "0.76rem" },
+                fontWeight: 700,
+                color: "#64748B",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+              }}
+            >
+              Total {filterMode === "last30" ? "Últimos 30 días" : "Período Seleccionado"}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "baseline", gap: 1, flexWrap: "wrap", mt: 0.2 }}>
+              <Typography
+                sx={{
+                  fontWeight: 900,
+                  fontSize: { xs: "1.45rem", sm: "1.75rem" },
+                  color: "#0f172a",
+                  lineHeight: 1.15,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                ${totalSum.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </Typography>
               <Chip
-                label="Por Concepto"
+                label={`${filteredTransactions.length} operaciones`}
                 size="small"
                 sx={{
-                  height: 20,
-                  fontSize: "0.68rem",
+                  height: 22,
+                  fontSize: "0.72rem",
                   fontWeight: 700,
                   bgcolor: "#EFF6FF",
                   color: "#0056D2",
@@ -293,13 +264,10 @@ export const MovementPieChart = ({
                 }}
               />
             </Box>
-            <Typography sx={{ color: "#64748b", fontSize: { xs: "0.76rem", sm: "0.82rem" }, mt: 0.2 }}>
-              Visualización gráfica de operaciones agrupadas por motivo y concepto
-            </Typography>
           </Box>
         </Box>
 
-        {/* Acciones de Cabecera: Selector de Mes y Botón a la Tabla */}
+        {/* Acciones de Cabecera: Botones 'Últimos 30 días' y 'Personalizado' + Botón a la Tabla */}
         <Box
           sx={{
             display: "flex",
@@ -309,52 +277,67 @@ export const MovementPieChart = ({
             width: { xs: "100%", md: "auto" },
           }}
         >
-          {/* Selector de Mes */}
-          <FormControl size="small" sx={{ flex: { xs: 1, sm: "initial" }, minWidth: { xs: "100%", sm: 220 } }}>
-            <Select
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              startAdornment={
-                <InputAdornment position="start" sx={{ ml: 0.5, mr: -0.2 }}>
-                  <CalendarMonthIcon sx={{ color: "#0056D2", fontSize: 19 }} />
-                </InputAdornment>
-              }
+          {/* Selector Segmentado de 2 Botones */}
+          <Box
+            sx={{
+              display: "flex",
+              p: 0.5,
+              borderRadius: "14px",
+              bgcolor: "#F1F5F9",
+              border: "1px solid #E2E8F0",
+              gap: 0.5,
+              width: { xs: "100%", sm: "auto" },
+            }}
+          >
+            <Button
+              size="small"
+              onClick={() => setFilterMode("last30")}
               sx={{
-                height: 42,
-                borderRadius: "12px",
-                bgcolor: "#F8FAFC",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                color: "#1E293B",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-                "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "#E2E8F0",
+                flex: { xs: 1, sm: "initial" },
+                borderRadius: "10px",
+                textTransform: "none",
+                fontWeight: 700,
+                fontSize: { xs: "0.8rem", sm: "0.84rem" },
+                px: { xs: 1.6, sm: 2.2 },
+                py: 0.7,
+                bgcolor: filterMode === "last30" ? "#0056D2" : "transparent",
+                color: filterMode === "last30" ? "#ffffff" : "#475569",
+                boxShadow: filterMode === "last30" ? "0 4px 12px rgba(0, 86, 210, 0.25)" : "none",
+                "&:hover": {
+                  bgcolor: filterMode === "last30" ? "#0047B3" : "rgba(0,0,0,0.04)",
                 },
-                "&:hover .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "#0056D2",
-                },
-                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "#0056D2",
-                },
+                transition: "all 0.2s ease",
+                whiteSpace: "nowrap",
               }}
             >
-              {monthOptions.map((opt) => (
-                <MenuItem
-                  key={opt.key}
-                  value={opt.key}
-                  sx={{
-                    fontSize: "0.85rem",
-                    fontWeight: opt.key === "current" ? 700 : 500,
-                    color: opt.key === "current" ? "#0056D2" : "#1E293B",
-                  }}
-                >
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              Últimos 30 días
+            </Button>
+            <Button
+              size="small"
+              onClick={() => setFilterMode("custom")}
+              sx={{
+                flex: { xs: 1, sm: "initial" },
+                borderRadius: "10px",
+                textTransform: "none",
+                fontWeight: 700,
+                fontSize: { xs: "0.8rem", sm: "0.84rem" },
+                px: { xs: 1.6, sm: 2.2 },
+                py: 0.7,
+                bgcolor: filterMode === "custom" ? "#0056D2" : "transparent",
+                color: filterMode === "custom" ? "#ffffff" : "#475569",
+                boxShadow: filterMode === "custom" ? "0 4px 12px rgba(0, 86, 210, 0.25)" : "none",
+                "&:hover": {
+                  bgcolor: filterMode === "custom" ? "#0047B3" : "rgba(0,0,0,0.04)",
+                },
+                transition: "all 0.2s ease",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Personalizado
+            </Button>
+          </Box>
 
-          {/* Botón para ver la tabla completa de historial */}
+          {/* Botón para ir a la tabla con el rango activo */}
           {onGoToTable && (
             <Button
               variant="contained"
@@ -363,7 +346,7 @@ export const MovementPieChart = ({
               sx={{
                 flex: { xs: 1, sm: "initial" },
                 width: { xs: "100%", sm: "auto" },
-                height: 42,
+                height: 40,
                 borderRadius: "12px",
                 background: "linear-gradient(135deg, #0056D2 0%, #1d4ed8 100%)",
                 textTransform: "none",
@@ -386,20 +369,20 @@ export const MovementPieChart = ({
         </Box>
       </Box>
 
-      {/* Rango de Fechas Personalizado (Desplegable animado si elige "Personalizado") */}
+      {/* Rango de Fechas Personalizado: Aparece al apretar 'Personalizado' */}
       <AnimatePresence>
-        {selectedPeriod === "custom" && (
+        {filterMode === "custom" && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.22 }}
             style={{ overflow: "hidden" }}
           >
             <Box
               sx={{
                 px: { xs: 2, sm: 3 },
-                py: 1.5,
+                py: 1.6,
                 bgcolor: "#F8FAFC",
                 borderBottom: "1px solid #E2E8F0",
                 display: "flex",
@@ -409,9 +392,12 @@ export const MovementPieChart = ({
                 flexWrap: "wrap",
               }}
             >
-              <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#475569" }}>
-                Filtrar por rango específico:
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <CalendarMonthIcon sx={{ color: "#0056D2", fontSize: 20 }} />
+                <Typography sx={{ fontSize: "0.84rem", fontWeight: 700, color: "#334155" }}>
+                  Seleccionar fechas del período:
+                </Typography>
+              </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                 <TextField
                   size="small"
@@ -420,7 +406,7 @@ export const MovementPieChart = ({
                   value={customDateFrom}
                   onChange={(e) => setCustomDateFrom(e.target.value)}
                   InputLabelProps={{ shrink: true }}
-                  sx={{ bgcolor: "#FFFFFF", borderRadius: "10px", width: 160 }}
+                  sx={{ bgcolor: "#FFFFFF", borderRadius: "10px", width: 165 }}
                 />
                 <TextField
                   size="small"
@@ -429,7 +415,7 @@ export const MovementPieChart = ({
                   value={customDateTo}
                   onChange={(e) => setCustomDateTo(e.target.value)}
                   InputLabelProps={{ shrink: true }}
-                  sx={{ bgcolor: "#FFFFFF", borderRadius: "10px", width: 160 }}
+                  sx={{ bgcolor: "#FFFFFF", borderRadius: "10px", width: 165 }}
                 />
               </Box>
             </Box>
@@ -437,32 +423,40 @@ export const MovementPieChart = ({
         )}
       </AnimatePresence>
 
-      {/* Contenido Principal con el Gráfico y los Datos */}
+      {/* Contenido: 1) SOLO EL GRÁFICO CENTRADO Y MÁS GRANDE */}
       <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
         {filteredTransactions.length === 0 ? (
           <Box sx={{ py: 8, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
-            <CalendarMonthIcon sx={{ fontSize: 44, color: "#94A3B8" }} />
+            <CalendarMonthIcon sx={{ fontSize: 48, color: "#94A3B8" }} />
             <Typography variant="body1" sx={{ color: "#64748b", fontWeight: 600 }}>
               No se encontraron movimientos registrados en este período.
             </Typography>
             <Button
               variant="outlined"
               size="small"
-              onClick={() => setSelectedPeriod("all")}
+              onClick={() => setFilterMode("last30")}
               sx={{ borderRadius: "8px", textTransform: "none", color: "#0056D2", borderColor: "#CBD5E1", mt: 0.5 }}
             >
-              Ver todos los meses
+              Restablecer a Últimos 30 días
             </Button>
           </Box>
         ) : (
-          <Grid container spacing={{ xs: 3, md: 4 }} alignItems="center">
-            {/* Lado Izquierdo: Pizza / Donut SVG Interactivo */}
-            <Grid item xs={12} lg={3.8} xl={3.5} sx={{ display: "flex", justifyContent: "center", position: "relative", my: { xs: 1, lg: 0 } }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {/* SECCIÓN 1: SOLO EL GRÁFICO (CENTRADO Y MÁS GRANDE) */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                py: { xs: 2, sm: 3, md: 4 },
+                position: "relative",
+              }}
+            >
               <Box
                 sx={{
                   position: "relative",
-                  width: { xs: 210, sm: 250, md: 260 },
-                  height: { xs: 210, sm: 250, md: 260 },
+                  width: { xs: 280, sm: 340, md: 390, lg: 420 },
+                  height: { xs: 280, sm: 340, md: 390, lg: 420 },
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -471,21 +465,21 @@ export const MovementPieChart = ({
                 <svg
                   width="100%"
                   height="100%"
-                  viewBox="0 0 220 220"
+                  viewBox="0 0 250 250"
                   style={{
                     transform: "rotate(-90deg)",
                     overflow: "visible",
-                    filter: "drop-shadow(0 10px 20px rgba(0,0,0,0.06))",
+                    filter: "drop-shadow(0 14px 28px rgba(0,0,0,0.07))",
                   }}
                 >
                   {/* Anillo de fondo suave */}
                   <circle
-                    cx="110"
-                    cy="110"
-                    r="80"
+                    cx="125"
+                    cy="125"
+                    r="95"
                     fill="transparent"
                     stroke="#f1f5f9"
-                    strokeWidth="32"
+                    strokeWidth="38"
                   />
 
                   {/* Arcos de las porciones */}
@@ -494,19 +488,19 @@ export const MovementPieChart = ({
                     return (
                       <circle
                         key={slice.id}
-                        cx="110"
-                        cy="110"
-                        r="80"
+                        cx="125"
+                        cy="125"
+                        r="95"
                         fill="transparent"
                         stroke={slice.color}
-                        strokeWidth={isHovered ? 36 : 30}
+                        strokeWidth={isHovered ? 45 : 37}
                         strokeDasharray={slice.strokeDasharray}
                         strokeDashoffset={slice.strokeDashoffset}
                         style={{
                           transition: "stroke-width 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, filter 0.25s ease",
                           cursor: "pointer",
-                          opacity: hoveredSlice !== null && !isHovered ? 0.45 : 1,
-                          filter: isHovered ? "brightness(1.08) drop-shadow(0 0 8px " + slice.color + "66)" : "none",
+                          opacity: hoveredSlice !== null && !isHovered ? 0.4 : 1,
+                          filter: isHovered ? "brightness(1.08) drop-shadow(0 0 10px " + slice.color + "77)" : "none",
                         }}
                         onClick={() => handleCategoryClick(slice.name)}
                         onMouseEnter={() => setHoveredSlice(index)}
@@ -516,7 +510,7 @@ export const MovementPieChart = ({
                   })}
                 </svg>
 
-                {/* Centro Dinámico de la Pizza */}
+                {/* Centro Dinámico de la Pizza (Total y Detalle activo) */}
                 <Box
                   sx={{
                     position: "absolute",
@@ -525,8 +519,8 @@ export const MovementPieChart = ({
                     transform: "translate(-50%, -50%)",
                     textAlign: "center",
                     pointerEvents: "none",
-                    px: 1.5,
-                    width: "60%",
+                    px: 2,
+                    width: "65%",
                   }}
                 >
                   <AnimatePresence mode="wait">
@@ -540,8 +534,8 @@ export const MovementPieChart = ({
                       >
                         <Typography
                           sx={{
-                            fontSize: "0.72rem",
-                            fontWeight: 700,
+                            fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                            fontWeight: 800,
                             color: activeSlice.color,
                             textTransform: "uppercase",
                             letterSpacing: "0.05em",
@@ -554,11 +548,11 @@ export const MovementPieChart = ({
                         </Typography>
                         <Typography
                           sx={{
-                            fontSize: { xs: "1.05rem", sm: "1.2rem" },
+                            fontSize: { xs: "1.25rem", sm: "1.55rem", md: "1.75rem" },
                             fontWeight: 900,
                             color: "#0f172a",
-                            lineHeight: 1.2,
-                            my: 0.3,
+                            lineHeight: 1.15,
+                            my: 0.4,
                           }}
                         >
                           ${activeSlice.total.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
@@ -567,8 +561,8 @@ export const MovementPieChart = ({
                           size="small"
                           label={`${activeSlice.percentage}% del total`}
                           sx={{
-                            height: 20,
-                            fontSize: "0.7rem",
+                            height: 22,
+                            fontSize: "0.74rem",
                             fontWeight: 800,
                             bgcolor: activeSlice.lightColor,
                             color: activeSlice.color,
@@ -584,31 +578,28 @@ export const MovementPieChart = ({
                       >
                         <Typography
                           sx={{
-                            fontSize: "0.68rem",
+                            fontSize: { xs: "0.7rem", sm: "0.78rem" },
                             fontWeight: 700,
                             color: "#64748b",
                             textTransform: "uppercase",
-                            letterSpacing: "0.05em",
+                            letterSpacing: "0.06em",
                           }}
                         >
-                          {selectedPeriod === "current"
-                            ? "Volumen Este Mes"
-                            : selectedPeriod === "all"
-                            ? "Volumen Total"
-                            : `Volumen ${activeDateRange.label}`}
+                          Volumen Total
                         </Typography>
                         <Typography
                           sx={{
-                            fontSize: { xs: "1.1rem", sm: "1.25rem" },
+                            fontSize: { xs: "1.45rem", sm: "1.85rem", md: "2.1rem" },
                             fontWeight: 900,
                             color: "#0f172a",
-                            lineHeight: 1.2,
-                            my: 0.2,
+                            lineHeight: 1.15,
+                            my: 0.3,
+                            letterSpacing: "-0.02em",
                           }}
                         >
                           ${totalSum.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </Typography>
-                        <Typography sx={{ fontSize: "0.72rem", color: "#94a3b8", fontWeight: 600 }}>
+                        <Typography sx={{ fontSize: { xs: "0.75rem", sm: "0.82rem" }, color: "#94a3b8", fontWeight: 600 }}>
                           {filteredTransactions.length} operaciones
                         </Typography>
                       </motion.div>
@@ -616,158 +607,166 @@ export const MovementPieChart = ({
                   </AnimatePresence>
                 </Box>
               </Box>
-            </Grid>
+            </Box>
 
-            {/* Lado Derecho: Tarjetas / Leyendas con desglose interactivo en 4x2 */}
-            <Grid item xs={12} lg={8.2} xl={8.5}>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: { xs: 0.5, sm: 0 }, flexWrap: "wrap", gap: 1 }}>
-                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#334155" }}>
-                    Detalle de participaciones:
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600 }}>
-                    Hacé clic en una tarjeta para filtrar la tabla
-                  </Typography>
-                </Box>
+            {/* SECCIÓN 2: ABAJO LOS DETALLES DE PARTICIPACIONES (4x2) */}
+            <Box sx={{ borderTop: "1px solid #f1f5f9", pt: { xs: 2.5, sm: 3 } }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 2,
+                  px: { xs: 0.5, sm: 0 },
+                  flexWrap: "wrap",
+                  gap: 1,
+                }}
+              >
+                <Typography sx={{ fontSize: "0.92rem", fontWeight: 700, color: "#1e293b" }}>
+                  Detalle de participaciones:
+                </Typography>
+                <Typography sx={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 600 }}>
+                  Hacé clic en una tarjeta para filtrar la tabla
+                </Typography>
+              </Box>
 
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: {
-                      xs: "1fr",
-                      sm: "repeat(2, 1fr)",
-                      md: "repeat(4, 1fr)",
-                    },
-                    gap: 1.2,
-                  }}
-                >
-                  {slices.map((item, idx) => {
-                    const isHovered = hoveredSlice === idx;
-                    return (
-                      <Tooltip
-                        key={idx}
-                        title={`Ver movimientos de ${item.name} en el historial`}
-                        arrow
-                        placement="top"
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    sm: "repeat(2, 1fr)",
+                    md: "repeat(4, 1fr)",
+                  },
+                  gap: 1.5,
+                }}
+              >
+                {slices.map((item, idx) => {
+                  const isHovered = hoveredSlice === idx;
+                  return (
+                    <Tooltip
+                      key={idx}
+                      title={`Ver movimientos de ${item.name} en el historial`}
+                      arrow
+                      placement="top"
+                    >
+                      <Box
+                        onClick={() => handleCategoryClick(item.name)}
+                        onMouseEnter={() => setHoveredSlice(idx)}
+                        onMouseLeave={() => setHoveredSlice(null)}
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          p: { xs: 1.5, sm: 1.6, md: 1.4, lg: 1.6 },
+                          borderRadius: "16px",
+                          bgcolor: "#ffffff",
+                          border: "1.5px solid",
+                          borderColor: isHovered ? item.color : "rgba(226, 232, 240, 0.9)",
+                          boxShadow: isHovered
+                            ? `0 12px 24px -4px ${item.color}35, 0 2px 6px rgba(0,0,0,0.04)`
+                            : "0 2px 6px -1px rgba(15, 23, 42, 0.04)",
+                          cursor: "pointer",
+                          transition: "all 0.22s cubic-bezier(0.4, 0, 0.2, 1)",
+                          transform: isHovered ? "translateY(-2px)" : "none",
+                          position: "relative",
+                          overflow: "hidden",
+                          gap: 1.2,
+                          minHeight: { xs: "auto", md: 100 },
+                        }}
                       >
+                        {/* Acento superior sutil con color al hacer hover o estar activo */}
                         <Box
-                          onClick={() => handleCategoryClick(item.name)}
-                          onMouseEnter={() => setHoveredSlice(idx)}
-                          onMouseLeave={() => setHoveredSlice(null)}
                           sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            justifyContent: "space-between",
-                            p: { xs: 1.4, sm: 1.5, md: 1.2, lg: 1.4 },
-                            borderRadius: "14px",
-                            bgcolor: "#ffffff",
-                            border: "1.5px solid",
-                            borderColor: isHovered ? item.color : "rgba(226, 232, 240, 0.9)",
-                            boxShadow: isHovered
-                              ? `0 10px 22px -4px ${item.color}35, 0 2px 6px rgba(0,0,0,0.04)`
-                              : "0 2px 6px -1px rgba(15, 23, 42, 0.04)",
-                            cursor: "pointer",
-                            transition: "all 0.22s cubic-bezier(0.4, 0, 0.2, 1)",
-                            transform: isHovered ? "translateY(-2px)" : "none",
-                            position: "relative",
-                            overflow: "hidden",
-                            gap: 1.1,
-                            minHeight: { xs: "auto", md: 96 },
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: 3.5,
+                            bgcolor: isHovered ? item.color : "transparent",
+                            transition: "background-color 0.2s ease",
                           }}
-                        >
-                          {/* Acento superior sutil con color al hacer hover o estar activo */}
-                          <Box
-                            sx={{
-                              position: "absolute",
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              height: 3,
-                              bgcolor: isHovered ? item.color : "transparent",
-                              transition: "background-color 0.2s ease",
-                            }}
-                          />
+                        />
 
-                          {/* Fila 1: Indicador con halo + Nombre + Badge de Porcentaje */}
-                          <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 0.6 }}>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0, flex: 1 }}>
-                              <Box
-                                sx={{
-                                  width: 10,
-                                  height: 10,
-                                  borderRadius: "50%",
-                                  bgcolor: item.color,
-                                  flexShrink: 0,
-                                  boxShadow: `0 0 0 2.5px ${item.lightColor}`,
-                                }}
-                              />
-                              <Box sx={{ minWidth: 0, flex: 1 }}>
-                                <Typography
-                                  sx={{
-                                    fontSize: { xs: "0.82rem", sm: "0.84rem", md: "0.78rem", lg: "0.82rem" },
-                                    fontWeight: 700,
-                                    color: isHovered ? item.color : "#1e293b",
-                                    lineHeight: 1.2,
-                                    whiteSpace: "nowrap",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    transition: "color 0.2s ease",
-                                  }}
-                                >
-                                  {item.name}
-                                </Typography>
-                              </Box>
-                            </Box>
-                            <Chip
-                              size="small"
-                              label={`${item.percentage}%`}
+                        {/* Fila 1: Indicador con halo + Nombre + Badge de Porcentaje */}
+                        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 0.6 }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0, flex: 1 }}>
+                            <Box
                               sx={{
-                                height: 19,
-                                fontSize: "0.66rem",
-                                fontWeight: 800,
-                                bgcolor: item.lightColor,
-                                color: item.color,
-                                borderRadius: "6px",
-                                px: 0.4,
+                                width: 10,
+                                height: 10,
+                                borderRadius: "50%",
+                                bgcolor: item.color,
                                 flexShrink: 0,
+                                boxShadow: `0 0 0 2.5px ${item.lightColor}`,
                               }}
                             />
+                            <Box sx={{ minWidth: 0, flex: 1 }}>
+                              <Typography
+                                sx={{
+                                  fontSize: { xs: "0.84rem", sm: "0.86rem", md: "0.82rem", lg: "0.86rem" },
+                                  fontWeight: 700,
+                                  color: isHovered ? item.color : "#1e293b",
+                                  lineHeight: 1.2,
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  transition: "color 0.2s ease",
+                                }}
+                              >
+                                {item.name}
+                              </Typography>
+                            </Box>
                           </Box>
-
-                          {/* Fila 2: Monto Total + Acción / Contador */}
-                          <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", mt: "auto" }}>
-                            <Typography
-                              sx={{
-                                fontSize: { xs: "0.95rem", sm: "1rem", md: "0.9rem", lg: "0.98rem" },
-                                fontWeight: 800,
-                                color: "#0f172a",
-                                letterSpacing: "-0.01em",
-                              }}
-                            >
-                              ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                            </Typography>
-                            <Typography
-                              sx={{
-                                fontSize: { xs: "0.7rem", md: "0.68rem", lg: "0.72rem" },
-                                color: isHovered ? item.color : "#94a3b8",
-                                fontWeight: isHovered ? 700 : 500,
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 0.3,
-                                transition: "color 0.2s ease",
-                              }}
-                            >
-                              {isHovered ? "Ver tabla →" : `${item.count} ops`}
-                            </Typography>
-                          </Box>
+                          <Chip
+                            size="small"
+                            label={`${item.percentage}%`}
+                            sx={{
+                              height: 20,
+                              fontSize: "0.68rem",
+                              fontWeight: 800,
+                              bgcolor: item.lightColor,
+                              color: item.color,
+                              borderRadius: "6px",
+                              px: 0.4,
+                              flexShrink: 0,
+                            }}
+                          />
                         </Box>
-                      </Tooltip>
-                    );
-                  })}
-                </Box>
+
+                        {/* Fila 2: Monto Total + Acción / Contador */}
+                        <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", mt: "auto" }}>
+                          <Typography
+                            sx={{
+                              fontSize: { xs: "1rem", sm: "1.05rem", md: "0.95rem", lg: "1.05rem" },
+                              fontWeight: 800,
+                              color: "#0f172a",
+                              letterSpacing: "-0.01em",
+                            }}
+                          >
+                            ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontSize: { xs: "0.72rem", md: "0.7rem", lg: "0.75rem" },
+                              color: isHovered ? item.color : "#94a3b8",
+                              fontWeight: isHovered ? 700 : 500,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.3,
+                              transition: "color 0.2s ease",
+                            }}
+                          >
+                            {isHovered ? "Ver tabla →" : `${item.count} ops`}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Tooltip>
+                  );
+                })}
               </Box>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         )}
       </CardContent>
     </Card>
