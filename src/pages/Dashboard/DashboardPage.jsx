@@ -269,8 +269,14 @@ export function DashboardPage() {
 
           {/* Barra Fija Inferior Mobile */}
           <MobileBottomNav
-            activeNav={activeMobileNav}
-            onChange={(e, val) => setActiveMobileNav(val)}
+            activeNav={0}
+            onChange={(e, val) => {
+              setActiveMobileNav(val);
+              if (val === 0) navigate("/");
+              else if (val === 1) navigate("/history");
+              else if (val === 2) navigate("/profile");
+              else if (val === 3) navigate("/profile");
+            }}
           />
         </Box>
       )}
