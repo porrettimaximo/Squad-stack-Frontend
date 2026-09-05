@@ -38,7 +38,8 @@ import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CloseIcon from "@mui/icons-material/Close";
-import { motion } from "framer-motion";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { motion, AnimatePresence } from "framer-motion";
 
 import AppLayout from "../../components/layout/AppLayout";
 import { useAccount } from "../../hooks/useAccount";
@@ -52,12 +53,16 @@ import MovementPieChart from "../../components/history/MovementPieChart";
  */
 export function HistoryPage() {
   const { transactions: localTransactions } = useAccount();
-  const tableSectionRef = useRef(null);
+  const [viewMode, setViewMode] = useState("chart"); // 'chart' | 'table'
 
-  const handleScrollToTable = () => {
-    if (tableSectionRef.current) {
-      tableSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+  const handleGoToTable = () => {
+    setViewMode("table");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleBackToChart = () => {
+    setViewMode("chart");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Estados de filtros
@@ -138,52 +143,59 @@ export function HistoryPage() {
   return (
     <AppLayout maxWidth={1380} showNavbarTabs={false}>
       <Box sx={{ width: "100%" }}>
-        {/* Cabecera de la Sección */}
-        <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: "10px",
-              bgcolor: "#EEF4FF",
-              color: "#0056D2",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <ReceiptLongOutlinedIcon sx={{ fontSize: 24 }} />
-          </Box>
-          <Box>
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 800,
-                color: "#0F172A",
-                fontSize: { xs: "1.35rem", md: "1.7rem" },
-                letterSpacing: "-0.02em",
-                lineHeight: 1.2,
-              }}
+        {/* ─── VISTAS CONDICIONALES CON ANIMACIÓN FLUIDA: GRÁFICO O TABLA ─── */}
+        <AnimatePresence mode="wait">
+          {viewMode === "chart" ? (
+            <motion.div
+              key="chart-view"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.25 }}
+              style={{ width: "100%" }}
             >
-              Historial de Movimientos
-            </Typography>
-            <Typography sx={{ color: "#64748B", fontSize: "0.85rem" }}>
-              Explorá todas tus operaciones, transferencias y depósitos.
-            </Typography>
-          </Box>
-        </Box>
+              <MovementPieChart
+                transactions={localTransactions && localTransactions.length > 0 ? localTransactions : (items.length > 0 ? items : [])}
+                onGoToTable={handleGoToTable}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="table-view"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.25 }}
+              style={{ width: "100%" }}
+            >
+              {/* Botón para volver al Gráfico */}
+              <Box sx={{ mb: 2.5, display: "flex", alignItems: "center", justifyContent: "flex-start" }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<ArrowBackIcon />}
+                  onClick={handleBackToChart}
+                  sx={{
+                    borderRadius: "12px",
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: "0.85rem",
+                    borderColor: "#CBD5E1",
+                    color: "#0056D2",
+                    bgcolor: "#FFFFFF",
+                    px: 2.2,
+                    py: 0.85,
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
+                    "&:hover": {
+                      borderColor: "#0056D2",
+                      bgcolor: "#EEF4FF",
+                    },
+                  }}
+                >
+                  Volver al Gráfico
+                </Button>
+              </Box>
 
-        {/* ─── 1. GRÁFICO INTERACTIVO DE MOVIMIENTOS (AL ENTRAR CON BOTÓN HACIA LA TABLA) ─── */}
-        <Box sx={{ mb: 3.5, width: "100%" }}>
-          <MovementPieChart
-            transactions={localTransactions && localTransactions.length > 0 ? localTransactions : (items.length > 0 ? items : [])}
-            onGoToTable={handleScrollToTable}
-          />
-        </Box>
-
-        {/* ─── 2. SECCIÓN DE FILTROS Y TABLA DE MOVIMIENTOS ─── */}
-        <Box ref={tableSectionRef} id="tabla-movimientos" sx={{ width: "100%", scrollMarginTop: "24px" }}>
-            {/* ─── BARRA DE FILTROS ─── */}
+              {/* ─── BARRA DE FILTROS ─── */}
             <Paper
               elevation={0}
               sx={{
@@ -563,8 +575,10 @@ export function HistoryPage() {
               />
             </>
           )}
-        </Paper>
-        </Box>
+              </Paper>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ─── MODAL DE COMPROBANTE DIGITAL ─── */}
         {selectedTx && (

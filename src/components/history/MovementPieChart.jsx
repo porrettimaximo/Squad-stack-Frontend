@@ -249,10 +249,10 @@ export const MovementPieChart = ({ transactions = [], onGoToTable }) => {
               }}
             >
               <MenuItem value="TYPE" sx={{ fontSize: "0.84rem", fontWeight: 600 }}>
-                📊 Por Tipo (Ingresos/Egresos)
+                📊 Por Tipo
               </MenuItem>
               <MenuItem value="CATEGORY" sx={{ fontSize: "0.84rem", fontWeight: 600 }}>
-                🏷️ Por Motivo / Concepto
+                🏷️ Por Concepto
               </MenuItem>
             </Select>
           </FormControl>
