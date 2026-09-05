@@ -901,7 +901,7 @@ export function ProfilePage() {
                   >
                     <Grid container spacing={2}>
                       {/* Contraseña */}
-                      <Grid size={{ xs: 12, sm: 4 }}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <Box
                           sx={{
                             p: 2,
@@ -913,70 +913,9 @@ export function ProfilePage() {
                           <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                             Contraseña
                           </Typography>
-                          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 0.4 }}>
-                            <Typography sx={{ fontSize: "1.1rem", fontWeight: 800, color: "#0F172A", letterSpacing: "0.2em" }}>
-                              ••••••••••••
-                            </Typography>
-                            <Chip
-                              label="Protegida"
-                              size="small"
-                              sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#EEF4FF", color: "#0056D2", borderRadius: "5px" }}
-                            />
-                          </Box>
-                        </Box>
-                      </Grid>
-
-                      {/* Cifrado y Seguridad */}
-                      <Grid size={{ xs: 12, sm: 4 }}>
-                        <Box
-                          sx={{
-                            p: 2,
-                            borderRadius: "14px",
-                            bgcolor: "#F8FAFC",
-                            border: "1px solid #E2E8F0",
-                          }}
-                        >
-                          <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                            Cifrado y Seguridad
+                          <Typography sx={{ fontSize: "1.15rem", fontWeight: 800, color: "#0F172A", letterSpacing: "0.2em", mt: 0.4 }}>
+                            ••••••••••••
                           </Typography>
-                          <Typography sx={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A", mt: 0.4 }}>
-                            BCrypt con Salt (Estándar Seguro)
-                          </Typography>
-                        </Box>
-                      </Grid>
-
-                      {/* Protección de Cuenta */}
-                      <Grid size={{ xs: 12, sm: 4 }}>
-                        <Box
-                          sx={{
-                            p: 2,
-                            borderRadius: "14px",
-                            bgcolor: "#F8FAFC",
-                            border: "1px solid #E2E8F0",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          <Box>
-                            <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                              Protección de Cuenta
-                            </Typography>
-                            <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#0F172A", mt: 0.4 }}>
-                              Clave actual requerida
-                            </Typography>
-                          </Box>
-                          <Chip
-                            label="Activo"
-                            size="small"
-                            sx={{
-                              bgcolor: "#DCFCE7",
-                              color: "#15803D",
-                              fontWeight: 700,
-                              fontSize: "0.72rem",
-                              borderRadius: "6px",
-                            }}
-                          />
                         </Box>
                       </Grid>
                     </Grid>
