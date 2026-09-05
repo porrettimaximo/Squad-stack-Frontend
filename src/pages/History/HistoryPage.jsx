@@ -34,7 +34,6 @@ import SouthWestIcon from "@mui/icons-material/SouthWest";
 import NorthEastIcon from "@mui/icons-material/NorthEast";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -132,56 +131,57 @@ export function HistoryPage() {
     <AppLayout maxWidth={1180}>
       <Box sx={{ width: "100%" }}>
         {/* Cabecera de la Sección */}
-        <Box sx={{ mb: 3.5 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
-            <Box
+        <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: "10px",
+              bgcolor: "#EEF4FF",
+              color: "#0056D2",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <ReceiptLongOutlinedIcon sx={{ fontSize: 24 }} />
+          </Box>
+          <Box>
+            <Typography
+              variant="h5"
               sx={{
-                width: 44,
-                height: 44,
-                borderRadius: "12px",
-                bgcolor: "#EEF4FF",
-                color: "#0056D2",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                fontWeight: 800,
+                color: "#0F172A",
+                fontSize: { xs: "1.35rem", md: "1.7rem" },
+                letterSpacing: "-0.02em",
+                lineHeight: 1.2,
               }}
             >
-              <ReceiptLongOutlinedIcon sx={{ fontSize: 26 }} />
-            </Box>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: "#0F172A", fontSize: { xs: "1.6rem", md: "2rem" }, letterSpacing: "-0.02em" }}>
               Historial de Movimientos
             </Typography>
+            <Typography sx={{ color: "#64748B", fontSize: "0.85rem" }}>
+              Explorá todas tus operaciones, transferencias y depósitos.
+            </Typography>
           </Box>
-          <Typography sx={{ color: "#64748B", fontSize: "0.95rem" }}>
-            Explorá el historial de todas las transacciones, depósitos y transferencias con filtros y comprobantes.
-          </Typography>
         </Box>
 
-
-        {/* ─── BARRA DE FILTROS AVANZADOS ─── */}
+        {/* ─── BARRA DE FILTROS ─── */}
         <Paper
           elevation={0}
           sx={{
-            p: 2.5,
-            borderRadius: "18px",
+            p: 1.8,
+            borderRadius: "16px",
             bgcolor: "#FFFFFF",
             border: "1px solid #E2E8F0",
-            mb: 3,
-            boxShadow: "0 4px 15px -3px rgba(15, 23, 42, 0.04)",
+            mb: 2.5,
+            boxShadow: "0 2px 10px -2px rgba(15, 23, 42, 0.03)",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-            <FilterListIcon sx={{ color: "#0056D2", fontSize: 20 }} />
-            <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#0F172A" }}>
-              Filtros avanzados
-            </Typography>
-          </Box>
-
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "1.2fr 1fr 1fr auto", md: "1.4fr 1.2fr 1fr 1fr auto" },
-              gap: 2,
+              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1.4fr 1.15fr 1fr 1fr auto" },
+              gap: 1.5,
               alignItems: "center",
             }}
           >
@@ -197,7 +197,7 @@ export function HistoryPage() {
                     <SearchIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
                   </InputAdornment>
                 ),
-                sx: { borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.9rem" },
+                sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.88rem" },
               }}
             />
 
@@ -209,7 +209,7 @@ export function HistoryPage() {
                 value={typeFilter}
                 label="Tipo de Movimiento"
                 onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
-                sx={{ borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.9rem" }}
+                sx={{ borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.88rem" }}
               >
                 <MenuItem value="all">Todos los tipos</MenuItem>
                 <MenuItem value="1">Depósitos</MenuItem>
@@ -227,7 +227,7 @@ export function HistoryPage() {
               onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
               InputLabelProps={{ shrink: true }}
               InputProps={{
-                sx: { borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.85rem" },
+                sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem" },
               }}
             />
 
@@ -240,7 +240,7 @@ export function HistoryPage() {
               onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
               InputLabelProps={{ shrink: true }}
               InputProps={{
-                sx: { borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.85rem" },
+                sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem" },
               }}
             />
 
@@ -251,13 +251,13 @@ export function HistoryPage() {
                 startIcon={<RestartAltIcon />}
                 onClick={handleClearFilters}
                 sx={{
-                  borderRadius: "12px",
+                  borderRadius: "10px",
                   borderColor: "#CBD5E1",
                   color: "#475569",
                   textTransform: "none",
                   fontWeight: 600,
                   fontSize: "0.85rem",
-                  py: 0.9,
+                  py: 0.8,
                   "&:hover": { bgcolor: "#F8FAFC", borderColor: "#94A3B8" },
                 }}
               >
