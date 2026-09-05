@@ -134,24 +134,9 @@ Squad-stack-Frontend/
 
 ---
 
-## 6. Historias de Usuario Implementadas
-
-### HU-21: Setup de la Arquitectura Frontend
-- Inicialización con React 19 y Vite 8.
-- Estructura modular estándar (`components`, `pages`, `services`, `layout`, `theme`).
-- Cliente Axios centralizado con inyección de Bearer Token y deslogueo ante error 401.
-
-### HU-24: Dashboard Principal de la Billetera
-- **Diseño Dual Fiel a Figma:**
-  - **Desktop (100% Full-Window):** Barra lateral izquierda azul marino fija, barra superior con pestañas, tarjeta destacada con levitación, grid de 4 botones y columna de actividad reciente.
-  - **Mobile:** Cabecera azul marina superior `#001639`, lámina inferior blanca curvada (`borderRadius: 28px 28px 0 0`), botones primarios táctiles en azul sólido, transacciones en tarjetas individuales separadas y barra inferior fija.
-- **Acciones Rápidas:** Modales interactivos para **Depositar** y **Transferir** dinero en tiempo real.
-- **Consumo de APIs:** Integración con `GET /api/transactions/me?page=1&pageSize=5`, `POST /api/accounts/deposit` y `POST /api/transactions/transfer`.
-- **Feedback Visual:** Animaciones de carga con `Skeleton` de Material UI y alertas con botón *"Reintentar"*.
-
 ---
 
-## 7. Instalación y Puesta en Marcha
+## 6. Instalación y Puesta en Marcha
 
 ### Prerrequisitos
 * Node.js v18.0.0 o superior
