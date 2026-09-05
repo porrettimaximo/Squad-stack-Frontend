@@ -38,10 +38,11 @@ export const MovementPieChart = ({
   onSelectCategory,
 }) => {
   const [hoveredSlice, setHoveredSlice] = useState(null);
-  // Modos de filtro: 'last30' (Últimos 30 días) o 'custom' (Personalizado)
+
+  // Únicamente dos opciones de filtro: 'last30' (predefinido) o 'custom'
   const [filterMode, setFilterMode] = useState("last30");
 
-  // Fechas iniciales para el modo personalizado (por defecto últimos 30 días)
+  // Fechas para el modo personalizado (inicializadas con los últimos 30 días para comodidad)
   const defaultDates = useMemo(() => {
     const now = new Date();
     const past30 = new Date(now);
@@ -197,7 +198,7 @@ export const MovementPieChart = ({
         }}
       />
 
-      {/* Cabecera: Total destacado a la izquierda + Botones de período y acceso a tabla a la derecha */}
+      {/* Cabecera: Total destacado a la izquierda + Solo 2 botones de período y botón a la tabla a la derecha */}
       <Box
         sx={{
           p: { xs: 2, sm: 2.5, md: 3 },
@@ -209,7 +210,7 @@ export const MovementPieChart = ({
           gap: { xs: 2, md: 2.5 },
         }}
       >
-        {/* Total General Destacado (Reemplaza el título 'Distribución por concepto') */}
+        {/* Total General Destacado */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.8 }}>
           <Box
             sx={{
@@ -267,7 +268,7 @@ export const MovementPieChart = ({
           </Box>
         </Box>
 
-        {/* Acciones de Cabecera: Botones 'Últimos 30 días' y 'Personalizado' + Botón a la Tabla */}
+        {/* Acciones de Cabecera: ÚNICAMENTE los 2 botones ('Últimos 30 días' y 'Personalizado') + Botón a la Tabla */}
         <Box
           sx={{
             display: "flex",
@@ -277,7 +278,7 @@ export const MovementPieChart = ({
             width: { xs: "100%", md: "auto" },
           }}
         >
-          {/* Selector Segmentado de 2 Botones */}
+          {/* Selector con solo dos botones */}
           <Box
             sx={{
               display: "flex",
@@ -369,7 +370,7 @@ export const MovementPieChart = ({
         </Box>
       </Box>
 
-      {/* Rango de Fechas Personalizado: Aparece al apretar 'Personalizado' */}
+      {/* Rango de Fechas Personalizado: Aparece al apretar 'Personalizado' con 'Desde' y 'Hasta' claramente visibles */}
       <AnimatePresence>
         {filterMode === "custom" && (
           <motion.div
@@ -382,41 +383,97 @@ export const MovementPieChart = ({
             <Box
               sx={{
                 px: { xs: 2, sm: 3 },
-                py: 1.6,
+                py: 2,
                 bgcolor: "#F8FAFC",
                 borderBottom: "1px solid #E2E8F0",
                 display: "flex",
-                alignItems: "center",
+                alignItems: { xs: "flex-start", sm: "center" },
                 justifyContent: "space-between",
+                flexDirection: { xs: "column", sm: "row" },
                 gap: 2,
-                flexWrap: "wrap",
               }}
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <CalendarMonthIcon sx={{ color: "#0056D2", fontSize: 20 }} />
-                <Typography sx={{ fontSize: "0.84rem", fontWeight: 700, color: "#334155" }}>
-                  Seleccionar fechas del período:
+                <CalendarMonthIcon sx={{ color: "#0056D2", fontSize: 22 }} />
+                <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#1E293B" }}>
+                  Filtrar por rango específico
                 </Typography>
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-                <TextField
-                  size="small"
-                  type="date"
-                  label="Desde"
-                  value={customDateFrom}
-                  onChange={(e) => setCustomDateFrom(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                  sx={{ bgcolor: "#FFFFFF", borderRadius: "10px", width: 165 }}
-                />
-                <TextField
-                  size="small"
-                  type="date"
-                  label="Hasta"
-                  value={customDateTo}
-                  onChange={(e) => setCustomDateTo(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                  sx={{ bgcolor: "#FFFFFF", borderRadius: "10px", width: 165 }}
-                />
+
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: { xs: 2, sm: 3 },
+                  flexWrap: "wrap",
+                  width: { xs: "100%", sm: "auto" },
+                }}
+              >
+                {/* Selector 'Desde' con etiqueta clara */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: { xs: 1, sm: "initial" } }}>
+                  <Typography
+                    component="label"
+                    htmlFor="filter-date-from"
+                    sx={{
+                      fontSize: "0.86rem",
+                      fontWeight: 700,
+                      color: "#334155",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Desde:
+                  </Typography>
+                  <TextField
+                    id="filter-date-from"
+                    size="small"
+                    type="date"
+                    value={customDateFrom}
+                    onChange={(e) => setCustomDateFrom(e.target.value)}
+                    sx={{
+                      bgcolor: "#FFFFFF",
+                      borderRadius: "10px",
+                      width: { xs: "100%", sm: 160 },
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "10px",
+                        fontSize: "0.85rem",
+                        height: 38,
+                      },
+                    }}
+                  />
+                </Box>
+
+                {/* Selector 'Hasta' con etiqueta clara */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: { xs: 1, sm: "initial" } }}>
+                  <Typography
+                    component="label"
+                    htmlFor="filter-date-to"
+                    sx={{
+                      fontSize: "0.86rem",
+                      fontWeight: 700,
+                      color: "#334155",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Hasta:
+                  </Typography>
+                  <TextField
+                    id="filter-date-to"
+                    size="small"
+                    type="date"
+                    value={customDateTo}
+                    onChange={(e) => setCustomDateTo(e.target.value)}
+                    sx={{
+                      bgcolor: "#FFFFFF",
+                      borderRadius: "10px",
+                      width: { xs: "100%", sm: 160 },
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "10px",
+                        fontSize: "0.85rem",
+                        height: 38,
+                      },
+                    }}
+                  />
+                </Box>
               </Box>
             </Box>
           </motion.div>
