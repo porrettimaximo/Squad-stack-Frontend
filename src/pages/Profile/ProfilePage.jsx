@@ -24,10 +24,12 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import SecurityIcon from "@mui/icons-material/Security";
-import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import SaveIcon from "@mui/icons-material/Save";
 import KeyIcon from "@mui/icons-material/Key";
-import { motion } from "framer-motion";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import CloseIcon from "@mui/icons-material/Close";
+import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
+import { motion, AnimatePresence } from "framer-motion";
 
 import AppLayout from "../../components/layout/AppLayout";
 import { useAccount } from "../../hooks/useAccount";
@@ -36,7 +38,8 @@ import { formatTransactionDate } from "../../utils/formatters";
 
 /**
  * HU-28: Pantalla de perfil de usuario.
- * Permite visualizar y editar datos personales, cambiar contraseña y actualizar el nombre en la Navbar.
+ * Muestra todos los datos del usuario con modo visualización y modo formulario editable
+ * al hacer clic en "Editar datos personales". Sin campo de rol.
  */
 export function ProfilePage() {
   const { user, updateUserProfile } = useAccount();
@@ -46,15 +49,23 @@ export function ProfilePage() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
 
-  // Datos de usuario
+  // Modo edición para datos personales
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Datos del perfil (modo visualización)
   const [profileData, setProfileData] = useState({
     id: null,
     firstName: "",
     lastName: "",
     email: "",
-    role: "User",
     createdAt: "",
     isActive: true,
+  });
+
+  // Datos del formulario en modo edición
+  const [editFormData, setEditFormData] = useState({
+    firstName: "",
+    lastName: "",
   });
 
   // Campos de contraseña
@@ -90,33 +101,42 @@ export function ProfilePage() {
             firstName: data.firstName || "",
             lastName: data.lastName || "",
             email: data.email || "",
-            role: data.role || "User",
             createdAt: data.createdAt || "",
             isActive: data.isActive ?? true,
           });
 
-          // Actualizar contexto global para sincronizar navbar
+          setEditFormData({
+            firstName: data.firstName || "",
+            lastName: data.lastName || "",
+          });
+
+          // Sincronizar con contexto global
           updateUserProfile({
             id: data.id,
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email,
-            role: data.role,
           });
         }
       } catch (error) {
         console.warn("No se pudo obtener el perfil de /users/me, usando datos en contexto:", error?.message);
         if (isMounted) {
-          // Fallback a datos en memoria del contexto
           const names = (user?.name || "Alejandro Silva").split(" ");
+          const fallbackFirst = user?.firstName || names[0] || "Alejandro";
+          const fallbackLast = user?.lastName || names.slice(1).join(" ") || "Silva";
+
           setProfileData({
             id: user?.id || 1,
-            firstName: user?.firstName || names[0] || "Alejandro",
-            lastName: user?.lastName || names.slice(1).join(" ") || "Silva",
+            firstName: fallbackFirst,
+            lastName: fallbackLast,
             email: user?.email || "alejandro.silva@digitalars.com",
-            role: user?.role || "User",
             createdAt: user?.createdAt || new Date().toISOString(),
             isActive: true,
+          });
+
+          setEditFormData({
+            firstName: fallbackFirst,
+            lastName: fallbackLast,
           });
         }
       } finally {
@@ -132,10 +152,28 @@ export function ProfilePage() {
     };
   }, []);
 
-  // Manejador de cambios en datos personales
-  const handleProfileChange = (e) => {
+  // Iniciar edición
+  const handleStartEdit = () => {
+    setEditFormData({
+      firstName: profileData.firstName,
+      lastName: profileData.lastName,
+    });
+    setIsEditing(true);
+  };
+
+  // Cancelar edición
+  const handleCancelEdit = () => {
+    setEditFormData({
+      firstName: profileData.firstName,
+      lastName: profileData.lastName,
+    });
+    setIsEditing(false);
+  };
+
+  // Manejador de cambios en formulario de edición
+  const handleEditFormChange = (e) => {
     const { name, value } = e.target;
-    setProfileData((prev) => ({
+    setEditFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -154,7 +192,7 @@ export function ProfilePage() {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
 
-    if (!profileData.firstName.trim()) {
+    if (!editFormData.firstName.trim()) {
       setSnackbar({
         open: true,
         message: "El nombre es obligatorio.",
@@ -163,7 +201,7 @@ export function ProfilePage() {
       return;
     }
 
-    if (!profileData.lastName.trim()) {
+    if (!editFormData.lastName.trim()) {
       setSnackbar({
         open: true,
         message: "El apellido es obligatorio.",
@@ -175,26 +213,27 @@ export function ProfilePage() {
     setSavingProfile(true);
     try {
       const updated = await userService.updateMyProfile({
-        firstName: profileData.firstName,
-        lastName: profileData.lastName,
+        firstName: editFormData.firstName,
+        lastName: editFormData.lastName,
       });
 
-      // Actualizar estado local si el backend devolvió el usuario actualizado
-      if (updated) {
-        setProfileData((prev) => ({
-          ...prev,
-          firstName: updated.firstName || prev.firstName,
-          lastName: updated.lastName || prev.lastName,
-          email: updated.email || prev.email,
-          role: updated.role || prev.role,
-        }));
-      }
+      const newFirst = updated?.firstName || editFormData.firstName.trim();
+      const newLast = updated?.lastName || editFormData.lastName.trim();
 
-      // Actualizar el estado global en AccountContext: actualiza la Navbar de inmediato
+      setProfileData((prev) => ({
+        ...prev,
+        firstName: newFirst,
+        lastName: newLast,
+      }));
+
+      // Actualizar contexto global (Navbar superior se actualiza de inmediato)
       updateUserProfile({
-        firstName: profileData.firstName.trim(),
-        lastName: profileData.lastName.trim(),
+        firstName: newFirst,
+        lastName: newLast,
       });
+
+      // Salir del modo edición
+      setIsEditing(false);
 
       setSnackbar({
         open: true,
@@ -207,12 +246,21 @@ export function ProfilePage() {
         error.message ||
         "Error al guardar los datos personales.";
 
-      // Si el backend no está disponible, aplicar cambio en memoria para experiencia offline reactiva
+      // Fallback offline
       if (error.code === "ERR_NETWORK" || !error.response) {
+        setProfileData((prev) => ({
+          ...prev,
+          firstName: editFormData.firstName.trim(),
+          lastName: editFormData.lastName.trim(),
+        }));
+
         updateUserProfile({
-          firstName: profileData.firstName.trim(),
-          lastName: profileData.lastName.trim(),
+          firstName: editFormData.firstName.trim(),
+          lastName: editFormData.lastName.trim(),
         });
+
+        setIsEditing(false);
+
         setSnackbar({
           open: true,
           message: "Datos guardados localmente (modo offline).",
@@ -315,7 +363,7 @@ export function ProfilePage() {
   return (
     <AppLayout activeSidebarItem="perfil" showNavbarTabs={false} maxWidth={1100}>
       <Box sx={{ width: "100%", pb: 4 }}>
-        {/* Cabecera / Hero del Perfil */}
+        {/* Cabecera / Hero del Perfil (Sin Rol) */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -404,38 +452,32 @@ export function ProfilePage() {
 
                 <Typography
                   sx={{
-                    color: "rgba(255, 255, 255, 0.85)",
+                    color: "rgba(255, 255, 255, 0.88)",
                     fontSize: "0.9rem",
                     display: "flex",
                     alignItems: "center",
                     gap: 0.6,
-                    mb: 1,
+                    mb: 0.8,
                   }}
                 >
                   <EmailOutlinedIcon sx={{ fontSize: 16 }} />
                   {profileData.email || "cargando..."}
                 </Typography>
 
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-                  <Chip
-                    icon={<BadgeOutlinedIcon sx={{ fontSize: "14px !important", color: "#FFFFFF !important" }} />}
-                    label={`Rol: ${profileData.role === "Admin" ? "Administrador" : "Cliente"}`}
-                    size="small"
+                {profileData.createdAt && (
+                  <Typography
                     sx={{
-                      bgcolor: "rgba(255, 255, 255, 0.18)",
-                      color: "#FFFFFF",
-                      fontWeight: 600,
-                      fontSize: "0.75rem",
-                      borderRadius: "6px",
-                      backdropFilter: "blur(4px)",
+                      fontSize: "0.78rem",
+                      color: "rgba(255, 255, 255, 0.75)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
                     }}
-                  />
-                  {profileData.createdAt && (
-                    <Typography sx={{ fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.75)" }}>
-                      Miembro desde: {formatTransactionDate(profileData.createdAt)}
-                    </Typography>
-                  )}
-                </Box>
+                  >
+                    <CalendarMonthOutlinedIcon sx={{ fontSize: 15 }} />
+                    Miembro desde: {formatTransactionDate(profileData.createdAt)}
+                  </Typography>
+                )}
               </Box>
             </Box>
           </Card>
@@ -443,7 +485,7 @@ export function ProfilePage() {
 
         {/* Contenido Principal en Cuadrícula: Datos Personales + Seguridad */}
         <Grid container spacing={3}>
-          {/* Tarjeta 1: Información Personal (Nombre, Apellido, Email) */}
+          {/* Tarjeta 1: Información Personal (Visualización con botón o Formulario Editable) */}
           <Grid size={{ xs: 12, md: 6 }}>
             <motion.div
               initial={{ opacity: 0, y: 15 }}
@@ -463,145 +505,330 @@ export function ProfilePage() {
                 }}
               >
                 <CardContent sx={{ p: { xs: 2.5, sm: 3.5 }, flex: 1, display: "flex", flexDirection: "column" }}>
-                  {/* Título de Sección */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.2, mb: 1 }}>
-                    <Box
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: "10px",
-                        bgcolor: "#EFF6FF",
-                        color: "#0056D2",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <PersonOutlineOutlinedIcon sx={{ fontSize: 20 }} />
+                  {/* Título de Sección con estado de visualización o edición */}
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+                      <Box
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: "10px",
+                          bgcolor: "#EFF6FF",
+                          color: "#0056D2",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <PersonOutlineOutlinedIcon sx={{ fontSize: 20 }} />
+                      </Box>
+                      <Box>
+                        <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#0F172A" }}>
+                          Datos Personales
+                        </Typography>
+                        <Typography sx={{ fontSize: "0.8rem", color: "#64748B" }}>
+                          {isEditing ? "Modificá tus datos personales" : "Información registrada en tu cuenta"}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Box>
-                      <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#0F172A" }}>
-                        Datos Personales
-                      </Typography>
-                      <Typography sx={{ fontSize: "0.8rem", color: "#64748B" }}>
-                        Actualizá tu nombre y apellido visibles en la cuenta
-                      </Typography>
-                    </Box>
+
+                    {isEditing && (
+                      <Chip
+                        label="Modo Edición"
+                        size="small"
+                        sx={{
+                          bgcolor: "#EFF6FF",
+                          color: "#0056D2",
+                          fontWeight: 700,
+                          fontSize: "0.72rem",
+                          borderRadius: "6px",
+                        }}
+                      />
+                    )}
                   </Box>
 
                   <Divider sx={{ my: 2 }} />
 
-                  {/* Formulario de Datos Personales */}
-                  <Box component="form" onSubmit={handleSaveProfile} sx={{ display: "flex", flexDirection: "column", gap: 2.2, flex: 1 }}>
-                    {/* Campo Nombre */}
-                    <Box>
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
-                        Nombre *
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        name="firstName"
-                        placeholder="Ingresá tu nombre"
-                        value={profileData.firstName}
-                        onChange={handleProfileChange}
-                        disabled={initialLoading || savingProfile}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <PersonOutlineOutlinedIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
-                            </InputAdornment>
-                          ),
-                          sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.9rem" },
-                        }}
-                      />
-                    </Box>
-
-                    {/* Campo Apellido */}
-                    <Box>
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
-                        Apellido *
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        name="lastName"
-                        placeholder="Ingresá tu apellido"
-                        value={profileData.lastName}
-                        onChange={handleProfileChange}
-                        disabled={initialLoading || savingProfile}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <PersonOutlineOutlinedIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
-                            </InputAdornment>
-                          ),
-                          sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.9rem" },
-                        }}
-                      />
-                    </Box>
-
-                    {/* Campo Email (Solo lectura) */}
-                    <Box>
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.6 }}>
-                        <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155" }}>
-                          Correo Electrónico
-                        </Typography>
-                        <Tooltip title="El correo electrónico identifica tu cuenta y no puede modificarse directamente por seguridad.">
-                          <Chip
-                            icon={<LockOutlinedIcon sx={{ fontSize: "13px !important" }} />}
-                            label="Solo lectura"
-                            size="small"
-                            sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#F1F5F9", color: "#64748B", borderRadius: "5px" }}
-                          />
-                        </Tooltip>
-                      </Box>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        value={profileData.email}
-                        disabled
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <EmailOutlinedIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
-                            </InputAdornment>
-                          ),
-                          sx: {
-                            borderRadius: "10px",
-                            bgcolor: "#F1F5F9",
-                            fontSize: "0.9rem",
-                            "& input": { color: "#475569", cursor: "not-allowed" },
-                          },
-                        }}
-                      />
-                    </Box>
-
-                    {/* Botón Guardar Datos Personales */}
-                    <Box sx={{ mt: "auto", pt: 1.5 }}>
-                      <Button
-                        type="submit"
-                        fullWidth
-                        variant="contained"
-                        disabled={initialLoading || savingProfile}
-                        startIcon={savingProfile ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
-                        sx={{
-                          height: 44,
-                          borderRadius: "12px",
-                          background: "linear-gradient(135deg, #0056D2 0%, #1d4ed8 100%)",
-                          textTransform: "none",
-                          fontWeight: 700,
-                          fontSize: "0.9rem",
-                          boxShadow: "0 4px 12px rgba(0, 86, 210, 0.25)",
-                          "&:hover": {
-                            background: "linear-gradient(135deg, #0047B3 0%, #1e40af 100%)",
-                          },
-                        }}
+                  {/* ─── ANIMACIÓN: VISTA DE DATOS O FORMULARIO EDITABLE ─── */}
+                  <AnimatePresence mode="wait">
+                    {!isEditing ? (
+                      /* 1. MODO VISUALIZACIÓN: TODOS LOS DATOS + BOTÓN 'EDITAR DATOS PERSONALES' */
+                      <motion.div
+                        key="view-mode"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2 }}
+                        style={{ display: "flex", flexDirection: "column", flex: 1 }}
                       >
-                        {savingProfile ? "Guardando cambios..." : "Guardar datos personales"}
-                      </Button>
-                    </Box>
-                  </Box>
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.8, flex: 1 }}>
+                          {/* Fila 1: Nombre */}
+                          <Box
+                            sx={{
+                              p: 1.5,
+                              borderRadius: "12px",
+                              bgcolor: "#F8FAFC",
+                              border: "1px solid #E2E8F0",
+                            }}
+                          >
+                            <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                              Nombre
+                            </Typography>
+                            <Typography sx={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A", mt: 0.3 }}>
+                              {profileData.firstName || "—"}
+                            </Typography>
+                          </Box>
+
+                          {/* Fila 2: Apellido */}
+                          <Box
+                            sx={{
+                              p: 1.5,
+                              borderRadius: "12px",
+                              bgcolor: "#F8FAFC",
+                              border: "1px solid #E2E8F0",
+                            }}
+                          >
+                            <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                              Apellido
+                            </Typography>
+                            <Typography sx={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A", mt: 0.3 }}>
+                              {profileData.lastName || "—"}
+                            </Typography>
+                          </Box>
+
+                          {/* Fila 3: Correo Electrónico */}
+                          <Box
+                            sx={{
+                              p: 1.5,
+                              borderRadius: "12px",
+                              bgcolor: "#F8FAFC",
+                              border: "1px solid #E2E8F0",
+                            }}
+                          >
+                            <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                              Correo Electrónico
+                            </Typography>
+                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 0.3 }}>
+                              <Typography sx={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A" }}>
+                                {profileData.email || "—"}
+                              </Typography>
+                              <Tooltip title="Identificador único de la cuenta">
+                                <Chip
+                                  icon={<LockOutlinedIcon sx={{ fontSize: "13px !important" }} />}
+                                  label="Principal"
+                                  size="small"
+                                  sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#EEF4FF", color: "#0056D2", borderRadius: "5px" }}
+                                />
+                              </Tooltip>
+                            </Box>
+                          </Box>
+
+                          {/* Fila 4: Fecha de Registro y Estado */}
+                          <Box
+                            sx={{
+                              p: 1.5,
+                              borderRadius: "12px",
+                              bgcolor: "#F8FAFC",
+                              border: "1px solid #E2E8F0",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <Box>
+                              <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                                Fecha de Registro
+                              </Typography>
+                              <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#0F172A", mt: 0.3 }}>
+                                {profileData.createdAt ? formatTransactionDate(profileData.createdAt) : "—"}
+                              </Typography>
+                            </Box>
+                            <Chip
+                              label="Activa"
+                              size="small"
+                              sx={{
+                                bgcolor: "#DCFCE7",
+                                color: "#15803D",
+                                fontWeight: 700,
+                                fontSize: "0.72rem",
+                                borderRadius: "6px",
+                              }}
+                            />
+                          </Box>
+                        </Box>
+
+                        {/* Botón Prominente: 'Editar datos personales' */}
+                        <Box sx={{ mt: 3, pt: 1 }}>
+                          <Button
+                            fullWidth
+                            variant="contained"
+                            onClick={handleStartEdit}
+                            startIcon={<EditOutlinedIcon />}
+                            disabled={initialLoading}
+                            sx={{
+                              height: 44,
+                              borderRadius: "12px",
+                              background: "linear-gradient(135deg, #0056D2 0%, #1d4ed8 100%)",
+                              textTransform: "none",
+                              fontWeight: 700,
+                              fontSize: "0.9rem",
+                              boxShadow: "0 4px 12px rgba(0, 86, 210, 0.25)",
+                              "&:hover": {
+                                background: "linear-gradient(135deg, #0047B3 0%, #1e40af 100%)",
+                              },
+                            }}
+                          >
+                            Editar datos personales
+                          </Button>
+                        </Box>
+                      </motion.div>
+                    ) : (
+                      /* 2. MODO EDICIÓN: FORMULARIO TRANSFORMADO CON BOTONES GUARDAR Y CANCELAR */
+                      <motion.div
+                        key="edit-mode"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2 }}
+                        style={{ display: "flex", flexDirection: "column", flex: 1 }}
+                      >
+                        <Box component="form" onSubmit={handleSaveProfile} sx={{ display: "flex", flexDirection: "column", gap: 2.2, flex: 1 }}>
+                          {/* Campo Nombre */}
+                          <Box>
+                            <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
+                              Nombre *
+                            </Typography>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              name="firstName"
+                              placeholder="Ingresá tu nombre"
+                              value={editFormData.firstName}
+                              onChange={handleEditFormChange}
+                              disabled={savingProfile}
+                              autoFocus
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <PersonOutlineOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
+                                  </InputAdornment>
+                                ),
+                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                              }}
+                            />
+                          </Box>
+
+                          {/* Campo Apellido */}
+                          <Box>
+                            <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
+                              Apellido *
+                            </Typography>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              name="lastName"
+                              placeholder="Ingresá tu apellido"
+                              value={editFormData.lastName}
+                              onChange={handleEditFormChange}
+                              disabled={savingProfile}
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <PersonOutlineOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
+                                  </InputAdornment>
+                                ),
+                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                              }}
+                            />
+                          </Box>
+
+                          {/* Campo Email (Solo lectura) */}
+                          <Box>
+                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.6 }}>
+                              <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155" }}>
+                                Correo Electrónico
+                              </Typography>
+                              <Tooltip title="El correo electrónico identifica tu cuenta y no puede modificarse por seguridad.">
+                                <Chip
+                                  icon={<LockOutlinedIcon sx={{ fontSize: "13px !important" }} />}
+                                  label="No editable"
+                                  size="small"
+                                  sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#F1F5F9", color: "#64748B", borderRadius: "5px" }}
+                                />
+                              </Tooltip>
+                            </Box>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              value={profileData.email}
+                              disabled
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <EmailOutlinedIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
+                                  </InputAdornment>
+                                ),
+                                sx: {
+                                  borderRadius: "10px",
+                                  bgcolor: "#F1F5F9",
+                                  fontSize: "0.9rem",
+                                  "& input": { color: "#475569", cursor: "not-allowed" },
+                                },
+                              }}
+                            />
+                          </Box>
+
+                          {/* Botones de Acción: Guardar y Cancelar */}
+                          <Box sx={{ mt: "auto", pt: 2, display: "flex", gap: 1.5 }}>
+                            <Button
+                              type="submit"
+                              fullWidth
+                              variant="contained"
+                              disabled={savingProfile}
+                              startIcon={savingProfile ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
+                              sx={{
+                                height: 44,
+                                borderRadius: "12px",
+                                background: "linear-gradient(135deg, #0056D2 0%, #1d4ed8 100%)",
+                                textTransform: "none",
+                                fontWeight: 700,
+                                fontSize: "0.9rem",
+                                boxShadow: "0 4px 12px rgba(0, 86, 210, 0.25)",
+                                "&:hover": {
+                                  background: "linear-gradient(135deg, #0047B3 0%, #1e40af 100%)",
+                                },
+                              }}
+                            >
+                              {savingProfile ? "Guardando..." : "Guardar cambios"}
+                            </Button>
+
+                            <Button
+                              variant="outlined"
+                              onClick={handleCancelEdit}
+                              disabled={savingProfile}
+                              startIcon={<CloseIcon />}
+                              sx={{
+                                height: 44,
+                                borderRadius: "12px",
+                                borderColor: "#CBD5E1",
+                                color: "#475569",
+                                textTransform: "none",
+                                fontWeight: 700,
+                                fontSize: "0.9rem",
+                                px: 2.5,
+                                "&:hover": {
+                                  borderColor: "#94A3B8",
+                                  bgcolor: "#F8FAFC",
+                                },
+                              }}
+                            >
+                              Cancelar
+                            </Button>
+                          </Box>
+                        </Box>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </CardContent>
               </Card>
             </motion.div>
