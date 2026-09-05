@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -39,8 +39,6 @@ import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CloseIcon from "@mui/icons-material/Close";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { motion } from "framer-motion";
 
 import AppLayout from "../../components/layout/AppLayout";
@@ -74,45 +72,6 @@ export function HistoryPage() {
   const [selectedTx, setSelectedTx] = useState(null);
   const [copied, setCopied] = useState(false);
 
-  // Pool completo para estadísticas
-  const allPool = useMemo(() => {
-    return localTransactions.length > 0
-      ? localTransactions
-      : transactionService.getDemoTransactions();
-  }, [localTransactions]);
-
-  // Métricas de resumen (KPIs)
-  const stats = useMemo(() => {
-    let totalIncome = 0;
-    let totalExpense = 0;
-    let depositsCount = 0;
-    let incomesCount = 0;
-    let expensesCount = 0;
-
-    allPool.forEach((tx) => {
-      const amt = Number(tx.amount) || 0;
-      if (tx.type === 1) {
-        totalIncome += amt;
-        depositsCount++;
-      } else if (tx.type === 2) {
-        totalIncome += amt;
-        incomesCount++;
-      } else {
-        totalExpense += amt;
-        expensesCount++;
-      }
-    });
-
-    return {
-      totalCount: allPool.length,
-      depositsCount,
-      incomesCount,
-      expensesCount,
-      totalIncome,
-      totalExpense,
-      netBalance: totalIncome - totalExpense,
-    };
-  }, [allPool]);
 
   // Carga de historial desde la API o fallback local
   const loadHistory = useCallback(async () => {
@@ -198,177 +157,6 @@ export function HistoryPage() {
           </Typography>
         </Box>
 
-        {/* ─── TARJETAS DE RESUMEN (KPIs) ─── */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(4, 1fr)" },
-            gap: 2,
-            mb: 3.5,
-          }}
-        >
-          {/* Card 1: Total Movimientos */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2.2,
-              borderRadius: "16px",
-              bgcolor: "#FFFFFF",
-              border: "1px solid #E2E8F0",
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-            }}
-          >
-            <Avatar sx={{ bgcolor: "#EEF4FF", color: "#0056D2", width: 44, height: 44 }}>
-              <ReceiptLongOutlinedIcon sx={{ fontSize: 22 }} />
-            </Avatar>
-            <Box>
-              <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600, display: "block" }}>
-                Total Operaciones
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: "#0F172A", lineHeight: 1.2 }}>
-                {stats.totalCount}
-              </Typography>
-            </Box>
-          </Paper>
-
-          {/* Card 2: Total Ingresos */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2.2,
-              borderRadius: "16px",
-              bgcolor: "#FFFFFF",
-              border: "1px solid #E2E8F0",
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-            }}
-          >
-            <Avatar sx={{ bgcolor: "#DCFCE7", color: "#16A34A", width: 44, height: 44 }}>
-              <TrendingUpIcon sx={{ fontSize: 22 }} />
-            </Avatar>
-            <Box>
-              <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600, display: "block" }}>
-                Total Ingresos
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: "#16A34A", lineHeight: 1.2 }}>
-                +{formatCurrency(stats.totalIncome)}
-              </Typography>
-            </Box>
-          </Paper>
-
-          {/* Card 3: Total Egresos */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2.2,
-              borderRadius: "16px",
-              bgcolor: "#FFFFFF",
-              border: "1px solid #E2E8F0",
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-            }}
-          >
-            <Avatar sx={{ bgcolor: "#FEE2E2", color: "#DC2626", width: 44, height: 44 }}>
-              <TrendingDownIcon sx={{ fontSize: 22 }} />
-            </Avatar>
-            <Box>
-              <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600, display: "block" }}>
-                Total Egresos
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: "#DC2626", lineHeight: 1.2 }}>
-                -{formatCurrency(stats.totalExpense)}
-              </Typography>
-            </Box>
-          </Paper>
-
-          {/* Card 4: Balance Neto */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2.2,
-              borderRadius: "16px",
-              bgcolor: "#FFFFFF",
-              border: "1px solid #E2E8F0",
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-            }}
-          >
-            <Avatar sx={{ bgcolor: "#F1F5F9", color: "#0F172A", width: 44, height: 44 }}>
-              <AccountBalanceWalletIcon sx={{ fontSize: 22 }} />
-            </Avatar>
-            <Box>
-              <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600, display: "block" }}>
-                Balance Neto
-              </Typography>
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 800,
-                  color: stats.netBalance >= 0 ? "#0F172A" : "#DC2626",
-                  lineHeight: 1.2,
-                }}
-              >
-                {formatCurrency(stats.netBalance)}
-              </Typography>
-            </Box>
-          </Paper>
-        </Box>
-
-        {/* ─── PESTAÑAS DE FILTRO RÁPIDO ─── */}
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
-          {[
-            { key: "all", label: "Todos", count: stats.totalCount },
-            { key: "1", label: "Depósitos", count: stats.depositsCount },
-            { key: "2", label: "Ingresos", count: stats.incomesCount },
-            { key: "3", label: "Egresos", count: stats.expensesCount },
-          ].map((tab) => {
-            const isSelected = typeFilter === tab.key;
-            return (
-              <Button
-                key={tab.key}
-                variant={isSelected ? "contained" : "outlined"}
-                onClick={() => {
-                  setTypeFilter(tab.key);
-                  setPage(1);
-                }}
-                sx={{
-                  borderRadius: "10px",
-                  px: 2,
-                  py: 0.6,
-                  textTransform: "none",
-                  fontWeight: 700,
-                  fontSize: "0.85rem",
-                  bgcolor: isSelected ? "#0056D2" : "#FFFFFF",
-                  borderColor: isSelected ? "#0056D2" : "#CBD5E1",
-                  color: isSelected ? "#FFFFFF" : "#475569",
-                  "&:hover": {
-                    bgcolor: isSelected ? "#0047B3" : "#F8FAFC",
-                    borderColor: isSelected ? "#0047B3" : "#94A3B8",
-                  },
-                }}
-              >
-                {tab.label}
-                <Chip
-                  label={tab.count}
-                  size="small"
-                  sx={{
-                    ml: 1,
-                    height: 20,
-                    fontSize: "0.72rem",
-                    fontWeight: 800,
-                    bgcolor: isSelected ? "rgba(255, 255, 255, 0.25)" : "#F1F5F9",
-                    color: isSelected ? "#FFFFFF" : "#64748B",
-                  }}
-                />
-              </Button>
-            );
-          })}
-        </Box>
 
         {/* ─── BARRA DE FILTROS AVANZADOS ─── */}
         <Paper

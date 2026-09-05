@@ -15,7 +15,6 @@ import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import CreditCardOutlinedIcon from "@mui/icons-material/CreditCardOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
-import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import HeadsetMicOutlinedIcon from "@mui/icons-material/HeadsetMicOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
@@ -36,12 +35,6 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
 
   const mainNav = [
     { id: "inicio", label: "Inicio", icon: <HomeOutlinedIcon />, path: "/" },
-    {
-      id: "admin-users",
-      label: "Usuarios",
-      icon: <AdminPanelSettingsOutlinedIcon />,
-      path: "/admin/users",
-    },
     { id: "historial", label: "Historial", icon: <HistoryOutlinedIcon />, path: "/history" },
     { id: "tarjetas", label: "Tarjetas", icon: <CreditCardOutlinedIcon />, path: "/" },
     { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon />, path: "/" },

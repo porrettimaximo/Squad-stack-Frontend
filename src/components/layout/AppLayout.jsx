@@ -33,8 +33,6 @@ export function AppLayout({
   if (location.pathname.startsWith("/history") || location.pathname.startsWith("/historial")) {
     currentActiveItem = "historial";
     currentMobileIndex = 1;
-  } else if (location.pathname.startsWith("/admin")) {
-    currentActiveItem = "admin-users";
   } else if (location.pathname === "/") {
     currentActiveItem = "inicio";
     currentMobileIndex = 0;
@@ -43,7 +41,6 @@ export function AppLayout({
   const handleSidebarClick = (item) => {
     if (item === "inicio") navigate("/");
     else if (item === "historial") navigate("/history");
-    else if (item === "admin-users") navigate("/admin/users");
   };
 
   const handleMobileNavChange = (e, index) => {
