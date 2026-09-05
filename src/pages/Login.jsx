@@ -37,13 +37,8 @@ export const Login = () => {
       //Persiste sesion en AuthContext
       const responseData = await login({ email, password });
 
-      const userRole = responseData?.role || responseData?.user?.role;
-      //Redireccion segun rol
-      if (userRole === "Admin" || userRole === "admin") {
-        navigate("/admin"), { replace: true };
-      } else {
-        navigate("/dashboard", { replace: true });
-      }
+      // Redirección al Dashboard principal
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       const message =
         err.response?.data?.message ||
