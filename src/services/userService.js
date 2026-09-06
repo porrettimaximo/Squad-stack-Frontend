@@ -93,17 +93,33 @@ export const userService = {
   },
 
   /**
-   * Obtiene los datos del perfil del usuario autenticado (HU-13).
+   * Obtiene los datos del perfil del usuario autenticado (HU-13 / HU-28).
    * GET /api/users/me
    */
   async getMyProfile() {
-    try {
-      const response = await api.get("/users/me");
-      return response.data;
-    } catch (error) {
-      console.warn("No se pudo obtener el perfil de /users/me, usando valor por defecto:", error.message);
-      return null;
+    const response = await api.get("/users/me");
+    return response.data;
+  },
+
+  /**
+   * Actualiza los datos del perfil del usuario autenticado (HU-13 / HU-28).
+   * PUT /api/users/me
+   * @param {Object} data - { firstName, lastName, currentPassword, newPassword }
+   * @returns {Promise<Object>}
+   */
+  async updateMyProfile(data) {
+    const payload = {
+      firstName: data.firstName?.trim() || "",
+      lastName: data.lastName?.trim() || "",
+    };
+
+    if (data.newPassword) {
+      payload.currentPassword = data.currentPassword || "";
+      payload.newPassword = data.newPassword;
     }
+
+    const response = await api.put("/users/me", payload);
+    return response.data;
   },
 };
 

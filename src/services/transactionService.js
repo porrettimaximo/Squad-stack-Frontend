@@ -1,4 +1,52 @@
 import api from "./api";
+import { findContact } from "../constants/contacts";
+
+/**
+ * Normaliza y deduce el motivo / concepto oficial de la transacción.
+ */
+function resolveMotive(tx) {
+  const concept = (tx.concept || "").trim();
+  const lower = concept.toLowerCase();
+
+  if (!concept) {
+    if (tx.type === 1) return "Depósito de Fondos";
+    if (tx.type === 2) return "Transferencia Recibida";
+    return "Varios";
+  }
+
+  // Si incluye un motivo después de un separador (ej: "Transferencia recibida · Salud")
+  if (concept.includes("·")) {
+    const parts = concept.split("·");
+    const lastPart = parts[parts.length - 1].trim();
+    if (lastPart) return lastPart;
+  }
+
+  // Identificar motivos financieros clave
+  if (lower.includes("alquiler") || lower.includes("vivienda") || lower.includes("expensa")) return "Alquiler";
+  if (lower.includes("comida") || lower.includes("alimento") || lower.includes("starbucks") || lower.includes("restaurant") || lower.includes("café")) return "Comidas y bebidas";
+  if (lower.includes("servicio") || lower.includes("edenor") || lower.includes("luz") || lower.includes("gas") || lower.includes("agua") || lower.includes("spotify") || lower.includes("netflix") || lower.includes("internet")) return "Cuentas y servicios";
+  if (lower.includes("salud") || lower.includes("farmacity") || lower.includes("medico") || lower.includes("médico") || lower.includes("farmacia") || lower.includes("clinica")) return "Salud";
+  if (lower.includes("combustible") || lower.includes("ypf") || lower.includes("shell") || lower.includes("nafta") || lower.includes("transporte") || lower.includes("uber") || lower.includes("cabify") || lower.includes("sube")) return "Transporte";
+  if (lower.includes("compra") || lower.includes("coto") || lower.includes("mercado") || lower.includes("super")) return "Compras";
+  if (lower.includes("educacion") || lower.includes("educación") || lower.includes("curso") || lower.includes("facultad")) return "Educación";
+  if (lower.includes("entretenimiento") || lower.includes("cine") || lower.includes("teatro") || lower.includes("salida")) return "Entretenimiento y cultura";
+  if (lower.includes("honorario") || lower.includes("profesional")) return "Honorarios profesionales";
+  if (lower.includes("haber") || lower.includes("sueldo") || lower.includes("nómina") || lower.includes("cobro de trabajo")) return "Haberes";
+  if (lower.includes("ahorro") || lower.includes("depósito") || lower.includes("deposito")) return "Ahorro";
+  if (lower.includes("invers") || lower.includes("rendimiento")) return "Inversión";
+  if (lower.includes("venta")) return "Venta de bienes";
+  if (lower.includes("familia") || lower.includes("amigo") || lower.includes("ayuda")) return "Familia y amigos";
+  if (lower.includes("viaje") || lower.includes("hotel") || lower.includes("vuelo")) return "Viajes";
+  if (lower.includes("mascota") || lower.includes("veterinaria")) return "Mascotas";
+  if (lower.includes("regalo")) return "Regalos";
+  if (lower.includes("seguro")) return "Seguros";
+
+  if (lower.startsWith("transferencia")) {
+    return "Familia y amigos";
+  }
+
+  return concept;
+}
 
 export const transactionService = {
   /**
@@ -11,21 +59,31 @@ export const transactionService = {
         params: { page: 1, pageSize },
       });
 
-      if (response.data?.items && response.data.items.length > 0) {
+      if (response.data?.items) {
         return response.data.items.map((tx) => {
           const isIncome = tx.type === 1 || tx.type === 2;
           const categoryName = tx.type === 1 ? "DEPÓSITO" : tx.type === 2 ? "INGRESO" : "EGRESO";
-          const formattedDate = tx.date ? new Date(tx.date).toLocaleDateString("es-AR", {
-            day: "2-digit",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-          }) : "Reciente";
+          const rawDateStr = tx.date;
+          const utcDateStr = (typeof rawDateStr === "string" && rawDateStr.includes("T") && !rawDateStr.endsWith("Z") && !rawDateStr.includes("+") && !rawDateStr.includes("-", 10))
+            ? `${rawDateStr}Z`
+            : rawDateStr;
+
+          const txDateObj = utcDateStr ? new Date(utcDateStr) : null;
+          const formattedDate = txDateObj && !isNaN(txDateObj.getTime())
+            ? txDateObj.toLocaleDateString("es-AR", {
+                day: "2-digit",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "Reciente";
 
           let defaultTitle = "Movimiento";
           if (tx.type === 1) defaultTitle = "Depósito de Fondos";
           else if (tx.type === 2) defaultTitle = "Transferencia Recibida";
           else if (tx.type === 3) defaultTitle = `Transferencia a Cuenta #${tx.toAccountId || ""}`.trim();
+
+          const motive = resolveMotive(tx);
 
           return {
             id: tx.id,
@@ -34,15 +92,25 @@ export const transactionService = {
             type: tx.type,
             amount: tx.amount,
             category: categoryName,
+            reason: motive,
+            concept: motive,
+            motive,
             isIncome,
             toAccountId: tx.toAccountId,
-            date: tx.date,
+            counterpart: tx.toAccountId ? `Cuenta #${tx.toAccountId}` : (tx.type === 1 ? "Cuenta Propia (CVU)" : "Directo"),
+            date: utcDateStr,
+            rawDate: utcDateStr,
+            formattedDate,
           };
         });
       }
 
+      const token = localStorage.getItem("token");
+      if (token) return [];
       return this.getDemoTransactions().slice(0, pageSize);
     } catch {
+      const token = localStorage.getItem("token");
+      if (token) return [];
       return this.getDemoTransactions().slice(0, pageSize);
     }
   },
@@ -61,18 +129,27 @@ export const transactionService = {
     localTransactions = [],
   } = {}) {
     const params = { page, pageSize };
-    if (type !== null && type !== "" && type !== "all") params.type = Number(type);
+    if (type !== null && type !== "" && type !== "all") {
+      params.type = type;
+    }
     if (dateFrom) params.dateFrom = dateFrom;
     if (dateTo) params.dateTo = dateTo;
 
     try {
       const response = await api.get("/transactions/me", { params });
-      if (response.data?.items && response.data.items.length > 0) {
+      if (response.data && Array.isArray(response.data.items)) {
         let items = response.data.items.map((tx) => {
           const isIncome = tx.type === 1 || tx.type === 2;
           const categoryName = tx.type === 1 ? "DEPÓSITO" : tx.type === 2 ? "INGRESO" : "EGRESO";
-          const formattedDate = tx.date
-            ? new Date(tx.date).toLocaleDateString("es-AR", {
+
+          const rawDateStr = tx.date;
+          const utcDateStr = (typeof rawDateStr === "string" && rawDateStr.includes("T") && !rawDateStr.endsWith("Z") && !rawDateStr.includes("+") && !rawDateStr.includes("-", 10))
+            ? `${rawDateStr}Z`
+            : rawDateStr;
+
+          const txDateObj = utcDateStr ? new Date(utcDateStr) : null;
+          const formattedDate = txDateObj && !isNaN(txDateObj.getTime())
+            ? txDateObj.toLocaleDateString("es-AR", {
                 day: "2-digit",
                 month: "short",
                 year: "numeric",
@@ -86,27 +163,36 @@ export const transactionService = {
           else if (tx.type === 2) defaultTitle = "Transferencia Recibida";
           else if (tx.type === 3) defaultTitle = `Transferencia a Cuenta #${tx.toAccountId || ""}`.trim();
 
+          const motive = resolveMotive(tx);
+
           return {
             id: tx.id,
             title: tx.concept || defaultTitle,
             subtitle: `${formattedDate} · ${categoryName}`,
-            rawDate: tx.date,
+            date: utcDateStr,
+            rawDate: utcDateStr,
             formattedDate,
             type: tx.type,
             amount: tx.amount,
             category: categoryName,
+            reason: motive,
+            concept: motive,
+            motive,
             isIncome,
             toAccountId: tx.toAccountId,
-            counterpart: tx.toAccountId ? `Cuenta #${tx.toAccountId}` : "Directo",
+            counterpart: tx.toAccountId ? `Cuenta #${tx.toAccountId}` : (tx.type === 1 ? "Cuenta Propia (CVU)" : "Directo"),
             status: "Completada",
           };
         });
+
 
         if (search && search.trim()) {
           const q = search.toLowerCase().trim();
           items = items.filter(
             (item) =>
-              item.title.toLowerCase().includes(q) ||
+              item.title?.toLowerCase().includes(q) ||
+              item.category?.toLowerCase().includes(q) ||
+              item.subtitle?.toLowerCase().includes(q) ||
               item.counterpart?.toLowerCase().includes(q)
           );
         }
@@ -120,24 +206,40 @@ export const transactionService = {
         };
       }
     } catch {
-      // Fallback a filtrado en memoria
+      // Fallback a filtrado en memoria solo si no hay sesión
     }
 
-    // Modo autónomo / memoria con historial completo
+    const token = localStorage.getItem("token");
+    if (token) {
+      return {
+        items: localTransactions.length > 0 ? localTransactions : [],
+        page,
+        pageSize,
+        totalItems: localTransactions.length,
+        totalPages: Math.max(1, Math.ceil(localTransactions.length / pageSize)),
+      };
+    }
+
+    // Modo autónomo / memoria con historial completo únicamente sin sesión
     let pool = localTransactions.length > 0 ? [...localTransactions] : this.getDemoTransactions();
 
     if (type !== null && type !== "" && type !== "all") {
-      pool = pool.filter((t) => t.type === Number(type));
+      if (type === "income" || type === "ingreso" || type === 1 || type === 2 || type === "1" || type === "2") {
+        pool = pool.filter((t) => t.type === 1 || t.type === 2 || t.isIncome);
+      } else if (type === "expense" || type === "egreso" || type === 3 || type === "3") {
+        pool = pool.filter((t) => t.type === 3 || (!t.isIncome && t.type !== 1 && t.type !== 2));
+      } else {
+        pool = pool.filter((t) => t.type === Number(type));
+      }
     }
 
     if (dateFrom) {
-      const from = new Date(dateFrom);
+      const from = new Date(dateFrom.includes("T") ? dateFrom : `${dateFrom}T00:00:00`);
       pool = pool.filter((t) => (t.date ? new Date(t.date) >= from : true));
     }
 
     if (dateTo) {
-      const to = new Date(dateTo);
-      to.setHours(23, 59, 59, 999);
+      const to = new Date(dateTo.includes("T") ? dateTo : `${dateTo}T23:59:59.999`);
       pool = pool.filter((t) => (t.date ? new Date(t.date) <= to : true));
     }
 
@@ -146,6 +248,9 @@ export const transactionService = {
       pool = pool.filter(
         (t) =>
           t.title?.toLowerCase().includes(q) ||
+          t.category?.toLowerCase().includes(q) ||
+          t.concept?.toLowerCase().includes(q) ||
+          t.reason?.toLowerCase().includes(q) ||
           t.subtitle?.toLowerCase().includes(q) ||
           t.counterpart?.toLowerCase().includes(q)
       );
@@ -170,11 +275,17 @@ export const transactionService = {
    * POST /api/transactions/transfer
    * Body: { destinationAccountId, amount }
    */
-  async transfer({ destination, destinationAccountId, amount }) {
-    const destId = destinationAccountId || destination;
+  async transfer({ destination, destinationAccountId, amount, concept }) {
+    let destId = destinationAccountId || destination;
+    const contact = findContact(destId);
+    if (contact?.accountId) {
+      destId = contact.accountId;
+    }
+
     const response = await api.post("/transactions/transfer", {
       destinationAccountId: Number(destId),
       amount: Number(amount),
+      concept: concept || null,
     });
     return response.data;
   },
@@ -187,10 +298,10 @@ export const transactionService = {
       {
         id: 1,
         title: "Transferencia enviada a Roberto Carlos",
-        subtitle: "03 Sep 18:40 · EGRESO",
+        subtitle: "03 Sep 18:40 · TRANSFERENCIAS",
         type: 3,
         amount: 15000.00,
-        category: "EGRESO",
+        category: "TRANSFERENCIAS",
         date: "2026-09-03T18:40:00Z",
         toAccountId: "2",
         counterpart: "Roberto Carlos",
@@ -199,10 +310,10 @@ export const transactionService = {
       {
         id: 2,
         title: "Transferencia recibida de Micaela Mulato",
-        subtitle: "02 Sep 14:15 · INGRESO",
+        subtitle: "02 Sep 14:15 · TRANSFERENCIAS",
         type: 2,
         amount: 25000.00,
-        category: "INGRESO",
+        category: "TRANSFERENCIAS",
         date: "2026-09-02T14:15:00Z",
         toAccountId: "4",
         counterpart: "Micaela Mulato",
@@ -211,10 +322,10 @@ export const transactionService = {
       {
         id: 3,
         title: "Depósito de Fondos (CVU)",
-        subtitle: "01 Sep 11:30 · DEPÓSITO",
+        subtitle: "01 Sep 11:30 · DEPÓSITOS",
         type: 1,
         amount: 20000.00,
-        category: "DEPÓSITO",
+        category: "DEPÓSITOS",
         date: "2026-09-01T11:30:00Z",
         toAccountId: null,
         counterpart: "Cuenta Propia",
@@ -223,11 +334,11 @@ export const transactionService = {
       {
         id: 4,
         title: "Netflix Suscripción",
-        subtitle: "30 Ago 21:00 · SERVICIOS",
+        subtitle: "04 Sep 21:00 · SERVICIOS",
         type: 3,
         amount: 8500.00,
         category: "SERVICIOS",
-        date: "2026-08-30T21:00:00Z",
+        date: "2026-09-04T21:00:00Z",
         toAccountId: null,
         counterpart: "Netflix Argentina",
         status: "Completada",
@@ -235,10 +346,10 @@ export const transactionService = {
       {
         id: 5,
         title: "Transferencia recibida de Mohammed Khan",
-        subtitle: "28 Ago 10:15 · INGRESO",
+        subtitle: "28 Ago 10:15 · TRANSFERENCIAS",
         type: 2,
         amount: 8500.00,
-        category: "INGRESO",
+        category: "TRANSFERENCIAS",
         date: "2026-08-28T10:15:00Z",
         toAccountId: "4",
         counterpart: "Mohammed Khan",
@@ -247,10 +358,10 @@ export const transactionService = {
       {
         id: 6,
         title: "Transferencia enviada a Emmanuel Torres",
-        subtitle: "25 Ago 16:45 · EGRESO",
+        subtitle: "25 Ago 16:45 · TRANSFERENCIAS",
         type: 3,
         amount: 12000.00,
-        category: "EGRESO",
+        category: "TRANSFERENCIAS",
         date: "2026-08-25T16:45:00Z",
         toAccountId: "6",
         counterpart: "Emmanuel Torres",
@@ -259,11 +370,11 @@ export const transactionService = {
       {
         id: 7,
         title: "Mercado Libre",
-        subtitle: "24 Ago 14:30 · COMPRAS",
+        subtitle: "03 Sep 14:30 · COMPRAS",
         type: 3,
         amount: 1250.00,
         category: "COMPRAS",
-        date: "2026-08-24T14:30:00Z",
+        date: "2026-09-03T14:30:00Z",
         toAccountId: null,
         counterpart: "Mercado Libre S.R.L.",
         status: "Completada",
@@ -271,11 +382,11 @@ export const transactionService = {
       {
         id: 8,
         title: "Starbucks Café",
-        subtitle: "23 Ago 08:30 · COMIDA",
+        subtitle: "02 Sep 08:30 · COMIDA",
         type: 3,
         amount: 850.00,
         category: "COMIDA",
-        date: "2026-08-23T08:30:00Z",
+        date: "2026-09-02T08:30:00Z",
         toAccountId: null,
         counterpart: "Starbucks Coffee",
         status: "Completada",
@@ -283,10 +394,10 @@ export const transactionService = {
       {
         id: 9,
         title: "Transferencia enviada a Micaela Mulato",
-        subtitle: "20 Ago 12:00 · EGRESO",
+        subtitle: "20 Ago 12:00 · TRANSFERENCIAS",
         type: 3,
         amount: 5000.00,
-        category: "EGRESO",
+        category: "TRANSFERENCIAS",
         date: "2026-08-20T12:00:00Z",
         toAccountId: "5",
         counterpart: "Micaela Mulato",
@@ -295,10 +406,10 @@ export const transactionService = {
       {
         id: 10,
         title: "Depósito inicial de nómina",
-        subtitle: "15 Ago 09:00 · DEPÓSITO",
+        subtitle: "15 Ago 09:00 · DEPÓSITOS",
         type: 1,
         amount: 43730.50,
-        category: "DEPÓSITO",
+        category: "DEPÓSITOS",
         date: "2026-08-15T09:00:00Z",
         toAccountId: null,
         counterpart: "DigitalArs Pagos",
@@ -319,10 +430,10 @@ export const transactionService = {
       {
         id: 12,
         title: "Transferencia recibida de Emmanuel Torres",
-        subtitle: "10 Ago 15:10 · INGRESO",
+        subtitle: "10 Ago 15:10 · TRANSFERENCIAS",
         type: 2,
         amount: 6000.00,
-        category: "INGRESO",
+        category: "TRANSFERENCIAS",
         date: "2026-08-10T15:10:00Z",
         toAccountId: "4",
         counterpart: "Emmanuel Torres",
@@ -331,11 +442,11 @@ export const transactionService = {
       {
         id: 13,
         title: "Carga de combustible YPF",
-        subtitle: "08 Ago 19:40 · COMBUSTIBLE",
+        subtitle: "02 Sep 19:40 · COMBUSTIBLE",
         type: 3,
         amount: 18500.00,
         category: "COMBUSTIBLE",
-        date: "2026-08-08T19:40:00Z",
+        date: "2026-09-02T19:40:00Z",
         toAccountId: null,
         counterpart: "YPF Estación Central",
         status: "Completada",
@@ -343,10 +454,10 @@ export const transactionService = {
       {
         id: 14,
         title: "Transferencia enviada a Roberto Carlos",
-        subtitle: "05 Ago 13:25 · EGRESO",
+        subtitle: "05 Ago 13:25 · TRANSFERENCIAS",
         type: 3,
         amount: 10000.00,
-        category: "EGRESO",
+        category: "TRANSFERENCIAS",
         date: "2026-08-05T13:25:00Z",
         toAccountId: "2",
         counterpart: "Roberto Carlos",
@@ -355,10 +466,10 @@ export const transactionService = {
       {
         id: 15,
         title: "Depósito acreditación bono",
-        subtitle: "01 Ago 10:00 · DEPÓSITO",
+        subtitle: "01 Ago 10:00 · DEPÓSITOS",
         type: 1,
         amount: 30000.00,
-        category: "DEPÓSITO",
+        category: "DEPÓSITOS",
         date: "2026-08-01T10:00:00Z",
         toAccountId: null,
         counterpart: "Bono Desempeño",
@@ -379,10 +490,10 @@ export const transactionService = {
       {
         id: 17,
         title: "Transferencia recibida de Roberto Carlos",
-        subtitle: "25 Jul 16:20 · INGRESO",
+        subtitle: "25 Jul 16:20 · TRANSFERENCIAS",
         type: 2,
         amount: 7500.00,
-        category: "INGRESO",
+        category: "TRANSFERENCIAS",
         date: "2026-07-25T16:20:00Z",
         toAccountId: "4",
         counterpart: "Roberto Carlos",
@@ -391,11 +502,11 @@ export const transactionService = {
       {
         id: 18,
         title: "Farmacity Recoleta",
-        subtitle: "20 Jul 11:45 · SALUD",
+        subtitle: "01 Sep 11:45 · SALUD",
         type: 3,
         amount: 6350.00,
         category: "SALUD",
-        date: "2026-07-20T11:45:00Z",
+        date: "2026-09-01T11:45:00Z",
         toAccountId: null,
         counterpart: "Farmacity S.A.",
         status: "Completada",
@@ -415,10 +526,10 @@ export const transactionService = {
       {
         id: 20,
         title: "Depósito inicial apertura de cuenta",
-        subtitle: "01 Jul 08:00 · DEPÓSITO",
+        subtitle: "01 Jul 08:00 · DEPÓSITOS",
         type: 1,
         amount: 50000.00,
-        category: "DEPÓSITO",
+        category: "DEPÓSITOS",
         date: "2026-07-01T08:00:00Z",
         toAccountId: null,
         counterpart: "Apertura DigitalArs",

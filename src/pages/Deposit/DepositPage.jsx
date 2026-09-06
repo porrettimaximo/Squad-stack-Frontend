@@ -12,6 +12,10 @@ import {
   Chip,
   Divider,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
@@ -22,6 +26,7 @@ import { useAccount } from "../../hooks/useAccount";
 import AppLayout from "../../components/layout/AppLayout";
 import SuccessStep from "../../components/common/SuccessStep";
 import { formatCurrency } from "../../utils/formatters";
+import { DEPOSIT_MOTIVES, DEFAULT_DEPOSIT_MOTIVE } from "../../constants/motives";
 
 const QUICK_AMOUNTS = [5000, 10000, 20000];
 
@@ -41,6 +46,7 @@ export function DepositPage() {
   const [step, setStep] = useState(1);
   const [method, setMethod] = useState("");
   const [amount, setAmount] = useState("");
+  const [motive, setMotive] = useState(DEFAULT_DEPOSIT_MOTIVE);
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
@@ -57,7 +63,7 @@ export function DepositPage() {
 
     setLoading(true);
     try {
-      await depositFunds(num);
+      await depositFunds({ amount: num, concept: motive });
       setStep(4);
     } catch (err) {
       setSnackbar({ open: true, message: err.message || "Error al depositar", severity: "error" });
@@ -201,6 +207,35 @@ export function DepositPage() {
                   ))}
                 </Box>
 
+                {/* Selector de Motivo del Depósito */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#475569", mb: 0.8 }}>
+                    Motivo del ingreso
+                  </Typography>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      value={motive}
+                      onChange={(e) => setMotive(e.target.value)}
+                      sx={{ borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.9rem" }}
+                      MenuProps={{
+                        PaperProps: {
+                          sx: {
+                            maxHeight: 240,
+                            borderRadius: "12px",
+                            boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+                          },
+                        },
+                      }}
+                    >
+                      {DEPOSIT_MOTIVES.map((m) => (
+                        <MenuItem key={m.id} value={m.label} sx={{ fontSize: "0.88rem", py: 1 }}>
+                          {m.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+
                 <Box sx={{ flex: 1 }} />
 
                 <Button
@@ -235,6 +270,11 @@ export function DepositPage() {
                     <Typography sx={{ fontWeight: 600, color: "#0F172A" }}>
                       {method === "transfer" ? "Transferencia Bancaria" : "Tarjeta de Débito"}
                     </Typography>
+                  </Box>
+                  <Divider />
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Typography sx={{ color: "#64748B" }}>Motivo</Typography>
+                    <Chip label={motive} size="small" sx={{ fontWeight: 700, bgcolor: "#EFF6FF", color: "#0056D2" }} />
                   </Box>
                   <Divider />
                   <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -284,6 +324,7 @@ export function DepositPage() {
                 subtitle="Los fondos fueron acreditados en tu cuenta DigitalArs."
                 amount={Number(amount)}
                 details={[
+                  { label: "Motivo", value: motive },
                   { label: "Nuevo saldo disponible", value: formatCurrency(account.money) },
                   { label: "Medio utilizado", value: method === "transfer" ? "Transferencia Inmediata" : "Tarjeta de Débito" },
                 ]}

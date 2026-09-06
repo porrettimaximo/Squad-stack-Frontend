@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Container,
@@ -20,6 +21,7 @@ import { motion } from "framer-motion";
  * - Microinteracción en perfil: whileHover con escalado suave scale 1.02.
  */
 export function DashboardNavbar({ currentTab = 0, onTabChange, userName = "Alejandro Silva", showTabs = true }) {
+  const navigate = useNavigate();
   return (
     <Box
       sx={{
@@ -120,6 +122,7 @@ export function DashboardNavbar({ currentTab = 0, onTabChange, userName = "Aleja
             {/* Perfil del Usuario con animación Motion */}
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Box
+                onClick={() => navigate("/profile")}
                 sx={{
                   display: "flex",
                   alignItems: "center",

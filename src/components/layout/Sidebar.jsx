@@ -37,7 +37,16 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const isAdmin = user?.role === "Admin" || user?.role === "admin";
+  const handleLogoutAction = () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      logout();
+      navigate("/login", { replace: true });
+    }
+  };
+
+  const isAdmin = user?.role?.toLowerCase() === "admin";
 
   const mainNav = [
     { id: "inicio", label: "Inicio", icon: <HomeOutlinedIcon />, path: "/" },
@@ -64,7 +73,10 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
       path: "/investments",
     },
     { id: "tarjetas", label: "Tarjetas", icon: <CreditCardOutlinedIcon />, path: "/" },
-    { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon />, path: "/" },
+    { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon />, path: "/profile" },
+    ...(isAdmin
+      ? [{ id: "admin", label: "Usuarios Admin", icon: <AdminPanelSettingsOutlinedIcon />, path: "/admin" }]
+      : []),
     {
       id: "configuracion",
       label: "Configuración",
@@ -78,11 +90,13 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
       id: "soporte",
       label: "Soporte",
       icon: <HeadsetMicOutlinedIcon fontSize="small" />,
+      path: "/support",
     },
     {
       id: "ayuda",
       label: "Ayuda",
       icon: <HelpOutlineOutlinedIcon fontSize="small" />,
+      path: "/help",
     },
   ];
 
@@ -290,57 +304,62 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
       <Box sx={{ px: collapsed ? 1 : 1.75, pb: 2, pt: 0.5, flexShrink: 0 }}>
         <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)", mb: 1 }} />
 
-        <List disablePadding sx={{ mb: 1 }}>
-          {bottomNav.map((item) => (
-            <ListItem key={item.id} disablePadding sx={{ mb: 0.25 }}>
-              <motion.div
-                whileHover={collapsed ? {} : { x: 3 }}
-                style={{ width: "100%" }}
-              >
-                <ListItemButton
-                  onClick={() => onItemClick && onItemClick(item.id)}
-                  sx={{
-                    py: 0.5,
-                    px: collapsed ? 0 : 1.25,
-                    justifyContent: collapsed ? "center" : "flex-start",
-                    borderRadius: "6px",
-                    color: "#7F96B2",
-                    "&:hover": {
-                      color: "#FFFFFF",
-                      bgcolor: "rgba(255, 255, 255, 0.05)",
-                    },
-                  }}
-                  title={collapsed ? item.label : ""}
+        <List disablePadding sx={{ mb: 1.5 }}>
+          {bottomNav.map((item) => {
+            const isActive = activeItem === item.id;
+            return (
+              <ListItem key={item.id} disablePadding sx={{ mb: 0.35 }}>
+                <motion.div
+                  whileHover={collapsed ? {} : { x: 3 }}
+                  style={{ width: "100%" }}
                 >
-                  <ListItemIcon
+                  <ListItemButton
+                    onClick={() => handleClick(item)}
+                    selected={isActive}
                     sx={{
-                      color: "inherit",
-                      minWidth: collapsed ? 0 : 28,
-                      justifyContent: "center",
+                      py: 0.6,
+                      px: collapsed ? 0 : 1.25,
+                      justifyContent: collapsed ? "center" : "flex-start",
+                      borderRadius: "6px",
+                      color: isActive ? "#38B6FF" : "#7F96B2",
+                      bgcolor: isActive ? "rgba(0, 119, 255, 0.15) !important" : "transparent",
+                      "&:hover": {
+                        color: "#FFFFFF",
+                        bgcolor: isActive ? "rgba(0, 119, 255, 0.25) !important" : "rgba(255, 255, 255, 0.05)",
+                      },
                     }}
+                    title={collapsed ? item.label : ""}
                   >
-                    {item.icon}
-                  </ListItemIcon>
-                  {!collapsed && (
-                    <ListItemText
-                      primary={item.label}
-                      primaryTypographyProps={{
-                        fontSize: "0.82rem",
-                        fontWeight: 500,
+                    <ListItemIcon
+                      sx={{
+                        color: "inherit",
+                        minWidth: collapsed ? 0 : 28,
+                        justifyContent: "center",
                       }}
-                    />
-                  )}
-                </ListItemButton>
-              </motion.div>
-            </ListItem>
-          ))}
+                    >
+                      {item.icon}
+                    </ListItemIcon>
+                    {!collapsed && (
+                      <ListItemText
+                        primary={item.label}
+                        primaryTypographyProps={{
+                          fontSize: "0.82rem",
+                          fontWeight: 500,
+                        }}
+                      />
+                    )}
+                  </ListItemButton>
+                </motion.div>
+              </ListItem>
+            );
+          })}
         </List>
 
         <motion.div whileTap={{ scale: 0.95 }}>
           <Button
             fullWidth
             variant="outlined"
-            onClick={handleLogoutClick}
+            onClick={handleLogoutAction}
             title={collapsed ? "Cerrar sesión" : ""}
             sx={{
               color: "#D0D9E5",

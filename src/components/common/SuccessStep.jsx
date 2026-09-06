@@ -16,11 +16,14 @@ export function SuccessStep({
   details = [],
   onFinish,
   autoRedirectSeconds = 3,
+  maxWidth = 420,
+  extraActions = null,
+  finishLabel = "Volver al inicio",
 }) {
   const [secondsLeft, setSecondsLeft] = useState(autoRedirectSeconds);
 
   useEffect(() => {
-    if (!autoRedirectSeconds || !onFinish) return;
+    if (!autoRedirectSeconds || autoRedirectSeconds <= 0 || !onFinish) return;
 
     const timer = setInterval(() => {
       setSecondsLeft((prev) => {
@@ -87,7 +90,7 @@ export function SuccessStep({
         {subtitle}
       </Typography>
 
-      {/* Monto destacado */}
+      {/* Monto destacado y datos de la operación */}
       {amount > 0 && (
         <Paper
           elevation={0}
@@ -97,7 +100,7 @@ export function SuccessStep({
             borderRadius: "16px",
             p: 2.5,
             width: "100%",
-            maxWidth: 400,
+            maxWidth: maxWidth,
             mb: 3,
           }}
         >
@@ -112,23 +115,63 @@ export function SuccessStep({
             <>
               <Divider sx={{ my: 2, borderColor: "#E2E8F0" }} />
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {details.map((item, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                  >
-                    <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>
-                      {item.label}
-                    </Typography>
-                    <Typography sx={{ fontSize: "0.9rem", fontWeight: 600, color: "#0F172A" }}>
-                      {item.value}
-                    </Typography>
-                  </Box>
-                ))}
+                {details.map((item, idx) =>
+                  item.isHeader ? (
+                    <Box
+                      key={idx}
+                      sx={{
+                        mt: idx > 0 ? 1.5 : 0,
+                        pt: idx > 0 ? 1.5 : 0,
+                        borderTop: idx > 0 ? "1px dashed #CBD5E1" : "none",
+                        textAlign: "left",
+                        pb: 0.2,
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: "0.75rem",
+                          fontWeight: 800,
+                          color: "#0056D2",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                        }}
+                      >
+                        {item.label}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box
+                      key={idx}
+                      sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}
+                    >
+                      <Typography sx={{ fontSize: "0.82rem", color: "#64748B", textAlign: "left" }}>
+                        {item.label}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: "0.88rem",
+                          fontWeight: 700,
+                          color: item.highlight ? "#0056D2" : "#0F172A",
+                          textAlign: "right",
+                          wordBreak: "break-all",
+                        }}
+                      >
+                        {item.value}
+                      </Typography>
+                    </Box>
+                  )
+                )}
               </Box>
             </>
           )}
         </Paper>
+      )}
+
+      {/* Acciones adicionales opcionales (ej. Información de transferencia, PDF) */}
+      {extraActions && (
+        <Box sx={{ width: "100%", maxWidth: maxWidth, mb: 1.5, display: "flex", flexDirection: "column", gap: 1.2 }}>
+          {extraActions}
+        </Box>
       )}
 
       {/* Botón de acción */}
@@ -138,7 +181,7 @@ export function SuccessStep({
         endIcon={<ArrowForwardIcon />}
         onClick={onFinish}
         sx={{
-          maxWidth: 400,
+          maxWidth: maxWidth,
           bgcolor: "#0056D2",
           color: "#FFFFFF",
           borderRadius: "14px",
@@ -150,7 +193,7 @@ export function SuccessStep({
           "&:hover": { bgcolor: "#0047b3" },
         }}
       >
-        Volver al inicio {secondsLeft > 0 && `(${secondsLeft}s)`}
+        {finishLabel} {secondsLeft > 0 ? `(${secondsLeft}s)` : ""}
       </Button>
     </motion.div>
   );

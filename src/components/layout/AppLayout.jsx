@@ -6,6 +6,7 @@ import Sidebar from "./Sidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import MobileBottomNav from "./MobileBottomNav";
 import { useAccount } from "../../hooks/useAccount";
+import { useAuth } from "../../context/AuthContext";
 
 /**
  * AppLayout: Contenedor estructural unificado de la aplicación (Desktop + Mobile).
@@ -26,11 +27,15 @@ export function AppLayout({
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const { user } = useAccount();
+  const { logout } = useAuth();
 
-  // Ocultar pestañas de navegación superior en historial
+  // Ocultar pestañas de navegación superior en historial, perfil, ayuda, soporte e inversiones según corresponda
   const isHistoryRoute = location.pathname.startsWith("/history") || location.pathname.startsWith("/historial");
   const isInvestmentsRoute = location.pathname.startsWith("/investments") || location.pathname.startsWith("/inversiones");
-  const shouldShowTabs = showNavbarTabs !== undefined ? showNavbarTabs : !isHistoryRoute;
+  const isProfileRoute = location.pathname.startsWith("/profile") || location.pathname.startsWith("/perfil");
+  const isHelpRoute = location.pathname.startsWith("/help") || location.pathname.startsWith("/ayuda");
+  const isSupportRoute = location.pathname.startsWith("/support") || location.pathname.startsWith("/soporte");
+  const shouldShowTabs = showNavbarTabs !== undefined ? showNavbarTabs : (!isHistoryRoute && !isProfileRoute && !isHelpRoute && !isSupportRoute);
 
   // Determinar ítem activo según la ruta actual si no viene explícito
   let currentActiveItem = activeSidebarItem;
@@ -43,6 +48,13 @@ export function AppLayout({
   } else if (isInvestmentsRoute) {
     currentActiveItem = "inversiones";
     activeNavbarTab = 1;
+  } else if (isProfileRoute) {
+    currentActiveItem = "perfil";
+    currentMobileIndex = 2;
+  } else if (isHelpRoute) {
+    currentActiveItem = "ayuda";
+  } else if (isSupportRoute) {
+    currentActiveItem = "soporte";
   } else if (location.pathname === "/" || location.pathname === "/dashboard") {
     currentActiveItem = "inicio";
     currentMobileIndex = 0;
@@ -53,6 +65,10 @@ export function AppLayout({
     if (item === "inicio") navigate("/");
     else if (item === "historial") navigate("/history");
     else if (item === "inversiones") navigate("/investments");
+    else if (item === "perfil") navigate("/profile");
+    else if (item === "admin") navigate("/admin");
+    else if (item === "ayuda") navigate("/help");
+    else if (item === "soporte") navigate("/support");
   };
 
   const handleDefaultTabChange = (e, val) => {
@@ -63,6 +79,13 @@ export function AppLayout({
   const handleMobileNavChange = (e, index) => {
     if (index === 0) navigate("/");
     else if (index === 1) navigate("/history");
+    else if (index === 2) navigate("/profile");
+    else if (index === 3) navigate("/profile");
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
   };
 
   const userName = user?.name || "Alejandro Silva";
@@ -74,7 +97,7 @@ export function AppLayout({
         <Sidebar
           activeItem={currentActiveItem}
           onItemClick={handleSidebarClick}
-          onLogout={() => console.info("Logout")}
+          onLogout={handleLogout}
         />
       )}
 

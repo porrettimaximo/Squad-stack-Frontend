@@ -3,17 +3,21 @@ import { ThemeProvider, CssBaseline } from "@mui/material";
 import theme from "./theme/theme";
 import { AuthProvider } from "./context/AuthContext";
 import { AccountProvider } from "./context/AccountContext";
-import { Login } from "./pages/Login";
 import ProtectedRoute from "./components/common/ProtectedRoute";
-import NotFoundPage from "./pages/NotFound/NotFoundPage";
-import ForbiddenPage from "./pages/Forbidden/ForbiddenPage";
 
+// Páginas
+import Login from "./pages/Login";
 import DashboardPage from "./pages/Dashboard/DashboardPage";
 import DepositPage from "./pages/Deposit/DepositPage";
 import TransferPage from "./pages/Transfer/TransferPage";
 import HistoryPage from "./pages/History/HistoryPage";
 import InvestmentsPage from "./pages/Investments/InvestmentsPage";
+import ProfilePage from "./pages/Profile/ProfilePage";
 import AdminUsersPage from "./pages/Admin/AdminUsersPage";
+import HelpPage from "./pages/Help/HelpPage";
+import SupportPage from "./pages/Support/SupportPage";
+import ForbiddenPage from "./pages/Forbidden/ForbiddenPage";
+import NotFoundPage from "./pages/NotFound/NotFoundPage";
 
 export function App() {
   return (
@@ -23,25 +27,25 @@ export function App() {
         <AccountProvider>
           <BrowserRouter>
             <Routes>
-              {/* HU-22: Pantalla de Login */}
+              {/* Ruta pública de autenticación (HU-22) */}
               <Route path="/login" element={<Login />} />
 
-              {/* HU-23: Error 403 - Acceso Denegado */}
+              {/* Páginas de error / autorización (HU-23) */}
               <Route path="/403" element={<ForbiddenPage />} />
 
-              {/* HU-23: Rutas Protegidas (Requieren Login) */}
+              {/* Rutas protegidas para cualquier usuario autenticado (HU-23) */}
               <Route element={<ProtectedRoute />}>
-                {/* HU-24: Dashboard principal */}
+                {/* HU-24: Dashboard principal de la billetera */}
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
 
-                {/* HU-25: Depósito de fondos */}
+                {/* HU-25: Pantalla de depósito de fondos */}
                 <Route path="/deposit" element={<DepositPage />} />
 
                 {/* HU-26: Transferencia de fondos */}
                 <Route path="/transfer" element={<TransferPage />} />
 
-                {/* HU-27: Historial de movimientos con filtros y gráficos */}
+                {/* HU-27: Historial con filtros y gráficos */}
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/historial" element={<HistoryPage />} />
 
@@ -49,14 +53,26 @@ export function App() {
                 <Route path="/investments" element={<InvestmentsPage />} />
                 <Route path="/inversiones" element={<InvestmentsPage />} />
 
-                {/* HU-29: Panel de Administración (Solo accesible con Rol Admin) */}
-                <Route element={<ProtectedRoute allowedRoles={["Admin"]} />}>
-                  <Route path="/admin" element={<AdminUsersPage />} />
-                  <Route path="/admin/users" element={<AdminUsersPage />} />
-                </Route>
+                {/* HU-28: Pantalla de perfil de usuario */}
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/perfil" element={<ProfilePage />} />
+
+                {/* Centro de Ayuda (FAQ) */}
+                <Route path="/help" element={<HelpPage />} />
+                <Route path="/ayuda" element={<HelpPage />} />
+
+                {/* Soporte y Atención al Cliente */}
+                <Route path="/support" element={<SupportPage />} />
+                <Route path="/soporte" element={<SupportPage />} />
               </Route>
 
-              {/* Fallback 404 - Página no encontrada */}
+              {/* Rutas exclusivas para Administradores (HU-29) */}
+              <Route element={<ProtectedRoute allowedRoles={["Admin", "admin"]} />}>
+                <Route path="/admin" element={<AdminUsersPage />} />
+                <Route path="/admin/users" element={<AdminUsersPage />} />
+              </Route>
+
+              {/* Fallback 404 */}
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </BrowserRouter>
@@ -67,3 +83,5 @@ export function App() {
 }
 
 export default App;
+
+

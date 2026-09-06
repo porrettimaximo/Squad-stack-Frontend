@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { Paper, Box, Typography } from "@mui/material";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
@@ -7,10 +7,10 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 
 export function MobileBottomNav({ activeNav = 0, onChange }) {
   const items = [
-    { label: "Home", icon: <HomeOutlinedIcon /> },
-    { label: "History", icon: <HistoryOutlinedIcon /> },
-    { label: "Profile", icon: <PersonOutlineOutlinedIcon /> },
-    { label: "Settings", icon: <SettingsOutlinedIcon /> },
+    { label: "Inicio", icon: <HomeOutlinedIcon /> },
+    { label: "Historial", icon: <HistoryOutlinedIcon /> },
+    { label: "Perfil", icon: <PersonOutlineOutlinedIcon /> },
+    { label: "Ajustes", icon: <SettingsOutlinedIcon /> },
   ];
 
   return (

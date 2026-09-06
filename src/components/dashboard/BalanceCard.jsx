@@ -10,7 +10,13 @@ import { motion } from "framer-motion";
  * - Levitation al hover: whileHover con desplazamiento en eje Y (-4px) y aumento sutil de sombra.
  * - Microinteracción en badge de tendencia: whileHover con escalado suave (scale 1.08).
  */
-export function BalanceCard({ balance = 45230.50, cardNumber = "4892", trend = 2.4, loading = false }) {
+export function BalanceCard({
+  balance = 45230.50,
+  cardNumber = "4892",
+  cvu,
+  trend = 2.4,
+  loading = false,
+}) {
   if (loading) {
     return (
       <Skeleton
@@ -29,6 +35,8 @@ export function BalanceCard({ balance = 45230.50, cardNumber = "4892", trend = 2
 
   const integerPart = formattedParts[0] || "0";
   const decimalPart = formattedParts[1] || "00";
+
+  const displayCvu = cvu || (cardNumber && cardNumber.length > 10 ? cardNumber : `000000310001000000000${cardNumber || "04"}`);
 
   return (
     <motion.div
@@ -127,7 +135,7 @@ export function BalanceCard({ balance = 45230.50, cardNumber = "4892", trend = 2
           }}
         />
 
-        {/* Pie de Tarjeta: DigitalArs Card y Círculos */}
+        {/* Pie de Tarjeta: DigitalArs (CVU) y Círculos */}
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
           <Box>
             <Typography
@@ -136,21 +144,22 @@ export function BalanceCard({ balance = 45230.50, cardNumber = "4892", trend = 2
                 display: "block",
                 color: "rgba(255, 255, 255, 0.75)",
                 fontSize: "0.75rem",
-                fontWeight: 500,
+                fontWeight: 600,
                 mb: 0.25,
               }}
             >
-              DigitalArs Card
+              DigitalArs (CVU)
             </Typography>
             <Typography
-              variant="body1"
+              variant="body2"
               sx={{
                 fontWeight: 700,
-                letterSpacing: "0.15em",
-                fontSize: "1rem",
+                letterSpacing: "0.04em",
+                fontSize: { xs: "0.82rem", sm: "0.92rem" },
+                fontFamily: "monospace",
               }}
             >
-              •••• {cardNumber}
+              {displayCvu}
             </Typography>
           </Box>
 

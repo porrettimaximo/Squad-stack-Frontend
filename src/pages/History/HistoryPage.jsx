@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Box,
   Typography,
@@ -30,6 +30,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import SyncIcon from "@mui/icons-material/Sync";
 import SouthWestIcon from "@mui/icons-material/SouthWest";
 import NorthEastIcon from "@mui/icons-material/NorthEast";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
@@ -39,23 +40,43 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { motion, AnimatePresence } from "framer-motion";
 
 import AppLayout from "../../components/layout/AppLayout";
 import { useAccount } from "../../hooks/useAccount";
+import { useAuth } from "../../context/AuthContext";
 import transactionService from "../../services/transactionService";
 import { formatCurrency, formatTransactionDate } from "../../utils/formatters";
 import MovementPieChart from "../../components/history/MovementPieChart";
+import TransferReceiptModal from "../../components/common/TransferReceiptModal";
+import { findContact } from "../../constants/contacts";
 
 /**
  * HU-27: Pantalla de Historial con filtros y paginación.
  * Tabla de Material UI conectada al endpoint de transacciones con soporte offline reactivo.
  */
 export function HistoryPage() {
-  const { transactions: localTransactions } = useAccount();
+  const { account, transactions: localTransactions } = useAccount();
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState("chart"); // 'chart' | 'table'
 
-  const handleGoToTable = () => {
+  const handleGoToTableWithFilter = ({ dateFrom: filterDateFrom, dateTo: filterDateTo } = {}) => {
+    setSearch("");
+    if (filterDateFrom !== undefined) setDateFrom(filterDateFrom || "");
+    if (filterDateTo !== undefined) setDateTo(filterDateTo || "");
+    setTypeFilter("all");
+    setPage(1);
+    setViewMode("table");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSelectCategory = ({ concept, dateFrom: filterDateFrom, dateTo: filterDateTo }) => {
+    setSearch(concept || "");
+    setDateFrom(filterDateFrom || "");
+    setDateTo(filterDateTo || "");
+    setTypeFilter("all");
+    setPage(1);
     setViewMode("table");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -78,12 +99,85 @@ export function HistoryPage() {
 
   // Estados de datos y carga
   const [items, setItems] = useState([]);
+  const [allChartTransactions, setAllChartTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // Estado del modal de comprobante
   const [selectedTx, setSelectedTx] = useState(null);
-  const [copied, setCopied] = useState(false);
 
+  // Mapeo completo de datos para el Comprobante y descarga en PDF
+  const selectedTxReceiptData = useMemo(() => {
+    if (!selectedTx) return null;
+
+    const myAccId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "4");
+    const mySeed = findContact(myAccId) || findContact(user?.id) || findContact(user?.email);
+    const myEmail = user?.email || mySeed?.email || `usuario${myAccId}@digitalars.com`;
+    const myName = mySeed?.name || (myEmail.split("@")[0].replace(".", " ").replace(/\b\w/g, (l) => l.toUpperCase()));
+    const myUsername = myEmail.split("@")[0];
+
+    const myProfileData = {
+      name: myName,
+      email: myEmail,
+      accountId: myAccId,
+      accountNumber: mySeed?.accountNumber || `0002-4892-0${myAccId}`,
+      cvu: mySeed?.cvu || `000000310001000000000${myAccId}`,
+      alias: mySeed?.alias || `${myUsername}.ars`,
+      bank: mySeed?.bank || "DigitalArs Billetera Virtual",
+    };
+
+    // Contraparte
+    const counterpartAccId = selectedTx.toAccountId
+      ? String(selectedTx.toAccountId)
+      : (selectedTx.accountId && String(selectedTx.accountId) !== myAccId ? String(selectedTx.accountId) : "2");
+
+    const rawTitleName = selectedTx.title?.replace(/transferencia (enviada )?a /i, "").replace(/transferencia (recibida )?de /i, "").trim();
+    const counterpartSeed = findContact(counterpartAccId) || findContact(selectedTx.counterpart) || findContact(rawTitleName);
+    const counterpartName = counterpartSeed?.name || selectedTx.counterpart || rawTitleName || `Cuenta #${counterpartAccId}`;
+    const counterpartEmail = counterpartSeed?.email || `cuenta${counterpartAccId}@digitalars.com`;
+    const counterpartUsername = counterpartEmail.split("@")[0];
+
+    const counterpartProfileData = {
+      name: counterpartName,
+      email: counterpartEmail,
+      accountId: counterpartAccId,
+      accountNumber: counterpartSeed?.accountNumber || `0002-4892-0${counterpartAccId}`,
+      cvu: counterpartSeed?.cvu || `000000310001000000000${counterpartAccId}`,
+      alias: counterpartSeed?.alias || `${counterpartUsername}.ars`,
+      bank: counterpartSeed?.bank || "DigitalArs Billetera Virtual",
+    };
+
+    const isIncoming = selectedTx.type === 2 || selectedTx.isIncome;
+
+    return {
+      operationId: `TX-${String(selectedTx.id).padStart(4, "0")}`,
+      date: selectedTx.formattedDate || formatTransactionDate(selectedTx.date || selectedTx.rawDate),
+      amount: Number(selectedTx.amount) || 0,
+      motive: selectedTx.concept || selectedTx.title || "Varios",
+      origin: isIncoming ? counterpartProfileData : myProfileData,
+      destination: isIncoming ? myProfileData : counterpartProfileData,
+      status: selectedTx.status || "Operación Exitosa",
+    };
+  }, [selectedTx, account, user]);
+
+  // Carga todas las transacciones sin paginar para alimentar la gráfica de motivos
+  const loadChartData = useCallback(async () => {
+    try {
+      const res = await transactionService.getHistory({
+        page: 1,
+        pageSize: 100,
+        localTransactions,
+      });
+      if (res?.items) {
+        setAllChartTransactions(res.items);
+      }
+    } catch {
+      // Ignorar error si está offline
+    }
+  }, [localTransactions]);
+
+  useEffect(() => {
+    loadChartData();
+  }, [loadChartData]);
 
   // Carga de historial desde la API o fallback local
   const loadHistory = useCallback(async () => {
@@ -114,6 +208,15 @@ export function HistoryPage() {
     loadHistory();
   }, [loadHistory]);
 
+  const handleRefresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      await Promise.all([loadChartData(), loadHistory()]);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadChartData, loadHistory]);
+
   const handleClearFilters = () => {
     setTypeFilter("all");
     setDateFrom("");
@@ -127,10 +230,14 @@ export function HistoryPage() {
   };
 
   const handleRowsPerPageChange = (event) => {
-    const newSize = parseInt(event.target.value, 10);
-    setPageSize(newSize);
+    setPageSize(parseInt(event.target.value, 10));
     setPage(1);
   };
+
+  // Transacciones a usar para el gráfico (prioriza la lista completa de la cuenta)
+  const chartTxSource = allChartTransactions.length > 0 
+    ? allChartTransactions 
+    : (localTransactions.length > 0 ? localTransactions : items);
 
   const handleCopyId = (id) => {
     if (navigator.clipboard) {
@@ -155,8 +262,11 @@ export function HistoryPage() {
               style={{ width: "100%" }}
             >
               <MovementPieChart
-                transactions={localTransactions && localTransactions.length > 0 ? localTransactions : (items.length > 0 ? items : [])}
-                onGoToTable={handleGoToTable}
+                transactions={chartTxSource}
+                onGoToTable={handleGoToTableWithFilter}
+                onSelectCategory={handleSelectCategory}
+                onRefresh={handleRefresh}
+                loading={loading}
               />
             </motion.div>
           ) : (
@@ -211,13 +321,13 @@ export function HistoryPage() {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1.4fr 1.15fr 1fr 1fr auto" },
+              gridTemplateColumns: { xs: "1fr 1fr", md: "1.4fr 1.15fr 1fr 1fr auto" },
               gap: 1.5,
               alignItems: "flex-end",
             }}
           >
             {/* 1. Búsqueda por concepto */}
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            <Box sx={{ gridColumn: { xs: "span 2", md: "span 1" }, display: "flex", flexDirection: "column", gap: 0.5 }}>
               <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#64748B" }}>
                 Concepto / Operación
               </Typography>
@@ -238,7 +348,7 @@ export function HistoryPage() {
             </Box>
 
             {/* 2. Tipo de movimiento */}
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            <Box sx={{ gridColumn: { xs: "span 2", md: "span 1" }, display: "flex", flexDirection: "column", gap: 0.5 }}>
               <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#64748B" }}>
                 Tipo de Movimiento
               </Typography>
@@ -249,15 +359,14 @@ export function HistoryPage() {
                   sx={{ borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.88rem", height: 40 }}
                 >
                   <MenuItem value="all">Todos los tipos</MenuItem>
-                  <MenuItem value="1">Depósitos</MenuItem>
-                  <MenuItem value="2">Ingresos / Recibidos</MenuItem>
-                  <MenuItem value="3">Egresos / Transferencias</MenuItem>
+                  <MenuItem value="income">Ingresos</MenuItem>
+                  <MenuItem value="expense">Egresos</MenuItem>
                 </Select>
               </FormControl>
             </Box>
 
             {/* 3. Fecha Desde */}
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            <Box sx={{ gridColumn: { xs: "span 1", md: "span 1" }, display: "flex", flexDirection: "column", gap: 0.5 }}>
               <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#64748B" }}>
                 Desde
               </Typography>
@@ -273,7 +382,7 @@ export function HistoryPage() {
             </Box>
 
             {/* 4. Fecha Hasta */}
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            <Box sx={{ gridColumn: { xs: "span 1", md: "span 1" }, display: "flex", flexDirection: "column", gap: 0.5 }}>
               <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#64748B" }}>
                 Hasta
               </Typography>
@@ -288,15 +397,23 @@ export function HistoryPage() {
               />
             </Box>
 
-            {/* 5. Botón Limpiar */}
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, justifyContent: "flex-end", width: { xs: "100%", md: "auto" } }}>
+            {/* 5. Botones Limpiar y Actualizar */}
+            <Box
+              sx={{
+                gridColumn: { xs: "span 2", md: "span 1" },
+                display: "flex",
+                gap: 1,
+                justifyContent: "flex-end",
+                width: { xs: "100%", md: "auto" },
+              }}
+            >
               <Tooltip title="Restablecer todos los filtros">
                 <Button
-                  fullWidth
                   variant="outlined"
                   startIcon={<RestartAltIcon />}
                   onClick={handleClearFilters}
                   sx={{
+                    flex: 1,
                     height: 40,
                     borderRadius: "10px",
                     borderColor: "#CBD5E1",
@@ -304,12 +421,47 @@ export function HistoryPage() {
                     textTransform: "none",
                     fontWeight: 600,
                     fontSize: "0.85rem",
-                    px: 2,
+                    px: 1.8,
                     whiteSpace: "nowrap",
                     "&:hover": { bgcolor: "#F8FAFC", borderColor: "#94A3B8" },
                   }}
                 >
                   Limpiar
+                </Button>
+              </Tooltip>
+
+              <Tooltip title="Actualizar datos desde el servidor">
+                <Button
+                  variant="contained"
+                  disabled={loading}
+                  startIcon={
+                    <SyncIcon
+                      sx={{
+                        fontSize: 18,
+                        animation: loading ? "spin 1s linear infinite" : "none",
+                        "@keyframes spin": {
+                          "0%": { transform: "rotate(0deg)" },
+                          "100%": { transform: "rotate(360deg)" },
+                        },
+                      }}
+                    />
+                  }
+                  onClick={handleRefresh}
+                  sx={{
+                    flex: 1,
+                    height: 40,
+                    borderRadius: "10px",
+                    bgcolor: "#0056D2",
+                    color: "#FFFFFF",
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: "0.85rem",
+                    px: 1.8,
+                    whiteSpace: "nowrap",
+                    "&:hover": { bgcolor: "#0047B3" },
+                  }}
+                >
+                  Actualizar
                 </Button>
               </Tooltip>
             </Box>
@@ -382,176 +534,328 @@ export function HistoryPage() {
             </Box>
           ) : (
             <>
-              <TableContainer sx={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-                <Table sx={{ minWidth: 700 }}>
-                  <TableHead sx={{ bgcolor: "#F8FAFC" }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
-                        Operación / Concepto
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
-                        Destinatario / Contraparte
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
-                        Tipo
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
-                        Fecha
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
-                        Estado
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
-                        Monto
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
-                        Detalle
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {items.map((tx) => {
-                      const isIncome = tx.type === 1 || tx.type === 2;
+              {/* ─── VISTA ESCRITORIO: TABLA COMPLETA (md en adelante) ─── */}
+              <Box sx={{ display: { xs: "none", md: "block" } }}>
+                <TableContainer sx={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+                  <Table sx={{ minWidth: 700 }}>
+                    <TableHead sx={{ bgcolor: "#F8FAFC" }}>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                          Operación / Concepto
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                          Destinatario / Contraparte
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                          Tipo
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                          Fecha
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                          Estado
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                          Monto
+                        </TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                          Detalle
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {items.map((tx) => {
+                        const isIncome = tx.type === 1 || tx.type === 2 || tx.isIncome || tx.category === "INGRESO" || tx.category === "DEPÓSITO";
 
-                      let icon = <NorthEastIcon sx={{ fontSize: 18 }} />;
-                      let iconBg = "#FEE2E2";
-                      let iconColor = "#DC2626";
-                      let chipLabel = "EGRESO";
-                      let chipBg = "#FEE2E2";
-                      let chipColor = "#B91C1C";
+                        const icon = isIncome ? (
+                          <SouthWestIcon sx={{ fontSize: 18 }} />
+                        ) : (
+                          <NorthEastIcon sx={{ fontSize: 18 }} />
+                        );
+                        const iconBg = isIncome ? "#DCFCE7" : "#FEE2E2";
+                        const iconColor = isIncome ? "#16A34A" : "#DC2626";
+                        const chipLabel = isIncome ? "INGRESO" : "EGRESO";
+                        const chipBg = isIncome ? "#DCFCE7" : "#FEE2E2";
+                        const chipColor = isIncome ? "#15803D" : "#B91C1C";
 
-                      if (tx.type === 1) {
-                        icon = <AccountBalanceWalletIcon sx={{ fontSize: 18 }} />;
-                        iconBg = "#E0F2FE";
-                        iconColor = "#0284C7";
-                        chipLabel = "DEPÓSITO";
-                        chipBg = "#E0F2FE";
-                        chipColor = "#0369A1";
-                      } else if (tx.type === 2) {
-                        icon = <SouthWestIcon sx={{ fontSize: 18 }} />;
-                        iconBg = "#DCFCE7";
-                        iconColor = "#16A34A";
-                        chipLabel = "INGRESO";
-                        chipBg = "#DCFCE7";
-                        chipColor = "#15803D";
-                      }
+                        const counterpartDisplay =
+                          tx.counterpart ||
+                          (tx.toAccountId ? `Cuenta #${tx.toAccountId}` : "Cuenta Propia");
 
-                      const txCode = `TX-${String(tx.id).padStart(4, "0")}`;
-                      const counterpartDisplay =
-                        tx.counterpart ||
-                        (tx.toAccountId ? `Cuenta #${tx.toAccountId}` : "Cuenta Propia");
+                        return (
+                          <TableRow
+                            key={tx.id}
+                            hover
+                            sx={{
+                              "&:last-child td, &:last-child th": { border: 0 },
+                              cursor: "pointer",
+                              transition: "background-color 0.15s ease",
+                            }}
+                            onClick={() => setSelectedTx(tx)}
+                          >
+                            {/* 1. Operación y Concepto */}
+                            <TableCell>
+                              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                                <Avatar
+                                  sx={{
+                                    width: 38,
+                                    height: 38,
+                                    bgcolor: iconBg,
+                                    color: iconColor,
+                                  }}
+                                >
+                                  {icon}
+                                </Avatar>
+                                <Box>
+                                  <Typography sx={{ fontWeight: 700, fontSize: "0.92rem", color: "#0F172A" }}>
+                                    {tx.title}
+                                  </Typography>
+                                  <Typography sx={{ fontSize: "0.78rem", color: "#64748B" }}>
+                                    {(tx.subtitle || tx.category || "").replace("DEPÓSITO", "INGRESO")}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
 
-                      return (
-                        <TableRow
-                          key={tx.id}
-                          hover
-                          sx={{
-                            "&:last-child td, &:last-child th": { border: 0 },
-                            cursor: "pointer",
-                            transition: "background-color 0.15s ease",
-                          }}
-                          onClick={() => setSelectedTx(tx)}
-                        >
-                          {/* 1. Operación y Concepto */}
-                          <TableCell>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                              <Avatar
+                            {/* 2. Contraparte / Destinatario */}
+                            <TableCell sx={{ color: "#334155", fontSize: "0.85rem", fontWeight: 600 }}>
+                              {counterpartDisplay}
+                            </TableCell>
+
+                            {/* 3. Tipo (Chip) */}
+                            <TableCell>
+                              <Chip
+                                label={chipLabel}
+                                size="small"
                                 sx={{
-                                  width: 38,
-                                  height: 38,
-                                  bgcolor: iconBg,
-                                  color: iconColor,
+                                  bgcolor: chipBg,
+                                  color: chipColor,
+                                  fontWeight: 800,
+                                  fontSize: "0.72rem",
+                                  borderRadius: "8px",
+                                }}
+                              />
+                            </TableCell>
+
+                            {/* 4. Fecha */}
+                            <TableCell sx={{ color: "#475569", fontSize: "0.85rem", fontWeight: 500 }}>
+                              {tx.formattedDate || formatTransactionDate(tx.date || tx.rawDate)}
+                            </TableCell>
+
+                            {/* 5. Estado */}
+                            <TableCell>
+                              <Chip
+                                icon={<CheckCircleOutlinedIcon sx={{ fontSize: "14px !important", color: "#16A34A !important" }} />}
+                                label={tx.status || "Completada"}
+                                size="small"
+                                sx={{
+                                  bgcolor: "#DCFCE7",
+                                  color: "#15803D",
+                                  fontWeight: 700,
+                                  fontSize: "0.72rem",
+                                  borderRadius: "8px",
+                                }}
+                              />
+                            </TableCell>
+
+                            {/* 6. Monto */}
+                            <TableCell align="right">
+                              <Typography
+                                sx={{
+                                  fontWeight: 800,
+                                  fontSize: "0.95rem",
+                                  color: isIncome ? "#16A34A" : "#0F172A",
                                 }}
                               >
-                                {icon}
-                              </Avatar>
-                              <Box>
-                                <Typography sx={{ fontWeight: 700, fontSize: "0.92rem", color: "#0F172A" }}>
-                                  {tx.title}
-                                </Typography>
-                                <Typography sx={{ fontSize: "0.78rem", color: "#64748B" }}>
-                                  {tx.subtitle || tx.category}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </TableCell>
+                                {isIncome ? "+" : "-"}{formatCurrency(tx.amount)}
+                              </Typography>
+                            </TableCell>
 
-                          {/* 3. Contraparte / Destinatario */}
-                          <TableCell sx={{ color: "#334155", fontSize: "0.85rem", fontWeight: 600 }}>
-                            {counterpartDisplay}
-                          </TableCell>
+                            {/* 7. Botón Ver Detalle */}
+                            <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+                              <Tooltip title="Ver comprobante digital">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => setSelectedTx(tx)}
+                                  sx={{
+                                    color: "#0056D2",
+                                    bgcolor: "#EEF4FF",
+                                    "&:hover": { bgcolor: "#D9E8FF" },
+                                  }}
+                                >
+                                  <VisibilityOutlinedIcon sx={{ fontSize: 18 }} />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
 
-                          {/* 4. Tipo (Chip) */}
-                          <TableCell>
-                            <Chip
-                              label={chipLabel}
-                              size="small"
-                              sx={{
-                                bgcolor: chipBg,
-                                color: chipColor,
-                                fontWeight: 800,
-                                fontSize: "0.72rem",
-                                borderRadius: "8px",
-                              }}
-                            />
-                          </TableCell>
+              {/* ─── VISTA MÓVIL: TARJETAS TOUCH-FRIENDLY (xs y sm) ─── */}
+              <Box sx={{ display: { xs: "block", md: "none" }, p: { xs: 1.2, sm: 2 } }}>
+                {items.map((tx) => {
+                  const isIncome = tx.type === 1 || tx.type === 2 || tx.isIncome || tx.category === "INGRESO" || tx.category === "DEPÓSITO";
+                  const icon = isIncome ? <SouthWestIcon sx={{ fontSize: 18 }} /> : <NorthEastIcon sx={{ fontSize: 18 }} />;
+                  const iconBg = isIncome ? "#DCFCE7" : "#FEE2E2";
+                  const iconColor = isIncome ? "#16A34A" : "#DC2626";
+                  const chipLabel = isIncome ? "INGRESO" : "EGRESO";
+                  const chipBg = isIncome ? "#DCFCE7" : "#FEE2E2";
+                  const chipColor = isIncome ? "#15803D" : "#B91C1C";
+                  const counterpartDisplay = tx.counterpart || (tx.toAccountId ? `Cuenta #${tx.toAccountId}` : "Cuenta Propia");
 
-                          {/* 5. Fecha */}
-                          <TableCell sx={{ color: "#475569", fontSize: "0.85rem", fontWeight: 500 }}>
-                            {tx.formattedDate || formatTransactionDate(tx.date || tx.rawDate)}
-                          </TableCell>
-
-                          {/* 6. Estado */}
-                          <TableCell>
-                            <Chip
-                              icon={<CheckCircleOutlinedIcon sx={{ fontSize: "14px !important", color: "#16A34A !important" }} />}
-                              label={tx.status || "Completada"}
-                              size="small"
-                              sx={{
-                                bgcolor: "#DCFCE7",
-                                color: "#15803D",
-                                fontWeight: 700,
-                                fontSize: "0.72rem",
-                                borderRadius: "8px",
-                              }}
-                            />
-                          </TableCell>
-
-                          {/* 7. Monto */}
-                          <TableCell align="right">
+                  return (
+                    <Paper
+                      key={tx.id}
+                      elevation={0}
+                      onClick={() => setSelectedTx(tx)}
+                      sx={{
+                        p: 1.5,
+                        mb: 1.2,
+                        borderRadius: "14px",
+                        border: "1px solid #E2E8F0",
+                        bgcolor: "#FFFFFF",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                        "&:hover": {
+                          borderColor: "#CBD5E1",
+                          bgcolor: "#FAFAFA",
+                        },
+                        "&:active": {
+                          bgcolor: "#F1F5F9",
+                          transform: "scale(0.99)",
+                        },
+                        "&:last-child": {
+                          mb: 0,
+                        },
+                      }}
+                    >
+                      {/* Fila Superior: Avatar + Título/Motivo + Monto */}
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.2 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.2, minWidth: 0, flex: 1 }}>
+                          <Avatar
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              bgcolor: iconBg,
+                              color: iconColor,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {icon}
+                          </Avatar>
+                          <Box sx={{ minWidth: 0, flex: 1 }}>
                             <Typography
                               sx={{
                                 fontWeight: 800,
-                                fontSize: "0.95rem",
-                                color: isIncome ? "#16A34A" : "#0F172A",
+                                fontSize: "0.88rem",
+                                color: "#0F172A",
+                                lineHeight: 1.2,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
                               }}
                             >
-                              {isIncome ? "+" : "-"}{formatCurrency(tx.amount)}
+                              {tx.title}
                             </Typography>
-                          </TableCell>
+                            <Typography
+                              sx={{
+                                fontSize: "0.74rem",
+                                color: "#64748B",
+                                fontWeight: 500,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                mt: 0.2,
+                              }}
+                            >
+                              {(tx.subtitle || tx.category || "").replace("DEPÓSITO", "INGRESO")}
+                            </Typography>
+                          </Box>
+                        </Box>
 
-                          {/* 8. Botón Ver Detalle */}
-                          <TableCell align="center" onClick={(e) => e.stopPropagation()}>
-                            <Tooltip title="Ver comprobante digital">
-                              <IconButton
-                                size="small"
-                                onClick={() => setSelectedTx(tx)}
-                                sx={{
-                                  color: "#0056D2",
-                                  bgcolor: "#EEF4FF",
-                                  "&:hover": { bgcolor: "#D9E8FF" },
-                                }}
-                              >
-                                <VisibilityOutlinedIcon sx={{ fontSize: 18 }} />
-                              </IconButton>
-                            </Tooltip>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                        <Box sx={{ textAlign: "right", flexShrink: 0 }}>
+                          <Typography
+                            sx={{
+                              fontWeight: 800,
+                              fontSize: "0.95rem",
+                              color: isIncome ? "#16A34A" : "#0F172A",
+                              lineHeight: 1.2,
+                            }}
+                          >
+                            {isIncome ? "+" : "-"}{formatCurrency(tx.amount)}
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      {/* Fila Inferior: Contraparte + Fecha + Chips + Flecha */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          mt: 1.2,
+                          pt: 1,
+                          borderTop: "1px dashed #F1F5F9",
+                          gap: 1,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, minWidth: 0 }}>
+                          <Typography
+                            sx={{
+                              fontSize: "0.74rem",
+                              color: "#475569",
+                              fontWeight: 600,
+                              maxWidth: { xs: 130, sm: 200 },
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {counterpartDisplay}
+                          </Typography>
+                          <Typography sx={{ fontSize: "0.7rem", color: "#CBD5E1" }}>•</Typography>
+                          <Typography sx={{ fontSize: "0.73rem", color: "#64748B", fontWeight: 500 }}>
+                            {tx.formattedDate || formatTransactionDate(tx.date || tx.rawDate)}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, flexShrink: 0 }}>
+                          <Chip
+                            label={chipLabel}
+                            size="small"
+                            sx={{
+                              bgcolor: chipBg,
+                              color: chipColor,
+                              fontWeight: 800,
+                              fontSize: "0.66rem",
+                              height: 19,
+                              borderRadius: "6px",
+                              px: 0.2,
+                            }}
+                          />
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              color: "#0056D2",
+                              bgcolor: "#EFF6FF",
+                              borderRadius: "6px",
+                              p: 0.2,
+                            }}
+                          >
+                            <ChevronRightIcon sx={{ fontSize: 16 }} />
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Paper>
+                  );
+                })}
+              </Box>
 
               {/* ─── PAGINACIÓN DE MATERIAL UI (Criterio de Aceptación) ─── */}
               <TablePagination
@@ -588,140 +892,12 @@ export function HistoryPage() {
           )}
         </AnimatePresence>
 
-        {/* ─── MODAL DE COMPROBANTE DIGITAL ─── */}
-        {selectedTx && (
-          <Dialog
-            open={Boolean(selectedTx)}
-            onClose={() => setSelectedTx(null)}
-            maxWidth="xs"
-            fullWidth
-            PaperProps={{
-              sx: {
-                borderRadius: "20px",
-                p: 1,
-              },
-            }}
-          >
-            <DialogTitle sx={{ m: 0, p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <ReceiptLongOutlinedIcon sx={{ color: "#0056D2" }} />
-                <Typography variant="h6" sx={{ fontWeight: 800, color: "#0F172A", fontSize: "1.1rem" }}>
-                  Comprobante Digital
-                </Typography>
-              </Box>
-              <IconButton onClick={() => setSelectedTx(null)} size="small">
-                <CloseIcon />
-              </IconButton>
-            </DialogTitle>
-
-            <DialogContent dividers sx={{ p: 3 }}>
-              {/* Badge de Monto */}
-              <Box sx={{ textAlign: "center", my: 1 }}>
-                <Chip
-                  icon={<CheckCircleOutlinedIcon sx={{ fontSize: "16px !important", color: "#16A34A !important" }} />}
-                  label="Operación Exitosa"
-                  size="small"
-                  sx={{ bgcolor: "#DCFCE7", color: "#15803D", fontWeight: 700, mb: 1 }}
-                />
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontWeight: 800,
-                    color: selectedTx.type === 1 || selectedTx.type === 2 ? "#16A34A" : "#0F172A",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  {selectedTx.type === 1 || selectedTx.type === 2 ? "+" : "-"}
-                  {formatCurrency(selectedTx.amount)}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#64748B", mt: 0.5 }}>
-                  {selectedTx.title}
-                </Typography>
-              </Box>
-
-              <Divider sx={{ my: 2.5 }} />
-
-              {/* Fila: ID Transacción */}
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
-                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                  Número de Operación
-                </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: "monospace", color: "#0F172A" }}>
-                    TX-{String(selectedTx.id).padStart(4, "0")}
-                  </Typography>
-                  <Tooltip title={copied ? "¡Copiado!" : "Copiar ID"}>
-                    <IconButton size="small" onClick={() => handleCopyId(selectedTx.id)}>
-                      <ContentCopyIcon sx={{ fontSize: 14, color: copied ? "#16A34A" : "#64748B" }} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </Box>
-
-              {/* Fila: Fecha y Hora */}
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
-                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                  Fecha y Hora
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: "#0F172A" }}>
-                  {selectedTx.formattedDate || formatTransactionDate(selectedTx.date || selectedTx.rawDate)}
-                </Typography>
-              </Box>
-
-              {/* Fila: Tipo */}
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
-                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                  Tipo de Operación
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: "#0056D2" }}>
-                  {selectedTx.type === 1
-                    ? "Depósito de Fondos"
-                    : selectedTx.type === 2
-                    ? "Transferencia Recibida"
-                    : "Transferencia Enviada"}
-                </Typography>
-              </Box>
-
-              {/* Fila: Contraparte / Destino */}
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
-                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                  Contraparte / Destinatario
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: "#0F172A" }}>
-                  {selectedTx.counterpart || (selectedTx.toAccountId ? `Cuenta #${selectedTx.toAccountId}` : "Cuenta Propia")}
-                </Typography>
-              </Box>
-
-              {/* Fila: Estado */}
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                  Estado
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: "#16A34A" }}>
-                  {selectedTx.status || "Completada"}
-                </Typography>
-              </Box>
-            </DialogContent>
-
-            <DialogActions sx={{ p: 2 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={() => setSelectedTx(null)}
-                sx={{
-                  bgcolor: "#0056D2",
-                  borderRadius: "12px",
-                  py: 1,
-                  fontWeight: 700,
-                  textTransform: "none",
-                  "&:hover": { bgcolor: "#0047B3" },
-                }}
-              >
-                Cerrar comprobante
-              </Button>
-            </DialogActions>
-          </Dialog>
-        )}
+        {/* ─── MODAL REUTILIZABLE DE COMPROBANTE CON TODA LA INFORMACIÓN Y DESCARGA EN PDF ─── */}
+        <TransferReceiptModal
+          open={Boolean(selectedTx)}
+          onClose={() => setSelectedTx(null)}
+          transferData={selectedTxReceiptData}
+        />
       </Box>
     </AppLayout>
   );

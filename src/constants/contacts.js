@@ -25,6 +25,17 @@ export const SEED_CONTACTS = [
     avatarText: "M",
   },
   {
+    id: "4",
+    name: "Alejandro Silva",
+    email: "alejandro.silva@digitalars.com",
+    accountId: "4",
+    accountNumber: "0002-4892-04",
+    cvu: "0000003100010000000004",
+    alias: "alejandro.silva.ars",
+    bank: "DigitalArs Billetera Virtual",
+    avatarText: "A",
+  },
+  {
     id: "5",
     name: "Micaela Mulato",
     email: "micaela.mulato@digitalars.com",
