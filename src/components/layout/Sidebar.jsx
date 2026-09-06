@@ -15,7 +15,6 @@ import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import CreditCardOutlinedIcon from "@mui/icons-material/CreditCardOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
-import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import HeadsetMicOutlinedIcon from "@mui/icons-material/HeadsetMicOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
@@ -23,6 +22,8 @@ import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
 import iconoImg from "../../assets/iconoPrincipal.png";
 import iconoSmall from "../../assets/icono.png";
 
@@ -33,18 +34,27 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
   const [collapsed, setCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogoutAction = () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      logout();
+      navigate("/login");
+    }
+  };
+
+  const isAdmin = user?.role?.toLowerCase() === "admin";
 
   const mainNav = [
     { id: "inicio", label: "Inicio", icon: <HomeOutlinedIcon />, path: "/" },
-    {
-      id: "admin-users",
-      label: "Usuarios",
-      icon: <AdminPanelSettingsOutlinedIcon />,
-      path: "/admin/users",
-    },
-    { id: "historial", label: "Historial", icon: <HistoryOutlinedIcon />, path: "/" },
+    { id: "historial", label: "Historial", icon: <HistoryOutlinedIcon />, path: "/history" },
     { id: "tarjetas", label: "Tarjetas", icon: <CreditCardOutlinedIcon />, path: "/" },
-    { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon />, path: "/" },
+    { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon />, path: "/profile" },
+    ...(isAdmin
+      ? [{ id: "admin", label: "Usuarios Admin", icon: <AdminPanelSettingsOutlinedIcon />, path: "/admin" }]
+      : []),
     {
       id: "configuracion",
       label: "Configuración",
@@ -58,11 +68,13 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
       id: "soporte",
       label: "Soporte",
       icon: <HeadsetMicOutlinedIcon fontSize="small" />,
+      path: "/support",
     },
     {
       id: "ayuda",
       label: "Ayuda",
       icon: <HelpOutlineOutlinedIcon fontSize="small" />,
+      path: "/help",
     },
   ];
 
@@ -250,27 +262,31 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
         <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)", mb: 2 }} />
 
         <List disablePadding sx={{ mb: 2 }}>
-          {bottomNav.map((item) => (
-            <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
-              <motion.div
-                whileHover={collapsed ? {} : { x: 3 }}
-                style={{ width: "100%" }}
-              >
-                <ListItemButton
-                  onClick={() => onItemClick && onItemClick(item.id)}
-                  sx={{
-                    py: 0.75,
-                    px: collapsed ? 0 : 1.5,
-                    justifyContent: collapsed ? "center" : "flex-start",
-                    borderRadius: "6px",
-                    color: "#7F96B2",
-                    "&:hover": {
-                      color: "#FFFFFF",
-                      bgcolor: "rgba(255, 255, 255, 0.05)",
-                    },
-                  }}
-                  title={collapsed ? item.label : ""}
+          {bottomNav.map((item) => {
+            const isActive = activeItem === item.id;
+            return (
+              <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
+                <motion.div
+                  whileHover={collapsed ? {} : { x: 3 }}
+                  style={{ width: "100%" }}
                 >
+                  <ListItemButton
+                    onClick={() => handleClick(item)}
+                    selected={isActive}
+                    sx={{
+                      py: 0.75,
+                      px: collapsed ? 0 : 1.5,
+                      justifyContent: collapsed ? "center" : "flex-start",
+                      borderRadius: "6px",
+                      color: isActive ? "#38B6FF" : "#7F96B2",
+                      bgcolor: isActive ? "rgba(0, 119, 255, 0.15) !important" : "transparent",
+                      "&:hover": {
+                        color: "#FFFFFF",
+                        bgcolor: isActive ? "rgba(0, 119, 255, 0.25) !important" : "rgba(255, 255, 255, 0.05)",
+                      },
+                    }}
+                    title={collapsed ? item.label : ""}
+                  >
                   <ListItemIcon
                     sx={{
                       color: "inherit",
@@ -291,15 +307,16 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
                   )}
                 </ListItemButton>
               </motion.div>
-            </ListItem>
-          ))}
+              </ListItem>
+            );
+          })}
         </List>
 
         <motion.div whileTap={{ scale: 0.95 }}>
           <Button
             fullWidth
             variant="outlined"
-            onClick={onLogout}
+            onClick={handleLogoutAction}
             title={collapsed ? "Cerrar sesión" : ""}
             sx={{
               color: "#D0D9E5",

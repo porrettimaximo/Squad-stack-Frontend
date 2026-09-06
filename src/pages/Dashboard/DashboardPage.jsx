@@ -12,6 +12,7 @@ import {
 import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
 
 import { useAccount } from "../../hooks/useAccount";
+import { useAuth } from "../../context/AuthContext";
 import Sidebar from "../../components/layout/Sidebar";
 import DashboardNavbar from "../../components/layout/DashboardNavbar";
 import MobileBottomNav from "../../components/layout/MobileBottomNav";
@@ -31,10 +32,16 @@ export function DashboardPage() {
   const isDesktop = useMediaQuery(muiTheme.breakpoints.up("md"));
 
   const { user, account, loading } = useAccount();
+  const { logout } = useAuth();
   const [currentTab, setCurrentTab] = useState(0);
   const [activeSidebarItem, setActiveSidebarItem] = useState("inicio");
   const [activeMobileNav, setActiveMobileNav] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   const userName = user?.name || "Alejandro Silva";
 
@@ -48,9 +55,9 @@ export function DashboardPage() {
             activeItem={activeSidebarItem}
             onItemClick={(item) => {
               setActiveSidebarItem(item);
-              setSnackbar({ open: true, message: `Navegando a ${item.toUpperCase()}...` });
+              if (item === "admin") navigate("/admin");
             }}
-            onLogout={() => setSnackbar({ open: true, message: "Sesión finalizada." })}
+            onLogout={handleLogout}
           />
 
           {/* Área Central de Contenido */}
@@ -117,6 +124,7 @@ export function DashboardPage() {
                   <BalanceCard
                     balance={account.money}
                     cardNumber={account.cardNumber}
+                    cvu={account.cvu || (account.id ? `000000310001000000000${account.id}` : "0000003100010000000004")}
                     trend={account.trend}
                     loading={loading}
                   />
@@ -230,6 +238,7 @@ export function DashboardPage() {
             <BalanceCard
               balance={account.money}
               cardNumber={account.cardNumber}
+              cvu={account.cvu || (account.id ? `000000310001000000000${account.id}` : "0000003100010000000004")}
               trend={account.trend}
               loading={loading}
             />
@@ -269,8 +278,14 @@ export function DashboardPage() {
 
           {/* Barra Fija Inferior Mobile */}
           <MobileBottomNav
-            activeNav={activeMobileNav}
-            onChange={(e, val) => setActiveMobileNav(val)}
+            activeNav={0}
+            onChange={(e, val) => {
+              setActiveMobileNav(val);
+              if (val === 0) navigate("/");
+              else if (val === 1) navigate("/history");
+              else if (val === 2) navigate("/profile");
+              else if (val === 3) navigate("/profile");
+            }}
           />
         </Box>
       )}

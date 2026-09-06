@@ -1,30 +1,80 @@
-import React, { useState } from "react";
+import React from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Box, Button, useMediaQuery, useTheme } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Sidebar from "./Sidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import MobileBottomNav from "./MobileBottomNav";
 import { useAccount } from "../../hooks/useAccount";
+import { useAuth } from "../../context/AuthContext";
 
 /**
  * AppLayout: Contenedor estructural unificado de la aplicación (Desktop + Mobile).
- * Elimina la duplicación de código de layout en DashboardPage, DepositPage y TransferPage.
+ * Conecta la barra lateral y la barra inferior móvil con la navegación del router.
  */
 export function AppLayout({
   children,
-  activeSidebarItem = "inicio",
+  activeSidebarItem,
   currentTab = 0,
   onTabChange,
+  showNavbarTabs,
   onBack,
   backLabel = "Volver",
   maxWidth = 1240,
 }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const { user } = useAccount();
+  const { logout } = useAuth();
 
-  const [activeItem, setActiveItem] = useState(activeSidebarItem);
-  const [mobileNavIndex, setMobileNavIndex] = useState(0);
+  // Ocultar pestañas de navegación superior en historial, perfil, ayuda y soporte
+  const isHistoryRoute = location.pathname.startsWith("/history") || location.pathname.startsWith("/historial");
+  const isProfileRoute = location.pathname.startsWith("/profile") || location.pathname.startsWith("/perfil");
+  const isHelpRoute = location.pathname.startsWith("/help") || location.pathname.startsWith("/ayuda");
+  const isSupportRoute = location.pathname.startsWith("/support") || location.pathname.startsWith("/soporte");
+  const shouldShowTabs = showNavbarTabs !== undefined ? showNavbarTabs : (!isHistoryRoute && !isProfileRoute && !isHelpRoute && !isSupportRoute);
+
+  // Determinar ítem activo según la ruta actual si no viene explícito
+  let currentActiveItem = activeSidebarItem;
+  let currentMobileIndex = 0;
+
+  if (isHistoryRoute) {
+    currentActiveItem = "historial";
+    currentMobileIndex = 1;
+  } else if (isProfileRoute) {
+    currentActiveItem = "perfil";
+    currentMobileIndex = 2;
+  } else if (isHelpRoute) {
+    currentActiveItem = "ayuda";
+  } else if (isSupportRoute) {
+    currentActiveItem = "soporte";
+  } else if (location.pathname === "/") {
+    currentActiveItem = "inicio";
+    currentMobileIndex = 0;
+  }
+
+  const handleSidebarClick = (item) => {
+    if (item === "inicio") navigate("/");
+    else if (item === "historial") navigate("/history");
+    else if (item === "perfil") navigate("/profile");
+    else if (item === "admin") navigate("/admin");
+    else if (item === "ayuda") navigate("/help");
+    else if (item === "soporte") navigate("/support");
+  };
+
+  const handleMobileNavChange = (e, index) => {
+    if (index === 0) navigate("/");
+    else if (index === 1) navigate("/history");
+    else if (index === 2) navigate("/profile");
+    else if (index === 3) navigate("/profile");
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   const userName = user?.name || "Alejandro Silva";
 
@@ -33,9 +83,9 @@ export function AppLayout({
       {/* 1. Vista Desktop: Barra Lateral */}
       {isDesktop && (
         <Sidebar
-          activeItem={activeItem}
-          onItemClick={(item) => setActiveItem(item)}
-          onLogout={() => console.info("Logout")}
+          activeItem={currentActiveItem}
+          onItemClick={handleSidebarClick}
+          onLogout={handleLogout}
         />
       )}
 
@@ -58,6 +108,7 @@ export function AppLayout({
             currentTab={currentTab}
             onTabChange={onTabChange}
             userName={userName}
+            showTabs={shouldShowTabs}
           />
         )}
 
@@ -92,8 +143,8 @@ export function AppLayout({
       {/* 3. Vista Mobile: Barra de Navegación Inferior */}
       {!isDesktop && (
         <MobileBottomNav
-          activeIndex={mobileNavIndex}
-          onChange={(index) => setMobileNavIndex(index)}
+          activeNav={currentMobileIndex}
+          onChange={handleMobileNavChange}
         />
       )}
     </Box>
