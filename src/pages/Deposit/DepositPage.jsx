@@ -183,9 +183,11 @@ export function DepositPage() {
                   value={amount ? `$ ${Number(amount).toLocaleString("es-AR")}` : ""}
                   onChange={handleAmountChange}
                   placeholder="$ 0,00"
-                  inputProps={{ inputMode: "numeric" }}
-                  InputProps={{
-                    sx: { borderRadius: "16px", fontSize: "1.6rem", fontWeight: 800, color: "#0F172A" }
+                  slotProps={{
+                    htmlInput: { inputMode: "numeric" },
+                    input: {
+                      sx: { borderRadius: "16px", fontSize: "1.6rem", fontWeight: 800, color: "#0F172A" },
+                    },
                   }}
                   sx={{ mb: 2 }}
                 />
@@ -217,8 +219,8 @@ export function DepositPage() {
                       value={motive}
                       onChange={(e) => setMotive(e.target.value)}
                       sx={{ borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.9rem" }}
-                      MenuProps={{
-                        PaperProps: {
+                      slotProps={{
+                        paper: {
                           sx: {
                             maxHeight: 240,
                             borderRadius: "12px",

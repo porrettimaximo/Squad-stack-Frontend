@@ -310,14 +310,17 @@ export function DashboardPage() {
             anchor="left"
             open={mobileDrawerOpen}
             onClose={() => setMobileDrawerOpen(false)}
-            ModalProps={{ keepMounted: true }}
-            PaperProps={{
-              sx: {
-                bgcolor: "#02122c",
-                backgroundImage: "none",
-                border: "none",
-                width: 280,
-                boxShadow: "4px 0 24px rgba(0,0,0,0.4)",
+            disableRestoreFocus
+            ModalProps={{ keepMounted: true, disableRestoreFocus: true }}
+            slotProps={{
+              paper: {
+                sx: {
+                  bgcolor: "#02122c",
+                  backgroundImage: "none",
+                  border: "none",
+                  width: 280,
+                  boxShadow: "4px 0 24px rgba(0,0,0,0.4)",
+                },
               },
             }}
           >

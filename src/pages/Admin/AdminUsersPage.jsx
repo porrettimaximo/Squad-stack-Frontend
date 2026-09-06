@@ -405,13 +405,15 @@ export function AdminUsersPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             size="small"
             sx={{ flex: 1, minWidth: 260 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "#94A3B8" }} />
-                </InputAdornment>
-              ),
-              sx: { borderRadius: "8px" },
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: "#94A3B8" }} />
+                  </InputAdornment>
+                ),
+                sx: { borderRadius: "8px" },
+              },
             }}
           />
 
@@ -422,7 +424,7 @@ export function AdminUsersPage() {
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
             sx={{ width: 140 }}
-            InputProps={{ sx: { borderRadius: "8px" } }}
+            slotProps={{ input: { sx: { borderRadius: "8px" } } }}
           >
             <MenuItem value="">Todos</MenuItem>
             <MenuItem value="Admin">Admin</MenuItem>
@@ -436,7 +438,7 @@ export function AdminUsersPage() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             sx={{ width: 140 }}
-            InputProps={{ sx: { borderRadius: "8px" } }}
+            slotProps={{ input: { sx: { borderRadius: "8px" } } }}
           >
             <MenuItem value="">Todos</MenuItem>
             <MenuItem value="true">Activos</MenuItem>
@@ -716,7 +718,8 @@ export function AdminUsersPage() {
         onClose={() => !submitting && setCreateOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { borderRadius: "16px", p: 1 } }}
+        disableRestoreFocus
+        slotProps={{ paper: { sx: { borderRadius: "16px", p: 1 } } }}
       >
         <DialogTitle
           component="div"
@@ -852,7 +855,8 @@ export function AdminUsersPage() {
         onClose={() => !submitting && setEditOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { borderRadius: "16px", p: 1 } }}
+        disableRestoreFocus
+        slotProps={{ paper: { sx: { borderRadius: "16px", p: 1 } } }}
       >
         <DialogTitle
           component="div"
@@ -958,7 +962,8 @@ export function AdminUsersPage() {
         onClose={() => !submitting && setDeleteOpen(false)}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: "16px", p: 1 } }}
+        disableRestoreFocus
+        slotProps={{ paper: { sx: { borderRadius: "16px", p: 1 } } }}
       >
         <DialogTitle sx={{ color: "#EF4444", fontWeight: 800 }}>
           ¿Dar de baja usuario?

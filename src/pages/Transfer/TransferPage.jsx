@@ -322,13 +322,15 @@ export function TransferPage() {
                       variant="outlined"
                       value={destinationInput}
                       onChange={(e) => setDestinationInput(e.target.value)}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <PersonOutlineOutlinedIcon sx={{ color: "#94A3B8", fontSize: "1.2rem" }} />
-                          </InputAdornment>
-                        ),
-                        sx: { borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.95rem" },
+                      slotProps={{
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <PersonOutlineOutlinedIcon sx={{ color: "#94A3B8", fontSize: "1.2rem" }} />
+                            </InputAdornment>
+                          ),
+                          sx: { borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.95rem" },
+                        },
                       }}
                       placeholder="Buscar destinatario por nombre"
                     />
@@ -461,9 +463,11 @@ export function TransferPage() {
                   value={amount ? `$ ${Number(amount).toLocaleString("es-AR")}` : ""}
                   onChange={handleAmountChange}
                   placeholder="$ 0,00"
-                  inputProps={{ inputMode: "numeric" }}
-                  InputProps={{
-                    sx: { borderRadius: "12px", fontSize: "1.4rem", fontWeight: 800, color: "#0F172A", py: 0.2 },
+                  slotProps={{
+                    htmlInput: { inputMode: "numeric" },
+                    input: {
+                      sx: { borderRadius: "12px", fontSize: "1.4rem", fontWeight: 800, color: "#0F172A", py: 0.2 },
+                    },
                   }}
                   sx={{ mb: 2 }}
                 />
@@ -480,8 +484,8 @@ export function TransferPage() {
                     label="Motivo"
                     onChange={(e) => setMotive(e.target.value)}
                     sx={{ borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.9rem" }}
-                    MenuProps={{
-                      PaperProps: {
+                    slotProps={{
+                      paper: {
                         sx: {
                           maxHeight: 240,
                           borderRadius: "12px",

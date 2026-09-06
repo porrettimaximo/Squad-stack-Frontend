@@ -525,12 +525,15 @@ export function SupportPage() {
         <Dialog
           open={Boolean(successTicket)}
           onClose={() => setSuccessTicket(null)}
-          PaperProps={{
-            sx: {
-              borderRadius: "20px",
-              p: 2,
-              maxWidth: 460,
-              textAlign: "center",
+          disableRestoreFocus
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: "20px",
+                p: 2,
+                maxWidth: 460,
+                textAlign: "center",
+              },
             },
           }}
         >

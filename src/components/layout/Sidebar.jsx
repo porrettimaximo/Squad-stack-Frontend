@@ -295,9 +295,11 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
                 {!collapsed && (
                   <ListItemText
                     primary={item.label}
-                    primaryTypographyProps={{
-                      fontSize: "0.925rem",
-                      fontWeight: isActive ? 700 : 500,
+                    slotProps={{
+                      primary: {
+                        fontSize: "0.925rem",
+                        fontWeight: isActive ? 700 : 500,
+                      },
                     }}
                   />
                 )}
@@ -359,9 +361,11 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
                   {!collapsed && (
                     <ListItemText
                       primary={item.label}
-                      primaryTypographyProps={{
-                        fontSize: "0.85rem",
-                        fontWeight: 500,
+                      slotProps={{
+                        primary: {
+                          fontSize: "0.85rem",
+                          fontWeight: 500,
+                        },
                       }}
                     />
                   )}
