@@ -186,13 +186,23 @@ export function AccountProvider({ children }) {
   /**
    * Realiza un depósito (autónomo y reactivo).
    */
-  const depositFunds = useCallback(async (amount) => {
-    const num = Number(amount);
+  const depositFunds = useCallback(async (amountOrObj, optionalConcept) => {
+    let num;
+    let concept = "Ahorro";
+
+    if (typeof amountOrObj === "object" && amountOrObj !== null) {
+      num = Number(amountOrObj.amount);
+      concept = amountOrObj.concept || "Ahorro";
+    } else {
+      num = Number(amountOrObj);
+      concept = optionalConcept || "Ahorro";
+    }
+
     if (!num || num <= 0) throw new Error("El monto debe ser mayor a 0.");
 
     let newBalance = account.money + num;
     try {
-      const res = await accountService.deposit(num);
+      const res = await accountService.deposit(num, concept);
       if (res?.newBalance !== undefined) {
         newBalance = res.newBalance;
       }
@@ -207,14 +217,14 @@ export function AccountProvider({ children }) {
     const isoDate = now.toISOString();
     const newTx = {
       id: Date.now(),
-      title: "Depósito de Fondos",
+      title: concept,
       subtitle: `Hoy ${timeStr} · DEPÓSITO`,
       amount: num,
       type: 1,
       category: "DEPÓSITO",
-      reason: "Depósitos y ahorro",
-      concept: "Depósito de fondos",
-      motive: "Depósitos y ahorro",
+      reason: concept,
+      concept: concept,
+      motive: concept,
       isIncome: true,
       date: isoDate,
       rawDate: isoDate,

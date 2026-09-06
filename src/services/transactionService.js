@@ -21,31 +21,27 @@ function resolveMotive(tx) {
     if (lastPart) return lastPart;
   }
 
-  // Identificar motivos comerciales clave
-  if (lower.includes("comida") || lower.includes("alimento") || lower.includes("starbucks")) return "Comidas y bebidas";
-  if (lower.includes("servicio") || lower.includes("edenor") || lower.includes("luz") || lower.includes("gas") || lower.includes("agua") || lower.includes("spotify") || lower.includes("netflix")) return "Cuentas y servicios";
-  if (lower.includes("salud") || lower.includes("farmacity") || lower.includes("medico") || lower.includes("médico") || lower.includes("farmacia")) return "Salud";
-  if (lower.includes("combustible") || lower.includes("ypf") || lower.includes("shell") || lower.includes("nafta")) return "Transporte";
+  // Identificar motivos financieros clave
+  if (lower.includes("alquiler") || lower.includes("vivienda") || lower.includes("expensa")) return "Alquiler";
+  if (lower.includes("comida") || lower.includes("alimento") || lower.includes("starbucks") || lower.includes("restaurant") || lower.includes("café")) return "Comidas y bebidas";
+  if (lower.includes("servicio") || lower.includes("edenor") || lower.includes("luz") || lower.includes("gas") || lower.includes("agua") || lower.includes("spotify") || lower.includes("netflix") || lower.includes("internet")) return "Cuentas y servicios";
+  if (lower.includes("salud") || lower.includes("farmacity") || lower.includes("medico") || lower.includes("médico") || lower.includes("farmacia") || lower.includes("clinica")) return "Salud";
+  if (lower.includes("combustible") || lower.includes("ypf") || lower.includes("shell") || lower.includes("nafta") || lower.includes("transporte") || lower.includes("uber") || lower.includes("cabify") || lower.includes("sube")) return "Transporte";
   if (lower.includes("compra") || lower.includes("coto") || lower.includes("mercado") || lower.includes("super")) return "Compras";
-  if (lower.includes("transporte") || lower.includes("uber") || lower.includes("cabify") || lower.includes("sube")) return "Transporte";
-  if (lower.includes("educacion") || lower.includes("educación") || lower.includes("curso")) return "Educación";
-  if (lower.includes("entretenimiento") || lower.includes("cine")) return "Entretenimiento y cultura";
+  if (lower.includes("educacion") || lower.includes("educación") || lower.includes("curso") || lower.includes("facultad")) return "Educación";
+  if (lower.includes("entretenimiento") || lower.includes("cine") || lower.includes("teatro") || lower.includes("salida")) return "Entretenimiento y cultura";
+  if (lower.includes("honorario") || lower.includes("profesional")) return "Honorarios profesionales";
+  if (lower.includes("haber") || lower.includes("sueldo") || lower.includes("nómina") || lower.includes("cobro de trabajo")) return "Haberes";
+  if (lower.includes("ahorro") || lower.includes("depósito") || lower.includes("deposito")) return "Ahorro";
+  if (lower.includes("invers") || lower.includes("rendimiento")) return "Inversión";
+  if (lower.includes("venta")) return "Venta de bienes";
+  if (lower.includes("familia") || lower.includes("amigo") || lower.includes("ayuda")) return "Familia y amigos";
   if (lower.includes("viaje") || lower.includes("hotel") || lower.includes("vuelo")) return "Viajes";
   if (lower.includes("mascota") || lower.includes("veterinaria")) return "Mascotas";
   if (lower.includes("regalo")) return "Regalos";
   if (lower.includes("seguro")) return "Seguros";
-  if (lower.includes("vivienda") || lower.includes("alquiler") || lower.includes("expensa")) return "Vivienda";
-  if (lower.includes("honorario")) return "Honorarios profesionales";
-  if (lower.includes("haber") || lower.includes("sueldo") || lower.includes("bono") || lower.includes("nómina")) return "Haberes";
-  if (lower.includes("ahorro") || lower.includes("depósito") || lower.includes("deposito")) return "Depósitos y ahorro";
 
-  // Si la transacción es una transferencia con destinatario/origen específico (ej: "Transferencia enviada a Roberto Carlos")
   if (lower.startsWith("transferencia")) {
-    // Si menciona un contacto o cuenta, lo dejamos categorizado con el destinatario o Varios
-    const match = concept.match(/(?:a|de)\s+([A-Za-zÁÉÍÓÚáéíóúñÑ\s]+)/i);
-    if (match && match[1]) {
-      return match[1].trim();
-    }
     return "Familia y amigos";
   }
 

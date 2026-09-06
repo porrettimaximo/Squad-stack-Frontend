@@ -135,21 +135,21 @@ export const MovementPieChart = ({
       let motive = (tx.motive || tx.reason || tx.concept || "").trim();
 
       // Si no tiene motivo o es un nombre genérico, deducir
-      if (!motive || motive === "EGRESO" || motive === "INGRESO" || motive === "DEPÓSITO") {
+      if (!motive || motive === "EGRESO" || motive === "INGRESO" || motive === "DEPÓSITO" || motive.startsWith("Transferencia")) {
         const title = (tx.title || "").toLowerCase();
-        if (title.includes("comida") || title.includes("starbucks")) motive = "Comidas y bebidas";
+        if (title.includes("alquiler") || title.includes("vivienda")) motive = "Alquiler";
+        else if (title.includes("comida") || title.includes("starbucks") || title.includes("alimento")) motive = "Comidas y bebidas";
         else if (title.includes("servicio") || title.includes("edenor") || title.includes("spotify") || title.includes("netflix")) motive = "Cuentas y servicios";
-        else if (title.includes("salud") || title.includes("farmacity")) motive = "Salud";
-        else if (title.includes("combustible") || title.includes("ypf")) motive = "Transporte";
+        else if (title.includes("salud") || title.includes("farmacity") || title.includes("médico")) motive = "Salud";
+        else if (title.includes("combustible") || title.includes("ypf") || title.includes("transporte")) motive = "Transporte";
         else if (title.includes("compra") || title.includes("coto") || title.includes("mercado libre")) motive = "Compras";
-        else if (title.includes("transferencia")) {
-          const match = (tx.title || "").match(/(?:a|de)\s+([A-Za-zÁÉÍÓÚáéíóúñÑ\s]+)/i);
-          motive = match ? match[1].trim() : "Familia y amigos";
-        } else if (title.includes("depósito") || title.includes("deposito")) {
-          motive = "Depósitos y ahorro";
-        } else {
-          motive = tx.title || "Varios";
-        }
+        else if (title.includes("educacion") || title.includes("educación") || title.includes("curso")) motive = "Educación";
+        else if (title.includes("entretenimiento") || title.includes("cine")) motive = "Entretenimiento y cultura";
+        else if (title.includes("honorario") || title.includes("profesional")) motive = "Honorarios profesionales";
+        else if (title.includes("haber") || title.includes("sueldo")) motive = "Haberes";
+        else if (title.includes("depósito") || title.includes("deposito") || title.includes("ahorro")) motive = "Ahorro";
+        else if (title.includes("transferencia")) motive = "Familia y amigos";
+        else motive = "Varios";
       }
 
       if (!acc[motive]) {

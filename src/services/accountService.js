@@ -43,12 +43,16 @@ export const accountService = {
   /**
    * Deposita fondos en la cuenta del usuario (HU-15).
    * POST /api/accounts/deposit
-   * Body: { amount }
+   * Body: { amount, concept }
    */
-  async deposit(amount) {
-    const response = await api.post("/accounts/deposit", {
+  async deposit(amount, concept = null) {
+    const payload = {
       amount: Number(amount),
-    });
+    };
+    if (concept) {
+      payload.concept = concept;
+    }
+    const response = await api.post("/accounts/deposit", payload);
     return response.data;
   },
 };
