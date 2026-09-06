@@ -1,4 +1,4 @@
-import { useState, } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -28,7 +28,7 @@ export const Login = () => {
     e.stopPropagation();
     setError("");
 
-    //Formulario con validaciones
+    // Formulario con validaciones
     if (!email || !password) {
       setError("Por favor, ingrese su email y contraseña.");
       return;
@@ -36,15 +36,15 @@ export const Login = () => {
 
     try {
       setLoading(true);
-      //Persiste sesion en AuthContext
-      const responseData = await login({ email, password });
+      // Persiste sesión en AuthContext
+      await login({ email, password });
 
-      // Redirección al Dashboard principal
+      // Redirección al Dashboard principal para todos los roles (HU-22 / HU-23)
       navigate("/dashboard", { replace: true });
     } catch (err) {
       const message =
         err.response?.data?.message ||
-        "Credenciales invalidas. Por favor, verifique su email y contraseña.";
+        "Credenciales inválidas. Por favor, verifique su email y contraseña.";
       setError(message);
       setLoading(false);
     }
@@ -57,7 +57,7 @@ export const Login = () => {
         justifyContent: "center",
         alignItems: "center",
         minHeight: "100vh",
-        backgroundColor: "#a9a9a9ff",
+        backgroundColor: "#001639",
         p: 2,
       }}>
       <Card
@@ -66,9 +66,9 @@ export const Login = () => {
           maxWidth: 420,
           width: "100%",
           borderRadius: "20px",
-          border: "1px solid #E2E8F0",
-          backgroundColor: "#0e2050ff",
-          boxShadow: "0px 10px 30px rgba(255, 255, 255, 1)",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          backgroundColor: "#02122c",
+          boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.5)",
         }}>
         <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
           <Box sx={{ mb: 3, textAlign: "center" }}>
@@ -77,30 +77,30 @@ export const Login = () => {
               src={iconoPrincipal}
               alt="DigitalArs"
               sx={{
-                width: "200%",
-                maxWidth: 300,
+                width: "100%",
+                maxWidth: 240,
                 height: "auto",
-                maxHeight: 130,
+                maxHeight: 110,
                 objectFit: "contain",
                 mx: "auto",
                 display: "block",
                 mb: 1.5,
               }}
             />
-
           </Box>
 
           {error && (
             <Alert severity="error" sx={{ mb: 2.5, borderRadius: "10px" }}>
-              {error}{" "}
+              {error}
             </Alert>
           )}
 
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Typography
               variant="caption"
-              sx={{ fontWeight: 600, color: "#ffffffff", mb: 0.5, display: "block" }}
-            >Correo Electronico
+              sx={{ fontWeight: 600, color: "#FFFFFF", mb: 0.5, display: "block" }}
+            >
+              Correo Electrónico
             </Typography>
             <TextField
               margin="dense"
@@ -119,14 +119,16 @@ export const Login = () => {
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "12px",
                   backgroundColor: "#F8FAFC",
-                  "& fieldset": { borderColor: "#ffffffff" },
+                  "& fieldset": { borderColor: "#CBD5E1" },
                   "&:hover fieldset": { borderColor: "#0056D2" },
                 },
               }}
             />
+
             <Typography
               variant="caption"
-              sx={{ fontWeight: 600, color: "#ffffffff", mb: 0.5, display: "block" }}>
+              sx={{ fontWeight: 600, color: "#FFFFFF", mb: 0.5, display: "block" }}
+            >
               Contraseña
             </Typography>
             <TextField
@@ -164,14 +166,13 @@ export const Login = () => {
                 textTransform: "none",
                 fontWeight: 700,
                 fontSize: "1rem",
-                background:
-                  "linear-gradient(135deg, #0056D2 0%, #0066FF 60%, #0077FF 100%)",
+                bgcolor: "#0056D2",
                 boxShadow: "0px 4px 12px rgba(0, 86, 210, 0.25)",
                 "&:hover": {
-                  backgroundColor: "#0047B3"
+                  bgcolor: "#0047B3",
                 },
                 "&.Mui-disabled": {
-                  background: "#CBD5E1",
+                  bgcolor: "#CBD5E1",
                 },
               }}>
               {loading ? (
@@ -188,3 +189,4 @@ export const Login = () => {
 };
 
 export default Login;
+

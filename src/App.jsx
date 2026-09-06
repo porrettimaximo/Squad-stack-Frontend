@@ -26,13 +26,13 @@ export function App() {
         <AccountProvider>
           <BrowserRouter>
             <Routes>
-              {/* Ruta pública de autenticación */}
+              {/* Ruta pública de autenticación (HU-22) */}
               <Route path="/login" element={<Login />} />
 
-              {/* Páginas de error / autorización */}
+              {/* Páginas de error / autorización (HU-23) */}
               <Route path="/403" element={<ForbiddenPage />} />
 
-              {/* Rutas protegidas para cualquier usuario autenticado */}
+              {/* Rutas protegidas para cualquier usuario autenticado (HU-23) */}
               <Route element={<ProtectedRoute />}>
                 {/* HU-24: Dashboard principal de la billetera */}
                 <Route path="/" element={<DashboardPage />} />
@@ -61,9 +61,10 @@ export function App() {
                 <Route path="/soporte" element={<SupportPage />} />
               </Route>
 
-              {/* Rutas exclusivas para Administradores */}
+              {/* Rutas exclusivas para Administradores (HU-29) */}
               <Route element={<ProtectedRoute allowedRoles={["Admin", "admin"]} />}>
                 <Route path="/admin" element={<AdminUsersPage />} />
+                <Route path="/admin/users" element={<AdminUsersPage />} />
               </Route>
 
               {/* Fallback 404 */}
@@ -77,4 +78,5 @@ export function App() {
 }
 
 export default App;
+
 
