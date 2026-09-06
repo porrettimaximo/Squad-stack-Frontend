@@ -153,8 +153,12 @@ export function TransferPage() {
 
     setLoading(true);
     try {
+      const destAccountId = activeContact ? activeContact.accountId : destinationInput;
+      const destName = activeContact ? activeContact.name : destinationInput;
+
       await transferFunds({
-        destination: activeContact ? activeContact.name : destinationInput,
+        destination: destName,
+        destinationAccountId: destAccountId,
         amount: num,
         concept: motive,
       });

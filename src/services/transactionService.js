@@ -1,4 +1,5 @@
 import api from "./api";
+import { findContact } from "../constants/contacts";
 
 /**
  * Normaliza y deduce el motivo / concepto oficial de la transacción.
@@ -260,7 +261,12 @@ export const transactionService = {
    * Body: { destinationAccountId, amount }
    */
   async transfer({ destination, destinationAccountId, amount, concept }) {
-    const destId = destinationAccountId || destination;
+    let destId = destinationAccountId || destination;
+    const contact = findContact(destId);
+    if (contact?.accountId) {
+      destId = contact.accountId;
+    }
+
     const response = await api.post("/transactions/transfer", {
       destinationAccountId: Number(destId),
       amount: Number(amount),

@@ -224,16 +224,20 @@ export function AccountProvider({ children }) {
   /**
    * Realiza una transferencia (autónoma y reactiva).
    */
-  const transferFunds = useCallback(async ({ destination, amount, concept }) => {
+  const transferFunds = useCallback(async ({ destination, destinationAccountId, amount, concept }) => {
     const num = Number(amount);
     if (!num || num <= 0) throw new Error("El monto debe ser mayor a 0.");
     if (num > account.money) throw new Error("El monto supera tu saldo disponible.");
 
     let newBalance = account.money - num;
     try {
-      await transactionService.transfer({ destination, amount: num, concept });
-    } catch {
-      // Backend no disponible: se aplica de forma local
+      const res = await transactionService.transfer({ destination, destinationAccountId, amount: num, concept });
+      if (res?.newBalance !== undefined) {
+        newBalance = res.newBalance;
+      }
+    } catch (err) {
+      const msg = err.response?.data?.error || err.response?.data?.message || err.message;
+      throw new Error(msg || "Error al procesar la transferencia.");
     }
 
     setAccount((prev) => ({ ...prev, money: newBalance }));
@@ -247,8 +251,11 @@ export function AccountProvider({ children }) {
       amount: num,
       type: 3,
       category: "EGRESO",
+      reason: concept || "Varios",
+      concept: concept || "Varios",
+      motive: concept || "Varios",
       isIncome: false,
-      toAccountId: destination,
+      toAccountId: destinationAccountId || destination,
       date: now.toISOString(),
       counterpart: destination,
       status: "Completada",
