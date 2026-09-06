@@ -60,3 +60,20 @@ export function formatTransactionDate(date) {
     minute: "2-digit",
   });
 }
+
+/**
+ * Formatea una fecha a formato local simple (DD/MM/AAAA).
+ * @param {Date|string} date
+ * @returns {string}
+ */
+export function formatDate(date) {
+  if (!date) return "-";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+

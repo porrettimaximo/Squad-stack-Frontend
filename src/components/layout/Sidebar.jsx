@@ -13,6 +13,7 @@ import {
 
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
+import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import CreditCardOutlinedIcon from "@mui/icons-material/CreditCardOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
@@ -55,6 +56,12 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
       label: "Historial",
       icon: <HistoryOutlinedIcon />,
       path: "/history",
+    },
+    {
+      id: "inversiones",
+      label: "Inversiones",
+      icon: <TrendingUpOutlinedIcon />,
+      path: "/investments",
     },
     { id: "tarjetas", label: "Tarjetas", icon: <CreditCardOutlinedIcon />, path: "/" },
     { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon />, path: "/" },
@@ -116,13 +123,14 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
       {/* Cabecera: Logo Principal PNG y Botón de Colapsar */}
       <Box
         sx={{
-          px: collapsed ? 1 : 2.5,
-          pt: 3.5,
-          pb: 2,
+          px: collapsed ? 1 : 2,
+          pt: 2,
+          pb: 1,
           display: "flex",
           justifyContent: collapsed ? "center" : "space-between",
           alignItems: "center",
-          minHeight: 80,
+          minHeight: 60,
+          flexShrink: 0,
         }}
       >
         {!collapsed && (
@@ -134,14 +142,15 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
               onClick={() => navigate("/")}
               sx={{
                 width: "100%",
-                maxWidth: 140,
+                maxWidth: 130,
                 height: "auto",
-                maxHeight: 80,
+                maxHeight: 52,
                 objectFit: "contain",
                 cursor: "pointer",
               }}
             />
             <IconButton
+              size="small"
               onClick={() => setCollapsed(true)}
               sx={{
                 color: "#8EA3BF",
@@ -160,8 +169,8 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
           <Box
             sx={{
               position: "relative",
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -174,8 +183,8 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
               onClick={() => navigate("/")}
               sx={{
                 position: "absolute",
-                width: 32,
-                height: 32,
+                width: 28,
+                height: 28,
                 objectFit: "contain",
                 opacity: isHovered ? 0 : 1,
                 transform: isHovered
@@ -187,6 +196,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
               }}
             />
             <IconButton
+              size="small"
               onClick={() => setCollapsed(false)}
               sx={{
                 position: "absolute",
@@ -209,12 +219,22 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
         )}
       </Box>
 
-      {/* Menú Principal */}
-      <List sx={{ px: collapsed ? 1 : 1.5, py: 1, flex: 1 }}>
+      {/* Menú Principal (Scrollable si es necesario) */}
+      <List
+        sx={{
+          px: collapsed ? 1 : 1.5,
+          py: 0.5,
+          flex: 1,
+          overflowY: "auto",
+          overflowX: "hidden",
+          "&::-webkit-scrollbar": { width: "4px" },
+          "&::-webkit-scrollbar-thumb": { bgcolor: "rgba(255, 255, 255, 0.1)", borderRadius: "4px" },
+        }}
+      >
         {mainNav.map((item) => {
           const isActive = activeItem === item.id;
           return (
-            <ListItem key={item.id} disablePadding sx={{ mb: 0.6 }}>
+            <ListItem key={item.id} disablePadding sx={{ mb: 0.35 }}>
               <motion.div
                 whileHover={collapsed ? {} : { x: 4 }}
                 whileTap={{ scale: 0.98 }}
@@ -225,8 +245,8 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
                   onClick={() => handleClick(item)}
                   sx={{
                     borderRadius: "8px",
-                    py: 1.1,
-                    px: collapsed ? 0 : 2,
+                    py: 0.8,
+                    px: collapsed ? 0 : 1.75,
                     justifyContent: collapsed ? "center" : "flex-start",
                     bgcolor: isActive ? "#0056D2" : "transparent",
                     color: isActive ? "#FFFFFF" : "#8EA3BF",
@@ -244,7 +264,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
                   <ListItemIcon
                     sx={{
                       color: isActive ? "#FFFFFF" : "#8EA3BF",
-                      minWidth: collapsed ? 0 : 38,
+                      minWidth: collapsed ? 0 : 34,
                       justifyContent: "center",
                     }}
                   >
@@ -254,7 +274,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
                     <ListItemText
                       primary={item.label}
                       primaryTypographyProps={{
-                        fontSize: "0.925rem",
+                        fontSize: "0.88rem",
                         fontWeight: isActive ? 700 : 500,
                       }}
                     />
@@ -266,13 +286,13 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
         })}
       </List>
 
-      {/* Sección Inferior: Soporte, Ayuda y Cerrar Sesión */}
-      <Box sx={{ px: collapsed ? 1 : 2, pb: 3, pt: 1 }}>
-        <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)", mb: 2 }} />
+      {/* Sección Inferior: Soporte, Ayuda y Cerrar Sesión (Siempre visible) */}
+      <Box sx={{ px: collapsed ? 1 : 1.75, pb: 2, pt: 0.5, flexShrink: 0 }}>
+        <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)", mb: 1 }} />
 
-        <List disablePadding sx={{ mb: 2 }}>
+        <List disablePadding sx={{ mb: 1 }}>
           {bottomNav.map((item) => (
-            <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
+            <ListItem key={item.id} disablePadding sx={{ mb: 0.25 }}>
               <motion.div
                 whileHover={collapsed ? {} : { x: 3 }}
                 style={{ width: "100%" }}
@@ -280,8 +300,8 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
                 <ListItemButton
                   onClick={() => onItemClick && onItemClick(item.id)}
                   sx={{
-                    py: 0.75,
-                    px: collapsed ? 0 : 1.5,
+                    py: 0.5,
+                    px: collapsed ? 0 : 1.25,
                     justifyContent: collapsed ? "center" : "flex-start",
                     borderRadius: "6px",
                     color: "#7F96B2",
@@ -295,7 +315,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
                   <ListItemIcon
                     sx={{
                       color: "inherit",
-                      minWidth: collapsed ? 0 : 32,
+                      minWidth: collapsed ? 0 : 28,
                       justifyContent: "center",
                     }}
                   >
@@ -305,7 +325,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
                     <ListItemText
                       primary={item.label}
                       primaryTypographyProps={{
-                        fontSize: "0.85rem",
+                        fontSize: "0.82rem",
                         fontWeight: 500,
                       }}
                     />
@@ -326,13 +346,13 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
               color: "#D0D9E5",
               borderColor: "rgba(255, 255, 255, 0.2)",
               borderRadius: "10px",
-              py: 1,
+              py: 0.75,
               minWidth: collapsed ? "auto" : "auto",
-              px: collapsed ? 0 : 2,
+              px: collapsed ? 0 : 1.5,
               justifyContent: collapsed ? "center" : "flex-start",
               textTransform: "none",
               fontWeight: 600,
-              fontSize: "0.875rem",
+              fontSize: "0.85rem",
               "&:hover": {
                 borderColor: "rgba(255, 255, 255, 0.4)",
                 bgcolor: "rgba(255, 255, 255, 0.05)",
@@ -340,7 +360,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
               },
             }}
           >
-            <LogoutOutlinedIcon sx={{ mr: collapsed ? 0 : 1 }} />
+            <LogoutOutlinedIcon sx={{ mr: collapsed ? 0 : 1, fontSize: "1.1rem" }} />
             {!collapsed && "Cerrar sesión"}
           </Button>
         </motion.div>

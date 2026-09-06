@@ -12,6 +12,7 @@ import DashboardPage from "./pages/Dashboard/DashboardPage";
 import DepositPage from "./pages/Deposit/DepositPage";
 import TransferPage from "./pages/Transfer/TransferPage";
 import HistoryPage from "./pages/History/HistoryPage";
+import InvestmentsPage from "./pages/Investments/InvestmentsPage";
 import AdminUsersPage from "./pages/Admin/AdminUsersPage";
 
 export function App() {
@@ -43,6 +44,10 @@ export function App() {
                 {/* HU-27: Historial de movimientos con filtros y gráficos */}
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/historial" element={<HistoryPage />} />
+
+                {/* HU-33: Plazo Fijo / Inversiones */}
+                <Route path="/investments" element={<InvestmentsPage />} />
+                <Route path="/inversiones" element={<InvestmentsPage />} />
 
                 {/* HU-29: Panel de Administración (Solo accesible con Rol Admin) */}
                 <Route element={<ProtectedRoute allowedRoles={["Admin"]} />}>

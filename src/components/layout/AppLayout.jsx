@@ -29,23 +29,35 @@ export function AppLayout({
 
   // Ocultar pestañas de navegación superior en historial
   const isHistoryRoute = location.pathname.startsWith("/history") || location.pathname.startsWith("/historial");
+  const isInvestmentsRoute = location.pathname.startsWith("/investments") || location.pathname.startsWith("/inversiones");
   const shouldShowTabs = showNavbarTabs !== undefined ? showNavbarTabs : !isHistoryRoute;
 
   // Determinar ítem activo según la ruta actual si no viene explícito
   let currentActiveItem = activeSidebarItem;
   let currentMobileIndex = 0;
+  let activeNavbarTab = currentTab;
 
   if (isHistoryRoute) {
     currentActiveItem = "historial";
     currentMobileIndex = 1;
-  } else if (location.pathname === "/") {
+  } else if (isInvestmentsRoute) {
+    currentActiveItem = "inversiones";
+    activeNavbarTab = 1;
+  } else if (location.pathname === "/" || location.pathname === "/dashboard") {
     currentActiveItem = "inicio";
     currentMobileIndex = 0;
+    activeNavbarTab = 0;
   }
 
   const handleSidebarClick = (item) => {
     if (item === "inicio") navigate("/");
     else if (item === "historial") navigate("/history");
+    else if (item === "inversiones") navigate("/investments");
+  };
+
+  const handleDefaultTabChange = (e, val) => {
+    if (val === 0) navigate("/dashboard");
+    else if (val === 1) navigate("/investments");
   };
 
   const handleMobileNavChange = (e, index) => {
@@ -82,8 +94,8 @@ export function AppLayout({
         {/* Navbar Superior (Desktop) */}
         {isDesktop && (
           <DashboardNavbar
-            currentTab={currentTab}
-            onTabChange={onTabChange}
+            currentTab={activeNavbarTab}
+            onTabChange={onTabChange || handleDefaultTabChange}
             userName={userName}
             showTabs={shouldShowTabs}
           />
