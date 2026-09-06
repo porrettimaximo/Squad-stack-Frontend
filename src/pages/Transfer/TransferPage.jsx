@@ -24,13 +24,17 @@ import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useAccount } from "../../hooks/useAccount";
 import { useAuth } from "../../context/AuthContext";
 import AppLayout from "../../components/layout/AppLayout";
 import SuccessStep from "../../components/common/SuccessStep";
+import TransferReceiptModal from "../../components/common/TransferReceiptModal";
 import { formatCurrency } from "../../utils/formatters";
+import { downloadTransferReceiptPdf } from "../../utils/pdfGenerator";
 import { TRANSFER_MOTIVES, DEFAULT_MOTIVE } from "../../constants/motives";
 import { SEED_CONTACTS, findContact } from "../../constants/contacts";
 
@@ -44,9 +48,9 @@ const slideVariants = {
  * HU-26: Pantalla de transferencia de fondos.
  * - Destinatarios sugeridos: muestra todos los usuarios estándar de la plataforma (no administradores)
  *   mostrando ÚNICAMENTE el nombre para agilidad visual.
- * - Datos de la transferencia (Paso 3 y Paso 4): muestra la ficha completa y detallada
- *   con todos los datos de la cuenta de origen (mi cuenta), de la cuenta de destino (a quién / la otra cuenta),
- *   montos, motivos, comisiones y saldos.
+ * - Paso 3: confirmación con todos los datos de origen, destino y operación.
+ * - Paso 4: pantalla de éxito limpia con botón "Información de la transferencia" (que abre el modal con todos
+ *   los datos completos) y opción de descargar el comprobante en PDF oficial.
  */
 export function TransferPage() {
   const navigate = useNavigate();
@@ -60,6 +64,10 @@ export function TransferPage() {
   const [motive, setMotive] = useState(DEFAULT_MOTIVE);
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+
+  // Control del modal de información completa y comprobante
+  const [receiptModalOpen, setReceiptModalOpen] = useState(false);
+  const [completedTxId, setCompletedTxId] = useState(null);
 
   const currentBalance = account?.money ?? 0;
 
@@ -158,6 +166,25 @@ export function TransferPage() {
     };
   }, [activeContact, destinationInput, destinationDisplay]);
 
+  // ─── OBJETO DE COMPROBANTE PARA MODAL Y PDF ───
+  const transferReceiptData = useMemo(() => {
+    return {
+      operationId: completedTxId || `TX-${Date.now().toString().slice(-4)}`,
+      date: new Date().toLocaleString("es-AR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      amount: Number(amount) || 0,
+      motive: motive,
+      origin: myProfile,
+      destination: recipientProfile,
+      status: "Transferencia Exitosa",
+    };
+  }, [completedTxId, amount, motive, myProfile, recipientProfile]);
+
   const handleAmountChange = (e) => {
     const val = e.target.value.replace(/[^0-9]/g, "");
     setAmount(val);
@@ -172,12 +199,15 @@ export function TransferPage() {
       const destAccountId = recipientProfile.accountId;
       const destName = recipientProfile.name;
 
-      await transferFunds({
+      const res = await transferFunds({
         destination: destName,
         destinationAccountId: Number(destAccountId),
         amount: num,
         concept: motive,
       });
+
+      const txId = res?.id ? `TX-${String(res.id).padStart(4, "0")}` : `TX-${Date.now().toString().slice(-4)}`;
+      setCompletedTxId(txId);
       setStep(4);
     } catch (err) {
       setSnackbar({ open: true, message: err.message || "Error al transferir", severity: "error" });
@@ -705,39 +735,74 @@ export function TransferPage() {
               </motion.div>
             )}
 
-            {/* ─── PASO 4: COMPROBANTE CON TODOS LOS DATOS DE LA TRANSFERENCIA ─── */}
+            {/* ─── PASO 4: ÉXITO LIMPIO CON BOTÓN "INFORMACIÓN DE LA TRANSFERENCIA" Y DESCARGA EN PDF ─── */}
             {step === 4 && (
-              <SuccessStep
-                title="¡Transferencia exitosa!"
-                subtitle={`El dinero fue enviado correctamente a ${recipientProfile.name}.`}
-                amount={Number(amount)}
-                maxWidth={520}
-                autoRedirectSeconds={0}
-                details={[
-                  { label: "CUENTA DE ORIGEN (MI CUENTA)", isHeader: true },
-                  { label: "Titular Origen", value: myProfile.name },
-                  { label: "Nº de Cuenta", value: `Cuenta #${myProfile.accountId} (${myProfile.accountNumber})` },
-                  { label: "Email Origen", value: myProfile.email },
-                  { label: "Alias Origen", value: myProfile.alias },
-                  { label: "CVU Origen", value: myProfile.cvu },
-                  { label: "Banco Origen", value: myProfile.bank },
+              <>
+                <SuccessStep
+                  title="¡Transferencia exitosa!"
+                  subtitle={`Enviamos el dinero a ${recipientProfile.name}.`}
+                  amount={Number(amount)}
+                  maxWidth={440}
+                  autoRedirectSeconds={0}
+                  details={[
+                    { label: "Destinatario", value: recipientProfile.name },
+                    { label: "Motivo", value: motive },
+                    { label: "Nuevo saldo disponible", value: formatCurrency(account?.money ?? 0) },
+                  ]}
+                  extraActions={
+                    <>
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        startIcon={<ReceiptLongOutlinedIcon />}
+                        onClick={() => setReceiptModalOpen(true)}
+                        sx={{
+                          borderRadius: "14px",
+                          py: 1.3,
+                          fontWeight: 700,
+                          color: "#0056D2",
+                          borderColor: "#93C5FD",
+                          bgcolor: "#EFF6FF",
+                          textTransform: "none",
+                          fontSize: "0.95rem",
+                          "&:hover": { bgcolor: "#DBEAFE", borderColor: "#60A5FA" },
+                        }}
+                      >
+                        Información de la transferencia
+                      </Button>
 
-                  { label: "CUENTA DE DESTINO (A QUIÉN)", isHeader: true },
-                  { label: "A quién (Titular)", value: recipientProfile.name },
-                  { label: "Nº de Cuenta", value: `Cuenta #${recipientProfile.accountId} (${recipientProfile.accountNumber})` },
-                  { label: "Email Destino", value: recipientProfile.email },
-                  { label: "Alias Destino", value: recipientProfile.alias },
-                  { label: "CVU Destino", value: recipientProfile.cvu },
-                  { label: "Banco Destino", value: recipientProfile.bank },
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        startIcon={<PictureAsPdfIcon />}
+                        onClick={() => downloadTransferReceiptPdf(transferReceiptData)}
+                        sx={{
+                          borderRadius: "14px",
+                          py: 1.2,
+                          fontWeight: 700,
+                          color: "#475569",
+                          borderColor: "#CBD5E1",
+                          bgcolor: "#FFFFFF",
+                          textTransform: "none",
+                          fontSize: "0.92rem",
+                          "&:hover": { bgcolor: "#F8FAFC", borderColor: "#94A3B8" },
+                        }}
+                      >
+                        Descargar en PDF
+                      </Button>
+                    </>
+                  }
+                  finishLabel="Volver al inicio"
+                  onFinish={() => navigate("/")}
+                />
 
-                  { label: "DETALLE DE LA OPERACIÓN", isHeader: true },
-                  { label: "Monto debitado", value: formatCurrency(Number(amount)) },
-                  { label: "Motivo", value: motive },
-                  { label: "Comisión", value: "Gratis ($ 0,00)" },
-                  { label: "Nuevo saldo disponible", value: formatCurrency(account?.money ?? 0) },
-                ]}
-                onFinish={() => navigate("/")}
-              />
+                {/* Modal de Información Completa de la Transferencia */}
+                <TransferReceiptModal
+                  open={receiptModalOpen}
+                  onClose={() => setReceiptModalOpen(false)}
+                  transferData={transferReceiptData}
+                />
+              </>
             )}
           </AnimatePresence>
         </Card>

@@ -17,6 +17,8 @@ export function SuccessStep({
   onFinish,
   autoRedirectSeconds = 3,
   maxWidth = 420,
+  extraActions = null,
+  finishLabel = "Volver al inicio",
 }) {
   const [secondsLeft, setSecondsLeft] = useState(autoRedirectSeconds);
 
@@ -165,6 +167,13 @@ export function SuccessStep({
         </Paper>
       )}
 
+      {/* Acciones adicionales opcionales (ej. Información de transferencia, PDF) */}
+      {extraActions && (
+        <Box sx={{ width: "100%", maxWidth: maxWidth, mb: 1.5, display: "flex", flexDirection: "column", gap: 1.2 }}>
+          {extraActions}
+        </Box>
+      )}
+
       {/* Botón de acción */}
       <Button
         variant="contained"
@@ -184,7 +193,7 @@ export function SuccessStep({
           "&:hover": { bgcolor: "#0047b3" },
         }}
       >
-        Volver al inicio {secondsLeft > 0 ? `(${secondsLeft}s)` : ""}
+        {finishLabel} {secondsLeft > 0 ? `(${secondsLeft}s)` : ""}
       </Button>
     </motion.div>
   );

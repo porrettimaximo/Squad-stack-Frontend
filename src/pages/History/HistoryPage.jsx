@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Box,
   Typography,
@@ -45,16 +45,20 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import AppLayout from "../../components/layout/AppLayout";
 import { useAccount } from "../../hooks/useAccount";
+import { useAuth } from "../../context/AuthContext";
 import transactionService from "../../services/transactionService";
 import { formatCurrency, formatTransactionDate } from "../../utils/formatters";
 import MovementPieChart from "../../components/history/MovementPieChart";
+import TransferReceiptModal from "../../components/common/TransferReceiptModal";
+import { findContact } from "../../constants/contacts";
 
 /**
  * HU-27: Pantalla de Historial con filtros y paginación.
  * Tabla de Material UI conectada al endpoint de transacciones con soporte offline reactivo.
  */
 export function HistoryPage() {
-  const { transactions: localTransactions } = useAccount();
+  const { account, transactions: localTransactions } = useAccount();
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState("chart"); // 'chart' | 'table'
 
   const handleGoToTableWithFilter = ({ dateFrom: filterDateFrom, dateTo: filterDateTo } = {}) => {
@@ -100,7 +104,60 @@ export function HistoryPage() {
 
   // Estado del modal de comprobante
   const [selectedTx, setSelectedTx] = useState(null);
-  const [copied, setCopied] = useState(false);
+
+  // Mapeo completo de datos para el Comprobante y descarga en PDF
+  const selectedTxReceiptData = useMemo(() => {
+    if (!selectedTx) return null;
+
+    const myAccId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "4");
+    const mySeed = findContact(myAccId) || findContact(user?.id) || findContact(user?.email);
+    const myEmail = user?.email || mySeed?.email || `usuario${myAccId}@digitalars.com`;
+    const myName = mySeed?.name || (myEmail.split("@")[0].replace(".", " ").replace(/\b\w/g, (l) => l.toUpperCase()));
+    const myUsername = myEmail.split("@")[0];
+
+    const myProfileData = {
+      name: myName,
+      email: myEmail,
+      accountId: myAccId,
+      accountNumber: mySeed?.accountNumber || `0002-4892-0${myAccId}`,
+      cvu: mySeed?.cvu || `000000310001000000000${myAccId}`,
+      alias: mySeed?.alias || `${myUsername}.ars`,
+      bank: mySeed?.bank || "DigitalArs Billetera Virtual",
+    };
+
+    // Contraparte
+    const counterpartAccId = selectedTx.toAccountId
+      ? String(selectedTx.toAccountId)
+      : (selectedTx.accountId && String(selectedTx.accountId) !== myAccId ? String(selectedTx.accountId) : "2");
+
+    const rawTitleName = selectedTx.title?.replace(/transferencia (enviada )?a /i, "").replace(/transferencia (recibida )?de /i, "").trim();
+    const counterpartSeed = findContact(counterpartAccId) || findContact(selectedTx.counterpart) || findContact(rawTitleName);
+    const counterpartName = counterpartSeed?.name || selectedTx.counterpart || rawTitleName || `Cuenta #${counterpartAccId}`;
+    const counterpartEmail = counterpartSeed?.email || `cuenta${counterpartAccId}@digitalars.com`;
+    const counterpartUsername = counterpartEmail.split("@")[0];
+
+    const counterpartProfileData = {
+      name: counterpartName,
+      email: counterpartEmail,
+      accountId: counterpartAccId,
+      accountNumber: counterpartSeed?.accountNumber || `0002-4892-0${counterpartAccId}`,
+      cvu: counterpartSeed?.cvu || `000000310001000000000${counterpartAccId}`,
+      alias: counterpartSeed?.alias || `${counterpartUsername}.ars`,
+      bank: counterpartSeed?.bank || "DigitalArs Billetera Virtual",
+    };
+
+    const isIncoming = selectedTx.type === 2 || selectedTx.isIncome;
+
+    return {
+      operationId: `TX-${String(selectedTx.id).padStart(4, "0")}`,
+      date: selectedTx.formattedDate || formatTransactionDate(selectedTx.date || selectedTx.rawDate),
+      amount: Number(selectedTx.amount) || 0,
+      motive: selectedTx.concept || selectedTx.title || "Varios",
+      origin: isIncoming ? counterpartProfileData : myProfileData,
+      destination: isIncoming ? myProfileData : counterpartProfileData,
+      status: selectedTx.status || "Operación Exitosa",
+    };
+  }, [selectedTx, account, user]);
 
   // Carga todas las transacciones sin paginar para alimentar la gráfica de motivos
   const loadChartData = useCallback(async () => {
@@ -835,142 +892,12 @@ export function HistoryPage() {
           )}
         </AnimatePresence>
 
-        {/* ─── MODAL DE COMPROBANTE DIGITAL ─── */}
-        {selectedTx && (
-          <Dialog
-            open={Boolean(selectedTx)}
-            onClose={() => setSelectedTx(null)}
-            maxWidth="xs"
-            fullWidth
-            PaperProps={{
-              sx: {
-                borderRadius: "20px",
-                p: 1,
-              },
-            }}
-          >
-            <DialogTitle sx={{ m: 0, p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <ReceiptLongOutlinedIcon sx={{ color: "#0056D2" }} />
-                <Typography variant="h6" sx={{ fontWeight: 800, color: "#0F172A", fontSize: "1.1rem" }}>
-                  Comprobante Digital
-                </Typography>
-              </Box>
-              <IconButton onClick={() => setSelectedTx(null)} size="small">
-                <CloseIcon />
-              </IconButton>
-            </DialogTitle>
-
-            <DialogContent dividers sx={{ p: 3 }}>
-              {/* Badge de Monto */}
-              <Box sx={{ textAlign: "center", my: 1 }}>
-                <Chip
-                  icon={<CheckCircleOutlinedIcon sx={{ fontSize: "16px !important", color: "#16A34A !important" }} />}
-                  label="Operación Exitosa"
-                  size="small"
-                  sx={{ bgcolor: "#DCFCE7", color: "#15803D", fontWeight: 700, mb: 1 }}
-                />
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontWeight: 800,
-                    color: selectedTx.type === 1 || selectedTx.type === 2 ? "#16A34A" : "#0F172A",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  {selectedTx.type === 1 || selectedTx.type === 2 ? "+" : "-"}
-                  {formatCurrency(selectedTx.amount)}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#64748B", mt: 0.5 }}>
-                  {selectedTx.title}
-                </Typography>
-              </Box>
-
-              <Divider sx={{ my: 2.5 }} />
-
-              {/* Fila: ID Transacción */}
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
-                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                  Número de Operación
-                </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: "monospace", color: "#0F172A" }}>
-                    TX-{String(selectedTx.id).padStart(4, "0")}
-                  </Typography>
-                  <Tooltip title={copied ? "¡Copiado!" : "Copiar ID"}>
-                    <IconButton size="small" onClick={() => handleCopyId(selectedTx.id)}>
-                      <ContentCopyIcon sx={{ fontSize: 14, color: copied ? "#16A34A" : "#64748B" }} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </Box>
-
-              {/* Fila: Fecha y Hora */}
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
-                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                  Fecha y Hora
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: "#0F172A" }}>
-                  {selectedTx.formattedDate || formatTransactionDate(selectedTx.date || selectedTx.rawDate)}
-                </Typography>
-              </Box>
-
-              {/* Fila: Tipo */}
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
-                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                  Tipo de Operación
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontWeight: 700,
-                    color: selectedTx.type === 1 || selectedTx.type === 2 || selectedTx.isIncome ? "#16A34A" : "#DC2626",
-                  }}
-                >
-                  {selectedTx.type === 1 || selectedTx.type === 2 || selectedTx.isIncome ? "Ingreso" : "Egreso"}
-                </Typography>
-              </Box>
-
-              {/* Fila: Contraparte / Destino */}
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
-                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                  Contraparte / Destinatario
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: "#0F172A" }}>
-                  {selectedTx.counterpart || (selectedTx.toAccountId ? `Cuenta #${selectedTx.toAccountId}` : "Cuenta Propia")}
-                </Typography>
-              </Box>
-
-              {/* Fila: Estado */}
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                  Estado
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: "#16A34A" }}>
-                  {selectedTx.status || "Completada"}
-                </Typography>
-              </Box>
-            </DialogContent>
-
-            <DialogActions sx={{ p: 2 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={() => setSelectedTx(null)}
-                sx={{
-                  bgcolor: "#0056D2",
-                  borderRadius: "12px",
-                  py: 1,
-                  fontWeight: 700,
-                  textTransform: "none",
-                  "&:hover": { bgcolor: "#0047B3" },
-                }}
-              >
-                Cerrar comprobante
-              </Button>
-            </DialogActions>
-          </Dialog>
-        )}
+        {/* ─── MODAL REUTILIZABLE DE COMPROBANTE CON TODA LA INFORMACIÓN Y DESCARGA EN PDF ─── */}
+        <TransferReceiptModal
+          open={Boolean(selectedTx)}
+          onClose={() => setSelectedTx(null)}
+          transferData={selectedTxReceiptData}
+        />
       </Box>
     </AppLayout>
   );

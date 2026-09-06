@@ -124,6 +124,7 @@ export function DashboardPage() {
                   <BalanceCard
                     balance={account.money}
                     cardNumber={account.cardNumber}
+                    cvu={account.cvu || (account.id ? `000000310001000000000${account.id}` : "0000003100010000000004")}
                     trend={account.trend}
                     loading={loading}
                   />
@@ -237,6 +238,7 @@ export function DashboardPage() {
             <BalanceCard
               balance={account.money}
               cardNumber={account.cardNumber}
+              cvu={account.cvu || (account.id ? `000000310001000000000${account.id}` : "0000003100010000000004")}
               trend={account.trend}
               loading={loading}
             />
