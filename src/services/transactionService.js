@@ -1,5 +1,56 @@
 import api from "./api";
 
+/**
+ * Normaliza y deduce el motivo / concepto oficial de la transacción.
+ */
+function resolveMotive(tx) {
+  const concept = (tx.concept || "").trim();
+  const lower = concept.toLowerCase();
+
+  if (!concept) {
+    if (tx.type === 1) return "Depósito de Fondos";
+    if (tx.type === 2) return "Transferencia Recibida";
+    return "Varios";
+  }
+
+  // Si incluye un motivo después de un separador (ej: "Transferencia recibida · Salud")
+  if (concept.includes("·")) {
+    const parts = concept.split("·");
+    const lastPart = parts[parts.length - 1].trim();
+    if (lastPart) return lastPart;
+  }
+
+  // Identificar motivos comerciales clave
+  if (lower.includes("comida") || lower.includes("alimento") || lower.includes("starbucks")) return "Comidas y bebidas";
+  if (lower.includes("servicio") || lower.includes("edenor") || lower.includes("luz") || lower.includes("gas") || lower.includes("agua") || lower.includes("spotify") || lower.includes("netflix")) return "Cuentas y servicios";
+  if (lower.includes("salud") || lower.includes("farmacity") || lower.includes("medico") || lower.includes("médico") || lower.includes("farmacia")) return "Salud";
+  if (lower.includes("combustible") || lower.includes("ypf") || lower.includes("shell") || lower.includes("nafta")) return "Transporte";
+  if (lower.includes("compra") || lower.includes("coto") || lower.includes("mercado") || lower.includes("super")) return "Compras";
+  if (lower.includes("transporte") || lower.includes("uber") || lower.includes("cabify") || lower.includes("sube")) return "Transporte";
+  if (lower.includes("educacion") || lower.includes("educación") || lower.includes("curso")) return "Educación";
+  if (lower.includes("entretenimiento") || lower.includes("cine")) return "Entretenimiento y cultura";
+  if (lower.includes("viaje") || lower.includes("hotel") || lower.includes("vuelo")) return "Viajes";
+  if (lower.includes("mascota") || lower.includes("veterinaria")) return "Mascotas";
+  if (lower.includes("regalo")) return "Regalos";
+  if (lower.includes("seguro")) return "Seguros";
+  if (lower.includes("vivienda") || lower.includes("alquiler") || lower.includes("expensa")) return "Vivienda";
+  if (lower.includes("honorario")) return "Honorarios profesionales";
+  if (lower.includes("haber") || lower.includes("sueldo") || lower.includes("bono") || lower.includes("nómina")) return "Haberes";
+  if (lower.includes("ahorro") || lower.includes("depósito") || lower.includes("deposito")) return "Depósitos y ahorro";
+
+  // Si la transacción es una transferencia con destinatario/origen específico (ej: "Transferencia enviada a Roberto Carlos")
+  if (lower.startsWith("transferencia")) {
+    // Si menciona un contacto o cuenta, lo dejamos categorizado con el destinatario o Varios
+    const match = concept.match(/(?:a|de)\s+([A-Za-zÁÉÍÓÚáéíóúñÑ\s]+)/i);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+    return "Familia y amigos";
+  }
+
+  return concept;
+}
+
 export const transactionService = {
   /**
    * Obtiene los últimos movimientos de la cuenta (HU-17).
@@ -27,6 +78,8 @@ export const transactionService = {
           else if (tx.type === 2) defaultTitle = "Transferencia Recibida";
           else if (tx.type === 3) defaultTitle = `Transferencia a Cuenta #${tx.toAccountId || ""}`.trim();
 
+          const motive = resolveMotive(tx);
+
           return {
             id: tx.id,
             title: tx.concept || defaultTitle,
@@ -34,6 +87,9 @@ export const transactionService = {
             type: tx.type,
             amount: tx.amount,
             category: categoryName,
+            reason: motive,
+            concept: motive,
+            motive,
             isIncome,
             toAccountId: tx.toAccountId,
             date: tx.date,
@@ -92,6 +148,8 @@ export const transactionService = {
           else if (tx.type === 2) defaultTitle = "Transferencia Recibida";
           else if (tx.type === 3) defaultTitle = `Transferencia a Cuenta #${tx.toAccountId || ""}`.trim();
 
+          const motive = resolveMotive(tx);
+
           return {
             id: tx.id,
             title: tx.concept || defaultTitle,
@@ -101,12 +159,16 @@ export const transactionService = {
             type: tx.type,
             amount: tx.amount,
             category: categoryName,
+            reason: motive,
+            concept: motive,
+            motive,
             isIncome,
             toAccountId: tx.toAccountId,
             counterpart: tx.toAccountId ? `Cuenta #${tx.toAccountId}` : "Directo",
             status: "Completada",
           };
         });
+
 
         if (search && search.trim()) {
           const q = search.toLowerCase().trim();
@@ -197,11 +259,12 @@ export const transactionService = {
    * POST /api/transactions/transfer
    * Body: { destinationAccountId, amount }
    */
-  async transfer({ destination, destinationAccountId, amount }) {
+  async transfer({ destination, destinationAccountId, amount, concept }) {
     const destId = destinationAccountId || destination;
     const response = await api.post("/transactions/transfer", {
       destinationAccountId: Number(destId),
       amount: Number(amount),
+      concept: concept || null,
     });
     return response.data;
   },

@@ -94,12 +94,32 @@ export function HistoryPage() {
 
   // Estados de datos y carga
   const [items, setItems] = useState([]);
+  const [allChartTransactions, setAllChartTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // Estado del modal de comprobante
   const [selectedTx, setSelectedTx] = useState(null);
   const [copied, setCopied] = useState(false);
 
+  // Carga todas las transacciones sin paginar para alimentar la gráfica de motivos
+  const loadChartData = useCallback(async () => {
+    try {
+      const res = await transactionService.getHistory({
+        page: 1,
+        pageSize: 100,
+        localTransactions,
+      });
+      if (res?.items) {
+        setAllChartTransactions(res.items);
+      }
+    } catch {
+      // Ignorar error si está offline
+    }
+  }, [localTransactions]);
+
+  useEffect(() => {
+    loadChartData();
+  }, [loadChartData]);
 
   // Carga de historial desde la API o fallback local
   const loadHistory = useCallback(async () => {
@@ -143,10 +163,14 @@ export function HistoryPage() {
   };
 
   const handleRowsPerPageChange = (event) => {
-    const newSize = parseInt(event.target.value, 10);
-    setPageSize(newSize);
+    setPageSize(parseInt(event.target.value, 10));
     setPage(1);
   };
+
+  // Transacciones a usar para el gráfico (prioriza la lista completa de la cuenta)
+  const chartTxSource = allChartTransactions.length > 0 
+    ? allChartTransactions 
+    : (localTransactions.length > 0 ? localTransactions : items);
 
   const handleCopyId = (id) => {
     if (navigator.clipboard) {
@@ -171,7 +195,7 @@ export function HistoryPage() {
               style={{ width: "100%" }}
             >
               <MovementPieChart
-                transactions={localTransactions && localTransactions.length > 0 ? localTransactions : (items.length > 0 ? items : [])}
+                transactions={chartTxSource}
                 onGoToTable={handleGoToTableWithFilter}
                 onSelectCategory={handleSelectCategory}
               />

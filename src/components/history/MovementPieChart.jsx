@@ -101,57 +101,52 @@ export const MovementPieChart = ({
     });
   }, [transactions, activeDateRange]);
 
-  // Filtrar exclusivamente movimientos que tengan un Concepto / Motivo comercial
-  // Excluyendo depósitos y transferencias genéricas (que se muestran en la tabla general)
+  // Filtrar y clasificar movimientos agrupados por su motivo o concepto real
   const conceptTransactions = useMemo(() => {
     return filteredTransactions.filter((tx) => {
-      const cat = (tx.category || tx.reason || tx.concept || "").toUpperCase();
-      const title = (tx.title || "").toLowerCase();
-
-      // Excluir depósitos y transferencias
-      if (
-        cat === "DEPÓSITOS" ||
-        cat === "DEPÓSITO" ||
-        cat === "DEPOSITOS" ||
-        cat === "DEPOSITO" ||
-        cat === "TRANSFERENCIAS" ||
-        cat === "TRANSFERENCIA" ||
-        cat === "INGRESO" ||
-        cat === "EGRESO"
-      ) {
+      // Excluir depósitos iniciales/fondos puros si se desea graficar solo gastos/transferencias con motivo
+      if (tx.type === 1 && (!tx.reason && !tx.concept)) {
         return false;
       }
-
-      if (
-        title.includes("transferencia") ||
-        title.includes("depósito") ||
-        title.includes("deposito")
-      ) {
-        return false;
-      }
-
-      if (tx.type === 1) {
-        return false;
-      }
-
-      return Boolean(cat && cat !== "VARIOS");
+      return true;
     });
   }, [filteredTransactions]);
 
-  // Procesar datos para el gráfico Donut agrupado por concepto real (Salud, Combustible, Servicios, Compras, Comida, etc.)
+  // Procesar datos para el gráfico Donut agrupado por concepto/motivo real
   const chartData = useMemo(() => {
     if (!conceptTransactions || conceptTransactions.length === 0) return [];
 
     const acc = {};
     conceptTransactions.forEach((tx) => {
       const amount = Math.abs(Number(tx.amount) || 0);
-      const cat = tx.category || tx.reason || tx.concept || "Varios";
+      if (amount <= 0) return;
 
-      if (!acc[cat]) {
-        acc[cat] = { count: 0, total: 0 };
+      // Obtener el motivo de forma prioritaria
+      let motive = (tx.motive || tx.reason || tx.concept || "").trim();
+
+      // Si no tiene motivo o es un nombre genérico, deducir
+      if (!motive || motive === "EGRESO" || motive === "INGRESO" || motive === "DEPÓSITO") {
+        const title = (tx.title || "").toLowerCase();
+        if (title.includes("comida") || title.includes("starbucks")) motive = "Comidas y bebidas";
+        else if (title.includes("servicio") || title.includes("edenor") || title.includes("spotify") || title.includes("netflix")) motive = "Cuentas y servicios";
+        else if (title.includes("salud") || title.includes("farmacity")) motive = "Salud";
+        else if (title.includes("combustible") || title.includes("ypf")) motive = "Transporte";
+        else if (title.includes("compra") || title.includes("coto") || title.includes("mercado libre")) motive = "Compras";
+        else if (title.includes("transferencia")) {
+          const match = (tx.title || "").match(/(?:a|de)\s+([A-Za-zÁÉÍÓÚáéíóúñÑ\s]+)/i);
+          motive = match ? match[1].trim() : "Familia y amigos";
+        } else if (title.includes("depósito") || title.includes("deposito")) {
+          motive = "Depósitos y ahorro";
+        } else {
+          motive = tx.title || "Varios";
+        }
       }
-      acc[cat].count += 1;
-      acc[cat].total += amount;
+
+      if (!acc[motive]) {
+        acc[motive] = { count: 0, total: 0 };
+      }
+      acc[motive].count += 1;
+      acc[motive].total += amount;
     });
 
     return Object.entries(acc)
