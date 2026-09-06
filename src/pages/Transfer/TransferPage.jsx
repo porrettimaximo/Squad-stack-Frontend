@@ -130,20 +130,19 @@ export function TransferPage() {
 
   // ─── PERFIL COMPLETO DE MI CUENTA (ORIGEN) ───
   const myProfile = useMemo(() => {
-    const accId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "4");
-    const fromSeed = findContact(accId) || findContact(user?.id) || findContact(user?.email);
-    const email = user?.email || fromSeed?.email || `usuario${accId}@digitalars.com`;
-    const name = fromSeed?.name || (email.split("@")[0].replace(".", " ").replace(/\b\w/g, (l) => l.toUpperCase()));
-    const username = email.split("@")[0];
+    const accId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "1");
+    const email = user?.email || "usuario@digitalars.com";
+    const name = user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())));
+    const username = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, ".");
 
     return {
       name,
       email,
       accountId: accId,
-      accountNumber: fromSeed?.accountNumber || `0002-4892-0${accId}`,
-      cvu: fromSeed?.cvu || `000000310001000000000${accId}`,
-      alias: fromSeed?.alias || `${username}.ars`,
-      bank: fromSeed?.bank || "DigitalArs Billetera Virtual",
+      accountNumber: account?.accountNumber || `0002-4892-0${accId}`,
+      cvu: account?.cvu || (account?.id ? `000000310001000000000${account.id}` : "0000003100010000000004"),
+      alias: account?.alias || `${username}.ars`,
+      bank: "DigitalArs Billetera Virtual",
     };
   }, [user, account]);
 

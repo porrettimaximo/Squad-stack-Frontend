@@ -20,7 +20,7 @@ import { motion } from "framer-motion";
  * - Microinteracción en campana: whileHover={{ rotate: [0, -10, 10, -5, 5, 0] }} simulando timbre/campanada.
  * - Microinteracción en perfil: whileHover con escalado suave scale 1.02.
  */
-export function DashboardNavbar({ currentTab = 0, onTabChange, userName = "Alejandro Silva", showTabs = true }) {
+export function DashboardNavbar({ currentTab = 0, onTabChange, userName = "Usuario", showTabs = true }) {
   const navigate = useNavigate();
   return (
     <Box

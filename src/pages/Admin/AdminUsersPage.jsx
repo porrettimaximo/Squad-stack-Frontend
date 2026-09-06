@@ -46,9 +46,6 @@ import userService from "../../services/userService";
 import authService from "../../services/authService";
 
 export function AdminUsersPage() {
-  const muiTheme = useTheme();
-  const isDesktop = useMediaQuery(muiTheme.breakpoints.up("md"));
-
   // Estados de la tabla y filtros
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);

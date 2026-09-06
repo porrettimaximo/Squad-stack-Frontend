@@ -43,7 +43,7 @@ export function DashboardPage() {
     navigate("/login");
   };
 
-  const userName = user?.name || "Alejandro Silva";
+  const userName = user?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : user?.email || "Usuario");
 
   return (
     <Box sx={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", bgcolor: "#F8FAFC" }}>

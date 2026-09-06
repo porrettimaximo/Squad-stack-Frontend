@@ -109,20 +109,19 @@ export function HistoryPage() {
   const selectedTxReceiptData = useMemo(() => {
     if (!selectedTx) return null;
 
-    const myAccId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "4");
-    const mySeed = findContact(myAccId) || findContact(user?.id) || findContact(user?.email);
-    const myEmail = user?.email || mySeed?.email || `usuario${myAccId}@digitalars.com`;
-    const myName = mySeed?.name || (myEmail.split("@")[0].replace(".", " ").replace(/\b\w/g, (l) => l.toUpperCase()));
-    const myUsername = myEmail.split("@")[0];
+    const myAccId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "1");
+    const myEmail = user?.email || "usuario@digitalars.com";
+    const myName = user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (myEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())));
+    const myUsername = myEmail.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, ".");
 
     const myProfileData = {
       name: myName,
       email: myEmail,
       accountId: myAccId,
-      accountNumber: mySeed?.accountNumber || `0002-4892-0${myAccId}`,
-      cvu: mySeed?.cvu || `000000310001000000000${myAccId}`,
-      alias: mySeed?.alias || `${myUsername}.ars`,
-      bank: mySeed?.bank || "DigitalArs Billetera Virtual",
+      accountNumber: account?.accountNumber || `0002-4892-0${myAccId}`,
+      cvu: account?.cvu || (account?.id ? `000000310001000000000${account.id}` : "0000003100010000000004"),
+      alias: account?.alias || `${myUsername}.ars`,
+      bank: "DigitalArs Billetera Virtual",
     };
 
     // Contraparte
