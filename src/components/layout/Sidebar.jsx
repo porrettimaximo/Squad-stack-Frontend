@@ -31,7 +31,23 @@ import iconoSmall from "../../assets/icono.png";
  * Sidebar: Barra lateral izquierda fija (Desktop)
  */
 export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("sidebar_collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleCollapse = (val) => {
+    setCollapsed(val);
+    try {
+      localStorage.setItem("sidebar_collapsed", String(val));
+    } catch (e) {
+      console.error("Error saving sidebar state:", e);
+    }
+  };
+
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -133,7 +149,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
               }}
             />
             <IconButton
-              onClick={() => setCollapsed(true)}
+              onClick={() => handleToggleCollapse(true)}
               sx={{
                 color: "#8EA3BF",
                 "&:hover": {
@@ -178,7 +194,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
               }}
             />
             <IconButton
-              onClick={() => setCollapsed(false)}
+              onClick={() => handleToggleCollapse(false)}
               sx={{
                 position: "absolute",
                 color: "#8EA3BF",
