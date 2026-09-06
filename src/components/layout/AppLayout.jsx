@@ -1,16 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Box, Button, useMediaQuery, useTheme } from "@mui/material";
+import {
+  Box,
+  Button,
+  IconButton,
+  Typography,
+  Drawer,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import MenuIcon from "@mui/icons-material/Menu";
 import Sidebar from "./Sidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import MobileBottomNav from "./MobileBottomNav";
 import { useAccount } from "../../hooks/useAccount";
 import { useAuth } from "../../context/AuthContext";
+import iconoSmall from "../../assets/icono.png";
 
 /**
  * AppLayout: Contenedor estructural unificado de la aplicación (Desktop + Mobile).
- * Conecta la barra lateral y la barra inferior móvil con la navegación del router.
+ * Conecta la barra lateral y la barra inferior móvil con la navegación del router,
+ * incorporando menú hamburguesa deslizante para mobile.
  */
 export function AppLayout({
   children,
@@ -28,6 +39,7 @@ export function AppLayout({
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const { user } = useAccount();
   const { logout } = useAuth();
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   // Ocultar pestañas de navegación superior en historial, perfil, ayuda, soporte e inversiones según corresponda
   const isHistoryRoute = location.pathname.startsWith("/history") || location.pathname.startsWith("/historial");
@@ -63,6 +75,7 @@ export function AppLayout({
   }
 
   const handleSidebarClick = (item) => {
+    setMobileDrawerOpen(false);
     if (item === "inicio") navigate("/");
     else if (item === "historial") navigate("/history");
     else if (item === "inversiones") navigate("/investments");
@@ -85,6 +98,7 @@ export function AppLayout({
   };
 
   const handleLogout = () => {
+    setMobileDrawerOpen(false);
     logout();
     navigate("/login");
   };
@@ -93,7 +107,7 @@ export function AppLayout({
 
   return (
     <Box sx={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", bgcolor: "#F8FAFC" }}>
-      {/* 1. Vista Desktop: Barra Lateral */}
+      {/* 1. Vista Desktop: Barra Lateral Fija */}
       {isDesktop && (
         <Sidebar
           activeItem={currentActiveItem}
@@ -102,7 +116,34 @@ export function AppLayout({
         />
       )}
 
-      {/* 2. Contenedor Principal Scrollable */}
+      {/* 2. Menú Lateral Deslizable para Mobile (Slide Drawer) */}
+      {!isDesktop && (
+        <Drawer
+          anchor="left"
+          open={mobileDrawerOpen}
+          onClose={() => setMobileDrawerOpen(false)}
+          ModalProps={{ keepMounted: true }}
+          PaperProps={{
+            sx: {
+              bgcolor: "#02122c",
+              backgroundImage: "none",
+              border: "none",
+              width: 280,
+              boxShadow: "4px 0 24px rgba(0,0,0,0.4)",
+            },
+          }}
+        >
+          <Sidebar
+            activeItem={currentActiveItem}
+            onItemClick={handleSidebarClick}
+            onLogout={handleLogout}
+            onClose={() => setMobileDrawerOpen(false)}
+            isMobileDrawer
+          />
+        </Drawer>
+      )}
+
+      {/* 3. Contenedor Principal Scrollable */}
       <Box
         component="main"
         sx={{
@@ -123,6 +164,70 @@ export function AppLayout({
             userName={userName}
             showTabs={shouldShowTabs}
           />
+        )}
+
+        {/* Barra Superior Mobile con Menú Hamburguesa */}
+        {!isDesktop && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              px: 2,
+              py: 1.5,
+              bgcolor: "#02122c",
+              color: "#FFFFFF",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+              position: "sticky",
+              top: 0,
+              zIndex: 1100,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <IconButton
+                onClick={() => setMobileDrawerOpen(true)}
+                aria-label="Abrir menú de navegación"
+                sx={{
+                  color: "#FFFFFF",
+                  p: 0.8,
+                  bgcolor: "rgba(255, 255, 255, 0.08)",
+                  "&:hover": { bgcolor: "rgba(255, 255, 255, 0.15)" },
+                }}
+              >
+                <MenuIcon />
+              </IconButton>
+              <Box
+                onClick={() => navigate("/")}
+                sx={{ display: "flex", alignItems: "center", gap: 1, cursor: "pointer" }}
+              >
+                <Box
+                  component="img"
+                  src={iconoSmall}
+                  alt="DigitalArs"
+                  sx={{ width: 32, height: 32, borderRadius: "8px", objectFit: "contain" }}
+                />
+                <Typography variant="h6" sx={{ fontWeight: 800, fontSize: "1.15rem", letterSpacing: "-0.01em" }}>
+                  DigitalArs
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "#94A3B8",
+                  fontWeight: 600,
+                  maxWidth: 120,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {userName}
+              </Typography>
+            </Box>
+          </Box>
         )}
 
         {/* Contenido de la Pantalla */}
@@ -153,7 +258,7 @@ export function AppLayout({
         </Box>
       </Box>
 
-      {/* 3. Vista Mobile: Barra de Navegación Inferior */}
+      {/* 4. Vista Mobile: Barra de Navegación Inferior */}
       {!isDesktop && (
         <MobileBottomNav
           activeNav={currentMobileIndex}

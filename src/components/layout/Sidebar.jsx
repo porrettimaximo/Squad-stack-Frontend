@@ -13,6 +13,7 @@ import {
 
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
+import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import CreditCardOutlinedIcon from "@mui/icons-material/CreditCardOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
@@ -20,6 +21,7 @@ import HeadsetMicOutlinedIcon from "@mui/icons-material/HeadsetMicOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
+import CloseIcon from "@mui/icons-material/Close";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -28,15 +30,16 @@ import iconoImg from "../../assets/iconoPrincipal.png";
 import iconoSmall from "../../assets/icono.png";
 
 /**
- * Sidebar: Barra lateral izquierda fija (Desktop)
+ * Sidebar: Barra lateral izquierda fija (Desktop) o menú deslizable (Mobile).
  */
-export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
+export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose, isMobileDrawer = false }) {
   const [collapsed, setCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
   const handleLogoutAction = () => {
+    if (onClose) onClose();
     if (onLogout) {
       onLogout();
     } else {
@@ -50,6 +53,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
   const mainNav = [
     { id: "inicio", label: "Inicio", icon: <HomeOutlinedIcon />, path: "/" },
     { id: "historial", label: "Historial", icon: <HistoryOutlinedIcon />, path: "/history" },
+    { id: "inversiones", label: "Inversiones", icon: <TrendingUpOutlinedIcon />, path: "/investments" },
     { id: "tarjetas", label: "Tarjetas", icon: <CreditCardOutlinedIcon />, path: "/" },
     { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon />, path: "/profile" },
     ...(isAdmin
@@ -79,6 +83,9 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
   ];
 
   const handleClick = (item) => {
+    if (onClose) {
+      onClose();
+    }
     if (onItemClick) {
       onItemClick(item.id);
     }
@@ -92,7 +99,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       sx={{
-        width: collapsed ? 80 : 240,
+        width: isMobileDrawer ? 280 : (collapsed ? 80 : 240),
         height: "100vh",
         bgcolor: "#02122c",
         color: "#FFFFFF",
@@ -104,19 +111,52 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
         overflow: "hidden",
       }}
     >
-      {/* Cabecera: Logo Principal PNG y Botón de Colapsar */}
+      {/* Cabecera: Logo Principal PNG y Botón de Colapsar / Cerrar */}
       <Box
         sx={{
-          px: collapsed ? 1 : 2.5,
-          pt: 3.5,
+          px: collapsed && !isMobileDrawer ? 1 : 2.5,
+          pt: 3,
           pb: 2,
           display: "flex",
-          justifyContent: collapsed ? "center" : "space-between",
+          justifyContent: collapsed && !isMobileDrawer ? "center" : "space-between",
           alignItems: "center",
-          minHeight: 80,
+          minHeight: 70,
         }}
       >
-        {!collapsed && (
+        {isMobileDrawer ? (
+          <>
+            <Box
+              component="img"
+              src={iconoImg}
+              alt="DigitalArs"
+              onClick={() => {
+                if (onClose) onClose();
+                navigate("/");
+              }}
+              sx={{
+                width: "100%",
+                maxWidth: 130,
+                height: "auto",
+                maxHeight: 65,
+                objectFit: "contain",
+                cursor: "pointer",
+              }}
+            />
+            <IconButton
+              onClick={onClose}
+              aria-label="Cerrar menú lateral"
+              sx={{
+                color: "#8EA3BF",
+                "&:hover": {
+                  color: "#FFF",
+                  bgcolor: "rgba(255, 255, 255, 0.08)",
+                },
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </>
+        ) : !collapsed ? (
           <>
             <Box
               component="img"
@@ -134,6 +174,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
             />
             <IconButton
               onClick={() => setCollapsed(true)}
+              aria-label="Colapsar menú"
               sx={{
                 color: "#8EA3BF",
                 "&:hover": {
@@ -145,7 +186,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
               <MenuOpenIcon />
             </IconButton>
           </>
-        )}
+        ) : null}
 
         {collapsed && (
           <Box
