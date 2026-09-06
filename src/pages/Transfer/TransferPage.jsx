@@ -23,6 +23,7 @@ import {
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import CloseIcon from "@mui/icons-material/Close";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useAccount } from "../../hooks/useAccount";
@@ -41,8 +42,11 @@ const slideVariants = {
 
 /**
  * HU-26: Pantalla de transferencia de fondos.
- * Destinatarios sugeridos: todos los usuarios de la plataforma que no sean administradores ni el usuario actual.
- * Muestra únicamente el nombre del destinatario (sin números de cuenta, emails, alias ni CBU/CVU).
+ * - Destinatarios sugeridos: muestra todos los usuarios estándar de la plataforma (no administradores)
+ *   mostrando ÚNICAMENTE el nombre para agilidad visual.
+ * - Datos de la transferencia (Paso 3 y Paso 4): muestra la ficha completa y detallada
+ *   con todos los datos de la cuenta de origen (mi cuenta), de la cuenta de destino (a quién / la otra cuenta),
+ *   montos, motivos, comisiones y saldos.
  */
 export function TransferPage() {
   const navigate = useNavigate();
@@ -59,7 +63,7 @@ export function TransferPage() {
 
   const currentBalance = account?.money ?? 0;
 
-  // Destinatarios sugeridos: todos los usuarios de la plataforma que no sean admins ni el usuario actual
+  // ─── USUARIOS DE LA PLATAFORMA (DESTINATARIOS SUGERIDOS) ───
   const currentUserId = user?.id ? String(user.id) : null;
   const currentAccountId = account?.id ? String(account.id) : null;
   const currentUserEmail = user?.email?.toLowerCase();
@@ -71,7 +75,7 @@ export function TransferPage() {
       const isNameAdmin = c.name?.toLowerCase().includes("admin");
       if (isEmailAdmin || isNameAdmin) return false;
 
-      // Excluir al usuario actualmente autenticado
+      // Excluir al usuario actualmente logueado
       if (currentUserId && String(c.id) === currentUserId) return false;
       if (currentAccountId && String(c.accountId) === currentAccountId) return false;
       if (currentUserEmail && c.email?.toLowerCase() === currentUserEmail) return false;
@@ -80,7 +84,7 @@ export function TransferPage() {
     });
   }, [currentUserId, currentAccountId, currentUserEmail]);
 
-  // Filtro dinámico por nombre si el usuario escribe en el buscador
+  // Filtro por nombre al escribir en el campo de texto
   const displayedContacts = useMemo(() => {
     if (!destinationInput.trim()) return suggestedUsers;
     const q = destinationInput.trim().toLowerCase();
@@ -116,6 +120,44 @@ export function TransferPage() {
 
   const destinationDisplay = activeContact ? activeContact.name : destinationInput;
 
+  // ─── PERFIL COMPLETO DE MI CUENTA (ORIGEN) ───
+  const myProfile = useMemo(() => {
+    const accId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "4");
+    const fromSeed = findContact(accId) || findContact(user?.id) || findContact(user?.email);
+    const email = user?.email || fromSeed?.email || `usuario${accId}@digitalars.com`;
+    const name = fromSeed?.name || (email.split("@")[0].replace(".", " ").replace(/\b\w/g, (l) => l.toUpperCase()));
+    const username = email.split("@")[0];
+
+    return {
+      name,
+      email,
+      accountId: accId,
+      accountNumber: fromSeed?.accountNumber || `0002-4892-0${accId}`,
+      cvu: fromSeed?.cvu || `000000310001000000000${accId}`,
+      alias: fromSeed?.alias || `${username}.ars`,
+      bank: fromSeed?.bank || "DigitalArs Billetera Virtual",
+    };
+  }, [user, account]);
+
+  // ─── PERFIL COMPLETO DE LA OTRA CUENTA (DESTINO / A QUIÉN) ───
+  const recipientProfile = useMemo(() => {
+    const accId = activeContact?.accountId || destinationInput || "2";
+    const fromSeed = activeContact || findContact(accId) || findContact(destinationInput);
+    const email = fromSeed?.email || `cuenta${accId}@digitalars.com`;
+    const name = fromSeed?.name || destinationDisplay || `Destinatario #${accId}`;
+    const username = email.split("@")[0];
+
+    return {
+      name,
+      email,
+      accountId: accId,
+      accountNumber: fromSeed?.accountNumber || `0002-4892-0${accId}`,
+      cvu: fromSeed?.cvu || `000000310001000000000${accId}`,
+      alias: fromSeed?.alias || `${username}.ars`,
+      bank: fromSeed?.bank || "DigitalArs Billetera Virtual",
+    };
+  }, [activeContact, destinationInput, destinationDisplay]);
+
   const handleAmountChange = (e) => {
     const val = e.target.value.replace(/[^0-9]/g, "");
     setAmount(val);
@@ -127,8 +169,8 @@ export function TransferPage() {
 
     setLoading(true);
     try {
-      const destAccountId = activeContact ? activeContact.accountId : destinationInput;
-      const destName = activeContact ? activeContact.name : destinationInput;
+      const destAccountId = recipientProfile.accountId;
+      const destName = recipientProfile.name;
 
       await transferFunds({
         destination: destName,
@@ -149,8 +191,8 @@ export function TransferPage() {
   };
 
   return (
-    <AppLayout onBack={step < 4 ? handleBack : null} maxWidth={600}>
-      <Box sx={{ maxWidth: 540, mx: "auto", width: "100%" }}>
+    <AppLayout onBack={step < 4 ? handleBack : null} maxWidth={620}>
+      <Box sx={{ maxWidth: 580, mx: "auto", width: "100%" }}>
         {/* Cabecera compacta */}
         {step < 4 && (
           <Box sx={{ mb: 2 }}>
@@ -183,7 +225,7 @@ export function TransferPage() {
             {step === 1 && (
               <motion.div key="step1" variants={slideVariants} initial="initial" animate="animate" exit="exit">
                 {selectedContact ? (
-                  /* Tarjeta Destinatario Seleccionado: ÚNICAMENTE NOMBRE */
+                  /* Tarjeta Destinatario Seleccionado: ÚNICAMENTE NOMBRE (Ágil) */
                   <Paper
                     elevation={0}
                     sx={{
@@ -353,7 +395,7 @@ export function TransferPage() {
             {/* ─── PASO 2: MONTO Y MOTIVO (CON LOS 18 MOTIVOS OFICIALES) ─── */}
             {step === 2 && (
               <motion.div key="step2" variants={slideVariants} initial="initial" animate="animate" exit="exit">
-                {/* Destinatario resumen compacto: SOLO NOMBRE */}
+                {/* Destinatario resumen */}
                 <Box
                   sx={{
                     display: "flex",
@@ -368,14 +410,14 @@ export function TransferPage() {
                 >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Avatar sx={{ width: 28, height: 28, bgcolor: "#0056D2", fontSize: "0.75rem" }}>
-                      {(destinationDisplay || "D").charAt(0).toUpperCase()}
+                      {(recipientProfile.name || "D").charAt(0).toUpperCase()}
                     </Avatar>
                     <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#1E3A8A" }}>
-                      {destinationDisplay}
+                      {recipientProfile.name}
                     </Typography>
                   </Box>
                   <Typography sx={{ fontSize: "0.75rem", color: "#64748B" }}>
-                    Saldo: <strong>{formatCurrency(currentBalance)}</strong>
+                    Saldo disponible: <strong>{formatCurrency(currentBalance)}</strong>
                   </Typography>
                 </Box>
 
@@ -448,14 +490,149 @@ export function TransferPage() {
               </motion.div>
             )}
 
-            {/* ─── PASO 3: RESUMEN Y CONFIRMACIÓN: ÚNICAMENTE NOMBRE ─── */}
+            {/* ─── PASO 3: RESUMEN COMPLETO CON TODOS LOS DATOS DE AMBAS CUENTAS ─── */}
             {step === 3 && (
               <motion.div key="step3" variants={slideVariants} initial="initial" animate="animate" exit="exit">
-                <Typography sx={{ color: "#0F172A", fontSize: "1rem", fontWeight: 700, mb: 2 }}>
+                <Typography sx={{ color: "#0F172A", fontSize: "1.1rem", fontWeight: 800, mb: 0.5 }}>
                   Confirmá los datos de la transferencia
                 </Typography>
+                <Typography sx={{ color: "#64748B", fontSize: "0.85rem", mb: 2 }}>
+                  Revisá la cuenta de origen, la cuenta de destino y el detalle antes de confirmar.
+                </Typography>
 
-                {/* Ficha del Destinatario: ÚNICAMENTE NOMBRE */}
+                {/* 1. Datos de MI CUENTA (Cuenta Origen) */}
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    borderRadius: "14px",
+                    bgcolor: "#F8FAFC",
+                    border: "1px solid #E2E8F0",
+                    mb: 1.5,
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                    <Chip
+                      label="Cuenta Origen (Mi cuenta)"
+                      size="small"
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: "0.72rem",
+                        bgcolor: "#E0E7FF",
+                        color: "#3730A3",
+                        borderRadius: "8px",
+                      }}
+                    />
+                    <Typography sx={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600 }}>
+                      {myProfile.bank}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
+                    <Box>
+                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>TITULAR</Typography>
+                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#0F172A" }}>
+                        {myProfile.name}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>Nº DE CUENTA</Typography>
+                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#0F172A" }}>
+                        Cuenta #{myProfile.accountId} ({myProfile.accountNumber})
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>EMAIL</Typography>
+                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", wordBreak: "break-all" }}>
+                        {myProfile.email}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>ALIAS</Typography>
+                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0056D2" }}>
+                        {myProfile.alias}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" } }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>CVU</Typography>
+                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", letterSpacing: "0.02em" }}>
+                        {myProfile.cvu}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Paper>
+
+                {/* Flecha indicadora de transferencia */}
+                <Box sx={{ display: "flex", justifyContent: "center", my: -0.5 }}>
+                  <Avatar sx={{ width: 28, height: 28, bgcolor: "#0056D2", color: "#FFFFFF" }}>
+                    <ArrowDownwardIcon sx={{ fontSize: 16 }} />
+                  </Avatar>
+                </Box>
+
+                {/* 2. Datos de LA OTRA CUENTA (Cuenta Destino / A quién) */}
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    borderRadius: "14px",
+                    bgcolor: "#F0FDF4",
+                    border: "1.5px solid #86EFAC",
+                    mb: 1.5,
+                    mt: 1,
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                    <Chip
+                      label="Cuenta Destino (A quién)"
+                      size="small"
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: "0.72rem",
+                        bgcolor: "#DCFCE7",
+                        color: "#166534",
+                        borderRadius: "8px",
+                      }}
+                    />
+                    <Typography sx={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600 }}>
+                      {recipientProfile.bank}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
+                    <Box>
+                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>DESTINATARIO</Typography>
+                      <Typography sx={{ fontSize: "0.92rem", fontWeight: 800, color: "#0F172A" }}>
+                        {recipientProfile.name}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>Nº DE CUENTA</Typography>
+                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#0F172A" }}>
+                        Cuenta #{recipientProfile.accountId} ({recipientProfile.accountNumber})
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>EMAIL</Typography>
+                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", wordBreak: "break-all" }}>
+                        {recipientProfile.email}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>ALIAS</Typography>
+                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0056D2" }}>
+                        {recipientProfile.alias}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" } }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>CVU</Typography>
+                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", letterSpacing: "0.02em" }}>
+                        {recipientProfile.cvu}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Paper>
+
+                {/* 3. Datos de la Operación (Monto, Motivo, Comisión, Total) */}
                 <Paper
                   elevation={0}
                   sx={{
@@ -470,13 +647,11 @@ export function TransferPage() {
                   }}
                 >
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>Destinatario</Typography>
-                    <Typography sx={{ fontSize: "0.95rem", fontWeight: 700, color: "#0F172A" }}>
-                      {destinationDisplay}
+                    <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>Monto a transferir</Typography>
+                    <Typography sx={{ fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+                      {formatCurrency(Number(amount))}
                     </Typography>
                   </Box>
-
-                  <Divider sx={{ my: 0.5 }} />
 
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>Motivo</Typography>
@@ -484,17 +659,26 @@ export function TransferPage() {
                   </Box>
 
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>Comisión</Typography>
+                    <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>Comisión de transferencia</Typography>
                     <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#10B981" }}>
                       Gratis ($ 0,00)
                     </Typography>
                   </Box>
 
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.5, pt: 1, borderTop: "1px dashed #CBD5E1" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mt: 0.5,
+                      pt: 1.2,
+                      borderTop: "1px dashed #CBD5E1",
+                    }}
+                  >
                     <Typography sx={{ fontWeight: 800, color: "#0F172A", fontSize: "0.95rem" }}>
                       Total a debitar
                     </Typography>
-                    <Typography sx={{ fontWeight: 800, color: "#0F172A", fontSize: "1.15rem" }}>
+                    <Typography sx={{ fontWeight: 800, color: "#0056D2", fontSize: "1.25rem" }}>
                       {formatCurrency(Number(amount))}
                     </Typography>
                   </Box>
@@ -521,15 +705,35 @@ export function TransferPage() {
               </motion.div>
             )}
 
-            {/* ─── PASO 4: ÉXITO: ÚNICAMENTE NOMBRE ─── */}
+            {/* ─── PASO 4: COMPROBANTE CON TODOS LOS DATOS DE LA TRANSFERENCIA ─── */}
             {step === 4 && (
               <SuccessStep
                 title="¡Transferencia exitosa!"
-                subtitle={`Enviamos el dinero a ${destinationDisplay}.`}
+                subtitle={`El dinero fue enviado correctamente a ${recipientProfile.name}.`}
                 amount={Number(amount)}
+                maxWidth={520}
+                autoRedirectSeconds={0}
                 details={[
-                  { label: "Destinatario", value: destinationDisplay },
+                  { label: "CUENTA DE ORIGEN (MI CUENTA)", isHeader: true },
+                  { label: "Titular Origen", value: myProfile.name },
+                  { label: "Nº de Cuenta", value: `Cuenta #${myProfile.accountId} (${myProfile.accountNumber})` },
+                  { label: "Email Origen", value: myProfile.email },
+                  { label: "Alias Origen", value: myProfile.alias },
+                  { label: "CVU Origen", value: myProfile.cvu },
+                  { label: "Banco Origen", value: myProfile.bank },
+
+                  { label: "CUENTA DE DESTINO (A QUIÉN)", isHeader: true },
+                  { label: "A quién (Titular)", value: recipientProfile.name },
+                  { label: "Nº de Cuenta", value: `Cuenta #${recipientProfile.accountId} (${recipientProfile.accountNumber})` },
+                  { label: "Email Destino", value: recipientProfile.email },
+                  { label: "Alias Destino", value: recipientProfile.alias },
+                  { label: "CVU Destino", value: recipientProfile.cvu },
+                  { label: "Banco Destino", value: recipientProfile.bank },
+
+                  { label: "DETALLE DE LA OPERACIÓN", isHeader: true },
+                  { label: "Monto debitado", value: formatCurrency(Number(amount)) },
                   { label: "Motivo", value: motive },
+                  { label: "Comisión", value: "Gratis ($ 0,00)" },
                   { label: "Nuevo saldo disponible", value: formatCurrency(account?.money ?? 0) },
                 ]}
                 onFinish={() => navigate("/")}
