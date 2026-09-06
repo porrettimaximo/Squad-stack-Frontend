@@ -1,40 +1,47 @@
-﻿import axios from "axios";
+import axios from "axios";
 
 /**
- * Instancia única de Axios (HU-21).
- * - baseURL configurada desde variable de entorno .env (VITE_API_URL).
- * - Interceptor de Request: inyecta Bearer token desde localStorage si existe.
- * - Interceptor de Response: captura respuestas 401 (Unauthorized) para limpiar sesión.
+ * Instancia centralizada de Axios para peticiones HTTP.
+ * - Inyecta token JWT de Authorization si existe en localStorage.
+ * - Maneja respuestas de error de forma segura sin forzar redirecciones invasivas.
  */
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "https://localhost:7142/api",
   headers: {
     "Content-Type": "application/json",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
   },
+  timeout: 7000,
 });
 
-// Interceptor de token
+// Interceptor de token y cache-busting
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Evitar cache del navegador en peticiones GET
+    if (config.method === "get") {
+      config.params = {
+        ...config.params,
+        _t: Date.now(),
+      };
+    }
     return config;
   },
   (error) => Promise.reject(error),
 );
 
-// Interceptor 401 Unauthorized
+// Interceptor de respuesta
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
+    if (error.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
-      }
     }
     return Promise.reject(error);
   },

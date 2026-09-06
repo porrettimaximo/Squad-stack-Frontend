@@ -1,7 +1,6 @@
-﻿import React from "react";
+import React, { useState } from "react";
 import {
   Box,
-  Typography,
   List,
   ListItem,
   ListItemButton,
@@ -9,8 +8,9 @@ import {
   ListItemText,
   Divider,
   Button,
+  IconButton,
 } from "@mui/material";
-import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
+
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import CreditCardOutlinedIcon from "@mui/icons-material/CreditCardOutlined";
@@ -19,32 +19,80 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import HeadsetMicOutlinedIcon from "@mui/icons-material/HeadsetMicOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
+import iconoImg from "../../assets/iconoPrincipal.png";
+import iconoSmall from "../../assets/icono.png";
 
 /**
  * Sidebar: Barra lateral izquierda fija (Desktop)
- * Efectos integrados (motion.dev):
- * - Microdesplazamiento en X al hover: whileHover={{ x: 4 }} para dar dinamismo a la navegación.
- * - Feedback táctil / tap: whileTap={{ scale: 0.98 }}.
  */
 export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogoutAction = () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      logout();
+      navigate("/login");
+    }
+  };
+
+  const isAdmin = user?.role?.toLowerCase() === "admin";
+
   const mainNav = [
-    { id: "inicio", label: "Inicio", icon: <HomeOutlinedIcon /> },
-    { id: "historial", label: "Historial", icon: <HistoryOutlinedIcon /> },
-    { id: "tarjetas", label: "Tarjetas", icon: <CreditCardOutlinedIcon /> },
-    { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon /> },
-    { id: "configuracion", label: "Configuración", icon: <SettingsOutlinedIcon /> },
+    { id: "inicio", label: "Inicio", icon: <HomeOutlinedIcon />, path: "/" },
+    { id: "historial", label: "Historial", icon: <HistoryOutlinedIcon />, path: "/history" },
+    { id: "tarjetas", label: "Tarjetas", icon: <CreditCardOutlinedIcon />, path: "/" },
+    { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon />, path: "/profile" },
+    ...(isAdmin
+      ? [{ id: "admin", label: "Usuarios Admin", icon: <AdminPanelSettingsOutlinedIcon />, path: "/admin" }]
+      : []),
+    {
+      id: "configuracion",
+      label: "Configuración",
+      icon: <SettingsOutlinedIcon />,
+      path: "/",
+    },
   ];
 
   const bottomNav = [
-    { id: "soporte", label: "Soporte", icon: <HeadsetMicOutlinedIcon fontSize="small" /> },
-    { id: "ayuda", label: "Ayuda", icon: <HelpOutlineOutlinedIcon fontSize="small" /> },
+    {
+      id: "soporte",
+      label: "Soporte",
+      icon: <HeadsetMicOutlinedIcon fontSize="small" />,
+      path: "/support",
+    },
+    {
+      id: "ayuda",
+      label: "Ayuda",
+      icon: <HelpOutlineOutlinedIcon fontSize="small" />,
+      path: "/help",
+    },
   ];
+
+  const handleClick = (item) => {
+    if (onItemClick) {
+      onItemClick(item.id);
+    }
+    if (item.path) {
+      navigate(item.path);
+    }
+  };
 
   return (
     <Box
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       sx={{
-        width: 240,
+        width: collapsed ? 80 : 240,
         height: "100vh",
         bgcolor: "#02122c",
         color: "#FFFFFF",
@@ -52,80 +100,156 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
         flexDirection: "column",
         flexShrink: 0,
         borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+        transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        overflow: "hidden",
       }}
     >
-      {/* Cabecera: Logo + DigitalArs */}
-      <Box sx={{ p: 3, pb: 2.5, display: "flex", alignItems: "center", gap: 1.5 }}>
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: "10px",
-            bgcolor: "#0e2448",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#FFFFFF",
-          }}
-        >
-          <AccountBalanceWalletOutlinedIcon fontSize="small" />
-        </Box>
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: 800, fontSize: "1.15rem", lineHeight: 1.1 }}>
-            DigitalArs
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: "#7F96B2", fontSize: "0.75rem", fontWeight: 500 }}
+      {/* Cabecera: Logo Principal PNG y Botón de Colapsar */}
+      <Box
+        sx={{
+          px: collapsed ? 1 : 2.5,
+          pt: 3.5,
+          pb: 2,
+          display: "flex",
+          justifyContent: collapsed ? "center" : "space-between",
+          alignItems: "center",
+          minHeight: 80,
+        }}
+      >
+        {!collapsed && (
+          <>
+            <Box
+              component="img"
+              src={iconoImg}
+              alt="DigitalArs"
+              onClick={() => navigate("/")}
+              sx={{
+                width: "100%",
+                maxWidth: 140,
+                height: "auto",
+                maxHeight: 80,
+                objectFit: "contain",
+                cursor: "pointer",
+              }}
+            />
+            <IconButton
+              onClick={() => setCollapsed(true)}
+              sx={{
+                color: "#8EA3BF",
+                "&:hover": {
+                  color: "#FFF",
+                  bgcolor: "rgba(255, 255, 255, 0.08)",
+                },
+              }}
+            >
+              <MenuOpenIcon />
+            </IconButton>
+          </>
+        )}
+
+        {collapsed && (
+          <Box
+            sx={{
+              position: "relative",
+              width: 40,
+              height: 40,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
           >
-            Billetera Digital
-          </Typography>
-        </Box>
+            <Box
+              component="img"
+              src={iconoSmall}
+              alt="DigitalArs"
+              onClick={() => navigate("/")}
+              sx={{
+                position: "absolute",
+                width: 32,
+                height: 32,
+                objectFit: "contain",
+                opacity: isHovered ? 0 : 1,
+                transform: isHovered
+                  ? "scale(0.8) rotate(-10deg)"
+                  : "scale(1) rotate(0deg)",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                pointerEvents: isHovered ? "none" : "auto",
+                cursor: "pointer",
+              }}
+            />
+            <IconButton
+              onClick={() => setCollapsed(false)}
+              sx={{
+                position: "absolute",
+                color: "#8EA3BF",
+                opacity: isHovered ? 1 : 0,
+                transform: isHovered
+                  ? "scale(1) rotate(0deg)"
+                  : "scale(0.8) rotate(10deg)",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                pointerEvents: isHovered ? "auto" : "none",
+                "&:hover": {
+                  color: "#FFF",
+                  bgcolor: "rgba(255, 255, 255, 0.08)",
+                },
+              }}
+            >
+              <MenuOpenIcon sx={{ transform: "rotate(180deg)" }} />
+            </IconButton>
+          </Box>
+        )}
       </Box>
 
       {/* Menú Principal */}
-      <List sx={{ px: 1.5, py: 1, flex: 1 }}>
+      <List sx={{ px: collapsed ? 1 : 1.5, py: 1, flex: 1 }}>
         {mainNav.map((item) => {
           const isActive = activeItem === item.id;
           return (
             <ListItem key={item.id} disablePadding sx={{ mb: 0.6 }}>
               <motion.div
-                whileHover={{ x: 4 }}
+                whileHover={collapsed ? {} : { x: 4 }}
                 whileTap={{ scale: 0.98 }}
                 style={{ width: "100%" }}
                 transition={{ duration: 0.15 }}
               >
                 <ListItemButton
-                  onClick={() => onItemClick && onItemClick(item.id)}
+                  onClick={() => handleClick(item)}
                   sx={{
                     borderRadius: "8px",
                     py: 1.1,
-                    px: 2,
+                    px: collapsed ? 0 : 2,
+                    justifyContent: collapsed ? "center" : "flex-start",
                     bgcolor: isActive ? "#0056D2" : "transparent",
                     color: isActive ? "#FFFFFF" : "#8EA3BF",
                     fontWeight: isActive ? 700 : 500,
                     transition: "all 0.15s ease",
                     "&:hover": {
-                      bgcolor: isActive ? "#0047B3" : "rgba(255, 255, 255, 0.05)",
+                      bgcolor: isActive
+                        ? "#0047B3"
+                        : "rgba(255, 255, 255, 0.05)",
                       color: "#FFFFFF",
                     },
                   }}
+                  title={collapsed ? item.label : ""}
                 >
                   <ListItemIcon
                     sx={{
                       color: isActive ? "#FFFFFF" : "#8EA3BF",
-                      minWidth: 38,
+                      minWidth: collapsed ? 0 : 38,
+                      justifyContent: "center",
                     }}
                   >
                     {item.icon}
                   </ListItemIcon>
-                  <ListItemText
-                    primary={item.label}
-                    primaryTypographyProps={{
-                      fontSize: "0.925rem",
-                      fontWeight: isActive ? 700 : 500,
-                    }}
-                  />
+                  {!collapsed && (
+                    <ListItemText
+                      primary={item.label}
+                      primaryTypographyProps={{
+                        fontSize: "0.925rem",
+                        fontWeight: isActive ? 700 : 500,
+                      }}
+                    />
+                  )}
                 </ListItemButton>
               </motion.div>
             </ListItem>
@@ -134,47 +258,74 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
       </List>
 
       {/* Sección Inferior: Soporte, Ayuda y Cerrar Sesión */}
-      <Box sx={{ px: 2, pb: 3, pt: 1 }}>
+      <Box sx={{ px: collapsed ? 1 : 2, pb: 3, pt: 1 }}>
         <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)", mb: 2 }} />
 
         <List disablePadding sx={{ mb: 2 }}>
-          {bottomNav.map((item) => (
-            <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
-              <motion.div whileHover={{ x: 3 }} style={{ width: "100%" }}>
-                <ListItemButton
-                  onClick={() => onItemClick && onItemClick(item.id)}
-                  sx={{
-                    py: 0.75,
-                    px: 1.5,
-                    borderRadius: "6px",
-                    color: "#7F96B2",
-                    "&:hover": { color: "#FFFFFF", bgcolor: "rgba(255, 255, 255, 0.05)" },
-                  }}
+          {bottomNav.map((item) => {
+            const isActive = activeItem === item.id;
+            return (
+              <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
+                <motion.div
+                  whileHover={collapsed ? {} : { x: 3 }}
+                  style={{ width: "100%" }}
                 >
-                  <ListItemIcon sx={{ color: "inherit", minWidth: 32 }}>
+                  <ListItemButton
+                    onClick={() => handleClick(item)}
+                    selected={isActive}
+                    sx={{
+                      py: 0.75,
+                      px: collapsed ? 0 : 1.5,
+                      justifyContent: collapsed ? "center" : "flex-start",
+                      borderRadius: "6px",
+                      color: isActive ? "#38B6FF" : "#7F96B2",
+                      bgcolor: isActive ? "rgba(0, 119, 255, 0.15) !important" : "transparent",
+                      "&:hover": {
+                        color: "#FFFFFF",
+                        bgcolor: isActive ? "rgba(0, 119, 255, 0.25) !important" : "rgba(255, 255, 255, 0.05)",
+                      },
+                    }}
+                    title={collapsed ? item.label : ""}
+                  >
+                  <ListItemIcon
+                    sx={{
+                      color: "inherit",
+                      minWidth: collapsed ? 0 : 32,
+                      justifyContent: "center",
+                    }}
+                  >
                     {item.icon}
                   </ListItemIcon>
-                  <ListItemText
-                    primary={item.label}
-                    primaryTypographyProps={{ fontSize: "0.85rem", fontWeight: 500 }}
-                  />
+                  {!collapsed && (
+                    <ListItemText
+                      primary={item.label}
+                      primaryTypographyProps={{
+                        fontSize: "0.85rem",
+                        fontWeight: 500,
+                      }}
+                    />
+                  )}
                 </ListItemButton>
               </motion.div>
-            </ListItem>
-          ))}
+              </ListItem>
+            );
+          })}
         </List>
 
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+        <motion.div whileTap={{ scale: 0.95 }}>
           <Button
             fullWidth
             variant="outlined"
-            startIcon={<LogoutOutlinedIcon fontSize="small" />}
-            onClick={onLogout}
+            onClick={handleLogoutAction}
+            title={collapsed ? "Cerrar sesión" : ""}
             sx={{
               color: "#D0D9E5",
               borderColor: "rgba(255, 255, 255, 0.2)",
               borderRadius: "10px",
               py: 1,
+              minWidth: collapsed ? "auto" : "auto",
+              px: collapsed ? 0 : 2,
+              justifyContent: collapsed ? "center" : "flex-start",
               textTransform: "none",
               fontWeight: 600,
               fontSize: "0.875rem",
@@ -185,7 +336,8 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
               },
             }}
           >
-            Cerrar Sesión
+            <LogoutOutlinedIcon sx={{ mr: collapsed ? 0 : 1 }} />
+            {!collapsed && "Cerrar sesión"}
           </Button>
         </motion.div>
       </Box>

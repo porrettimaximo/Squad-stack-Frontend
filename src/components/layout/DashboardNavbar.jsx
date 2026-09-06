@@ -1,4 +1,5 @@
-﻿import React from "react";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Container,
@@ -19,7 +20,8 @@ import { motion } from "framer-motion";
  * - Microinteracción en campana: whileHover={{ rotate: [0, -10, 10, -5, 5, 0] }} simulando timbre/campanada.
  * - Microinteracción en perfil: whileHover con escalado suave scale 1.02.
  */
-export function DashboardNavbar({ currentTab = 0, onTabChange, userName = "Alejandro Silva" }) {
+export function DashboardNavbar({ currentTab = 0, onTabChange, userName = "Alejandro Silva", showTabs = true }) {
+  const navigate = useNavigate();
   return (
     <Box
       sx={{
@@ -40,36 +42,40 @@ export function DashboardNavbar({ currentTab = 0, onTabChange, userName = "Aleja
           }}
         >
           {/* Lado Izquierdo: Tabs de Navegación (Desktop) */}
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Tabs
-              value={currentTab}
-              onChange={onTabChange}
-              textColor="primary"
-              indicatorColor="primary"
-              sx={{
-                "& .MuiTab-root": {
-                  textTransform: "none",
-                  fontWeight: 700,
-                  fontSize: "1rem",
-                  minWidth: "auto",
-                  px: { xs: 1.5, sm: 2.5 },
-                  color: "#64748B",
-                  "&.Mui-selected": {
-                    color: "#0056D2",
+          {showTabs ? (
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Tabs
+                value={currentTab}
+                onChange={onTabChange}
+                textColor="primary"
+                indicatorColor="primary"
+                sx={{
+                  "& .MuiTab-root": {
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: "1rem",
+                    minWidth: "auto",
+                    px: { xs: 1.5, sm: 2.5 },
+                    color: "#64748B",
+                    "&.Mui-selected": {
+                      color: "#0056D2",
+                    },
                   },
-                },
-                "& .MuiTabs-indicator": {
-                  height: 3,
-                  borderRadius: "3px 3px 0 0",
-                  bgcolor: "#0056D2",
-                },
-              }}
-            >
-              <Tab label="Resumen" />
-              <Tab label="Inversiones" />
-              <Tab label="Préstamos" />
-            </Tabs>
-          </Box>
+                  "& .MuiTabs-indicator": {
+                    height: 3,
+                    borderRadius: "3px 3px 0 0",
+                    bgcolor: "#0056D2",
+                  },
+                }}
+              >
+                <Tab label="Resumen" />
+                <Tab label="Inversiones" />
+                <Tab label="Préstamos" />
+              </Tabs>
+            </Box>
+          ) : (
+            <Box />
+          )}
 
           {/* Lado Derecho: Notificaciones + Perfil */}
           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 2.5 } }}>
@@ -116,6 +122,7 @@ export function DashboardNavbar({ currentTab = 0, onTabChange, userName = "Aleja
             {/* Perfil del Usuario con animación Motion */}
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Box
+                onClick={() => navigate("/profile")}
                 sx={{
                   display: "flex",
                   alignItems: "center",
