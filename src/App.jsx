@@ -13,6 +13,8 @@ import TransferPage from "./pages/Transfer/TransferPage";
 import HistoryPage from "./pages/History/HistoryPage";
 import ProfilePage from "./pages/Profile/ProfilePage";
 import AdminUsersPage from "./pages/Admin/AdminUsersPage";
+import HelpPage from "./pages/Help/HelpPage";
+import SupportPage from "./pages/Support/SupportPage";
 import ForbiddenPage from "./pages/Forbidden/ForbiddenPage";
 import NotFoundPage from "./pages/NotFound/NotFoundPage";
 
@@ -49,6 +51,14 @@ export function App() {
                 {/* HU-28: Pantalla de perfil de usuario */}
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/perfil" element={<ProfilePage />} />
+
+                {/* Centro de Ayuda (FAQ) */}
+                <Route path="/help" element={<HelpPage />} />
+                <Route path="/ayuda" element={<HelpPage />} />
+
+                {/* Soporte y Atención al Cliente */}
+                <Route path="/support" element={<SupportPage />} />
+                <Route path="/soporte" element={<SupportPage />} />
               </Route>
 
               {/* Rutas exclusivas para Administradores */}

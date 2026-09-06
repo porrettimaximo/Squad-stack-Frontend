@@ -29,10 +29,12 @@ export function AppLayout({
   const { user } = useAccount();
   const { logout } = useAuth();
 
-  // Ocultar pestañas de navegación superior en historial y perfil
+  // Ocultar pestañas de navegación superior en historial, perfil, ayuda y soporte
   const isHistoryRoute = location.pathname.startsWith("/history") || location.pathname.startsWith("/historial");
   const isProfileRoute = location.pathname.startsWith("/profile") || location.pathname.startsWith("/perfil");
-  const shouldShowTabs = showNavbarTabs !== undefined ? showNavbarTabs : (!isHistoryRoute && !isProfileRoute);
+  const isHelpRoute = location.pathname.startsWith("/help") || location.pathname.startsWith("/ayuda");
+  const isSupportRoute = location.pathname.startsWith("/support") || location.pathname.startsWith("/soporte");
+  const shouldShowTabs = showNavbarTabs !== undefined ? showNavbarTabs : (!isHistoryRoute && !isProfileRoute && !isHelpRoute && !isSupportRoute);
 
   // Determinar ítem activo según la ruta actual si no viene explícito
   let currentActiveItem = activeSidebarItem;
@@ -44,6 +46,10 @@ export function AppLayout({
   } else if (isProfileRoute) {
     currentActiveItem = "perfil";
     currentMobileIndex = 2;
+  } else if (isHelpRoute) {
+    currentActiveItem = "ayuda";
+  } else if (isSupportRoute) {
+    currentActiveItem = "soporte";
   } else if (location.pathname === "/") {
     currentActiveItem = "inicio";
     currentMobileIndex = 0;
@@ -54,6 +60,8 @@ export function AppLayout({
     else if (item === "historial") navigate("/history");
     else if (item === "perfil") navigate("/profile");
     else if (item === "admin") navigate("/admin");
+    else if (item === "ayuda") navigate("/help");
+    else if (item === "soporte") navigate("/support");
   };
 
   const handleMobileNavChange = (e, index) => {
