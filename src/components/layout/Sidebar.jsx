@@ -206,52 +206,61 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
           const isActive = activeItem === item.id;
           return (
             <ListItem key={item.id} disablePadding sx={{ mb: 0.6 }}>
-              <motion.div
+              <ListItemButton
+                component={motion.div}
                 whileHover={collapsed ? {} : { x: 4 }}
                 whileTap={{ scale: 0.98 }}
-                style={{ width: "100%" }}
                 transition={{ duration: 0.15 }}
+                onClick={() => handleClick(item)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleClick(item);
+                  }
+                }}
+                tabIndex={0}
+                sx={{
+                  width: "100%",
+                  borderRadius: "8px",
+                  py: 1.1,
+                  px: collapsed ? 0 : 2,
+                  justifyContent: collapsed ? "center" : "flex-start",
+                  bgcolor: isActive ? "#0056D2" : "transparent",
+                  color: isActive ? "#FFFFFF" : "#8EA3BF",
+                  fontWeight: isActive ? 700 : 500,
+                  transition: "all 0.15s ease",
+                  "&:hover": {
+                    bgcolor: isActive
+                      ? "#0047B3"
+                      : "rgba(255, 255, 255, 0.05)",
+                    color: "#FFFFFF",
+                  },
+                  "&:focus-visible": {
+                    outline: "2px solid #38B6FF !important",
+                    outlineOffset: "2px",
+                  },
+                }}
+                title={collapsed ? item.label : ""}
               >
-                <ListItemButton
-                  onClick={() => handleClick(item)}
+                <ListItemIcon
                   sx={{
-                    borderRadius: "8px",
-                    py: 1.1,
-                    px: collapsed ? 0 : 2,
-                    justifyContent: collapsed ? "center" : "flex-start",
-                    bgcolor: isActive ? "#0056D2" : "transparent",
                     color: isActive ? "#FFFFFF" : "#8EA3BF",
-                    fontWeight: isActive ? 700 : 500,
-                    transition: "all 0.15s ease",
-                    "&:hover": {
-                      bgcolor: isActive
-                        ? "#0047B3"
-                        : "rgba(255, 255, 255, 0.05)",
-                      color: "#FFFFFF",
-                    },
+                    minWidth: collapsed ? 0 : 38,
+                    justifyContent: "center",
                   }}
-                  title={collapsed ? item.label : ""}
                 >
-                  <ListItemIcon
-                    sx={{
-                      color: isActive ? "#FFFFFF" : "#8EA3BF",
-                      minWidth: collapsed ? 0 : 38,
-                      justifyContent: "center",
+                  {item.icon}
+                </ListItemIcon>
+                {!collapsed && (
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{
+                      fontSize: "0.925rem",
+                      fontWeight: isActive ? 700 : 500,
                     }}
-                  >
-                    {item.icon}
-                  </ListItemIcon>
-                  {!collapsed && (
-                    <ListItemText
-                      primary={item.label}
-                      primaryTypographyProps={{
-                        fontSize: "0.925rem",
-                        fontWeight: isActive ? 700 : 500,
-                      }}
-                    />
-                  )}
-                </ListItemButton>
-              </motion.div>
+                  />
+                )}
+              </ListItemButton>
             </ListItem>
           );
         })}
@@ -266,27 +275,37 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
             const isActive = activeItem === item.id;
             return (
               <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
-                <motion.div
+                <ListItemButton
+                  component={motion.div}
                   whileHover={collapsed ? {} : { x: 3 }}
-                  style={{ width: "100%" }}
+                  onClick={() => handleClick(item)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleClick(item);
+                    }
+                  }}
+                  selected={isActive}
+                  tabIndex={0}
+                  sx={{
+                    width: "100%",
+                    py: 0.75,
+                    px: collapsed ? 0 : 1.5,
+                    justifyContent: collapsed ? "center" : "flex-start",
+                    borderRadius: "6px",
+                    color: isActive ? "#38B6FF" : "#7F96B2",
+                    bgcolor: isActive ? "rgba(0, 119, 255, 0.15) !important" : "transparent",
+                    "&:hover": {
+                      color: "#FFFFFF",
+                      bgcolor: isActive ? "rgba(0, 119, 255, 0.25) !important" : "rgba(255, 255, 255, 0.05)",
+                    },
+                    "&:focus-visible": {
+                      outline: "2px solid #38B6FF !important",
+                      outlineOffset: "2px",
+                    },
+                  }}
+                  title={collapsed ? item.label : ""}
                 >
-                  <ListItemButton
-                    onClick={() => handleClick(item)}
-                    selected={isActive}
-                    sx={{
-                      py: 0.75,
-                      px: collapsed ? 0 : 1.5,
-                      justifyContent: collapsed ? "center" : "flex-start",
-                      borderRadius: "6px",
-                      color: isActive ? "#38B6FF" : "#7F96B2",
-                      bgcolor: isActive ? "rgba(0, 119, 255, 0.15) !important" : "transparent",
-                      "&:hover": {
-                        color: "#FFFFFF",
-                        bgcolor: isActive ? "rgba(0, 119, 255, 0.25) !important" : "rgba(255, 255, 255, 0.05)",
-                      },
-                    }}
-                    title={collapsed ? item.label : ""}
-                  >
                   <ListItemIcon
                     sx={{
                       color: "inherit",
@@ -306,40 +325,49 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
                     />
                   )}
                 </ListItemButton>
-              </motion.div>
               </ListItem>
             );
           })}
         </List>
 
-        <motion.div whileTap={{ scale: 0.95 }}>
-          <Button
-            fullWidth
-            variant="outlined"
-            onClick={handleLogoutAction}
-            title={collapsed ? "Cerrar sesión" : ""}
-            sx={{
-              color: "#D0D9E5",
-              borderColor: "rgba(255, 255, 255, 0.2)",
-              borderRadius: "10px",
-              py: 1,
-              minWidth: collapsed ? "auto" : "auto",
-              px: collapsed ? 0 : 2,
-              justifyContent: collapsed ? "center" : "flex-start",
-              textTransform: "none",
-              fontWeight: 600,
-              fontSize: "0.875rem",
-              "&:hover": {
-                borderColor: "rgba(255, 255, 255, 0.4)",
-                bgcolor: "rgba(255, 255, 255, 0.05)",
-                color: "#FFFFFF",
-              },
-            }}
-          >
-            <LogoutOutlinedIcon sx={{ mr: collapsed ? 0 : 1 }} />
-            {!collapsed && "Cerrar sesión"}
-          </Button>
-        </motion.div>
+        <Button
+          component={motion.button}
+          whileTap={{ scale: 0.95 }}
+          fullWidth
+          variant="outlined"
+          onClick={handleLogoutAction}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleLogoutAction();
+            }
+          }}
+          title={collapsed ? "Cerrar sesión" : ""}
+          sx={{
+            color: "#D0D9E5",
+            borderColor: "rgba(255, 255, 255, 0.2)",
+            borderRadius: "10px",
+            py: 1,
+            minWidth: collapsed ? "auto" : "auto",
+            px: collapsed ? 0 : 2,
+            justifyContent: collapsed ? "center" : "flex-start",
+            textTransform: "none",
+            fontWeight: 600,
+            fontSize: "0.875rem",
+            "&:hover": {
+              borderColor: "rgba(255, 255, 255, 0.4)",
+              bgcolor: "rgba(255, 255, 255, 0.05)",
+              color: "#FFFFFF",
+            },
+            "&:focus-visible": {
+              outline: "2px solid #38B6FF !important",
+              outlineOffset: "2px",
+            },
+          }}
+        >
+          <LogoutOutlinedIcon sx={{ mr: collapsed ? 0 : 1 }} />
+          {!collapsed && "Cerrar sesión"}
+        </Button>
       </Box>
     </Box>
   );
