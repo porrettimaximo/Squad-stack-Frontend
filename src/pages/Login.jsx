@@ -57,39 +57,37 @@ export const Login = () => {
         justifyContent: "center",
         alignItems: "center",
         minHeight: "100vh",
-        backgroundColor: "#F8FAFC",
+        backgroundColor: "#a9a9a9ff",
         p: 2,
       }}>
       <Card
         elevation={0}
-        sx={{ 
-          maxWidth: 420, 
+        sx={{
+          maxWidth: 420,
           width: "100%",
           borderRadius: "20px",
           border: "1px solid #E2E8F0",
-          backgroundColor: "#FFFFFF",
-          boxShadow: "0px 10px 30px rgba(0, 22, 57, 0.05)",
+          backgroundColor: "#0e2050ff",
+          boxShadow: "0px 10px 30px rgba(255, 255, 255, 1)",
         }}>
         <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-          <Box sx={{ mb:3, textAlign: "center"}}>
+          <Box sx={{ mb: 3, textAlign: "center" }}>
             <Box
               component="img"
               src={iconoPrincipal}
               alt="DigitalArs"
               sx={{
-                width: "100%",
-                maxWidth: 180,
+                width: "200%",
+                maxWidth: 300,
                 height: "auto",
-                maxHeight: 70,
+                maxHeight: 130,
                 objectFit: "contain",
                 mx: "auto",
                 display: "block",
                 mb: 1.5,
               }}
             />
-            <Typography variant="body2" sx={{ color: "#64748B", fontWeight: 500 }}>
-              Debe iniciar sesion para continuar
-            </Typography>
+
           </Box>
 
           {error && (
@@ -101,8 +99,8 @@ export const Login = () => {
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Typography
               variant="caption"
-              sx={{ fontWeight: 600, color: "#0F172A", mb: 0.5, display: "block"}}
-              >Correo Electronico
+              sx={{ fontWeight: 600, color: "#ffffffff", mb: 0.5, display: "block" }}
+            >Correo Electronico
             </Typography>
             <TextField
               margin="dense"
@@ -118,17 +116,17 @@ export const Login = () => {
               disabled={loading}
               sx={{
                 mb: 2,
-                "& .MuiOutlinedInput-root":{
+                "& .MuiOutlinedInput-root": {
                   borderRadius: "12px",
                   backgroundColor: "#F8FAFC",
-                  "& fieldset": { borderColor: "#CBD5E1" },
-                  "&:hover fieldset": { borderColor: "#0056D2"},
+                  "& fieldset": { borderColor: "#ffffffff" },
+                  "&:hover fieldset": { borderColor: "#0056D2" },
                 },
               }}
             />
             <Typography
               variant="caption"
-              sx={{ fontWeight: 600, color: "#0F172A", mb: 0.5, display: "block" }}>
+              sx={{ fontWeight: 600, color: "#ffffffff", mb: 0.5, display: "block" }}>
               Contraseña
             </Typography>
             <TextField
@@ -148,8 +146,8 @@ export const Login = () => {
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "12px",
                   backgroundColor: "#F8FAFC",
-                  "& fieldset": { borderColor: "#CBD5E1"},
-                  "&:hover fieldset": { borderColor: "#0056D2"},
+                  "& fieldset": { borderColor: "#CBD5E1" },
+                  "&:hover fieldset": { borderColor: "#0056D2" },
                 },
               }}
             />
@@ -160,14 +158,14 @@ export const Login = () => {
               variant="contained"
               size="large"
               disabled={loading}
-              sx={{ 
+              sx={{
                 py: 1.5,
                 borderRadius: "12px",
                 textTransform: "none",
                 fontWeight: 700,
                 fontSize: "1rem",
                 background:
-                "linear-gradient(135deg, #0056D2 0%, #0066FF 60%, #0077FF 100%)",
+                  "linear-gradient(135deg, #0056D2 0%, #0066FF 60%, #0077FF 100%)",
                 boxShadow: "0px 4px 12px rgba(0, 86, 210, 0.25)",
                 "&:hover": {
                   backgroundColor: "#0047B3"
@@ -175,7 +173,7 @@ export const Login = () => {
                 "&.Mui-disabled": {
                   background: "#CBD5E1",
                 },
-               }}>
+              }}>
               {loading ? (
                 <CircularProgress size={24} sx={{ color: "#FFFFFF" }} />
               ) : (
