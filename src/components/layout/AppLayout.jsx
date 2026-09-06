@@ -29,20 +29,26 @@ export function AppLayout({
   const { user } = useAccount();
   const { logout } = useAuth();
 
-  // Ocultar pestañas de navegación superior en historial, perfil, ayuda y soporte
+  // Ocultar pestañas de navegación superior en historial, perfil, ayuda, soporte e inversiones según corresponda
   const isHistoryRoute = location.pathname.startsWith("/history") || location.pathname.startsWith("/historial");
+  const isInvestmentsRoute = location.pathname.startsWith("/investments") || location.pathname.startsWith("/inversiones");
   const isProfileRoute = location.pathname.startsWith("/profile") || location.pathname.startsWith("/perfil");
   const isHelpRoute = location.pathname.startsWith("/help") || location.pathname.startsWith("/ayuda");
   const isSupportRoute = location.pathname.startsWith("/support") || location.pathname.startsWith("/soporte");
-  const shouldShowTabs = showNavbarTabs !== undefined ? showNavbarTabs : (!isHistoryRoute && !isProfileRoute && !isHelpRoute && !isSupportRoute);
+  const isDepositOrTransfer = location.pathname.startsWith("/deposit") || location.pathname.startsWith("/transfer");
+  const shouldShowTabs = showNavbarTabs !== undefined ? showNavbarTabs : (!isHistoryRoute && !isProfileRoute && !isHelpRoute && !isSupportRoute && !isDepositOrTransfer);
 
   // Determinar ítem activo según la ruta actual si no viene explícito
   let currentActiveItem = activeSidebarItem;
   let currentMobileIndex = 0;
+  let activeNavbarTab = currentTab;
 
   if (isHistoryRoute) {
     currentActiveItem = "historial";
     currentMobileIndex = 1;
+  } else if (isInvestmentsRoute) {
+    currentActiveItem = "inversiones";
+    activeNavbarTab = 1;
   } else if (isProfileRoute) {
     currentActiveItem = "perfil";
     currentMobileIndex = 2;
@@ -50,18 +56,25 @@ export function AppLayout({
     currentActiveItem = "ayuda";
   } else if (isSupportRoute) {
     currentActiveItem = "soporte";
-  } else if (location.pathname === "/") {
+  } else if (location.pathname === "/" || location.pathname === "/dashboard") {
     currentActiveItem = "inicio";
     currentMobileIndex = 0;
+    activeNavbarTab = 0;
   }
 
   const handleSidebarClick = (item) => {
     if (item === "inicio") navigate("/");
     else if (item === "historial") navigate("/history");
+    else if (item === "inversiones") navigate("/investments");
     else if (item === "perfil") navigate("/profile");
-    else if (item === "admin") navigate("/admin");
+    else if (item === "admin" || item === "admin-users") navigate("/admin");
     else if (item === "ayuda") navigate("/help");
     else if (item === "soporte") navigate("/support");
+  };
+
+  const handleDefaultTabChange = (e, val) => {
+    if (val === 0) navigate("/dashboard");
+    else if (val === 1) navigate("/investments");
   };
 
   const handleMobileNavChange = (e, index) => {
@@ -76,7 +89,7 @@ export function AppLayout({
     navigate("/login");
   };
 
-  const userName = user?.name || "Alejandro Silva";
+  const userName = user?.name || "Usuario";
 
   return (
     <Box sx={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", bgcolor: "#F8FAFC" }}>
@@ -105,15 +118,15 @@ export function AppLayout({
         {/* Navbar Superior (Desktop) */}
         {isDesktop && (
           <DashboardNavbar
-            currentTab={currentTab}
-            onTabChange={onTabChange}
+            currentTab={activeNavbarTab}
+            onTabChange={onTabChange || handleDefaultTabChange}
             userName={userName}
             showTabs={shouldShowTabs}
           />
         )}
 
         {/* Contenido de la Pantalla */}
-        <Box sx={{ flex: 1, p: { xs: 2.5, md: 4 }, maxWidth, width: "100%", mx: "auto" }}>
+        <Box sx={{ flex: 1, p: { xs: 2, sm: 3, md: 4 }, maxWidth, width: "100%", mx: "auto" }}>
           {/* Botón Volver Opcional */}
           {onBack && (
             <Box sx={{ display: "flex", alignSelf: "flex-start", mb: { xs: 2, md: 3 } }}>
@@ -121,13 +134,13 @@ export function AppLayout({
                 startIcon={<ArrowBackIcon />}
                 onClick={onBack}
                 sx={{
-                  color: "#3B82F6",
+                  color: "#0056D2",
                   textTransform: "none",
                   fontWeight: 600,
-                  fontSize: "1.05rem",
-                  borderRadius: "12px",
+                  fontSize: "0.95rem",
+                  borderRadius: "10px",
                   px: 2,
-                  py: 1,
+                  py: 0.8,
                   "&:hover": { bgcolor: "#EFF6FF" },
                 }}
               >
@@ -152,3 +165,4 @@ export function AppLayout({
 }
 
 export default AppLayout;
+

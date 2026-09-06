@@ -1,4 +1,4 @@
-﻿*,
+*,
 *::before,
 *::after {
   box-sizing: border-box;
@@ -19,6 +19,17 @@ body,
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Accesibilidad: Estilos de foco visible para navegación por teclado */
+:focus-visible {
+  outline: 2px solid #0056D2 !important;
+  outline-offset: 2px !important;
+}
+
+/* Evitar outline azul molesto al hacer click con mouse si el navegador no soporta focus-visible */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
@@ -36,4 +47,11 @@ body,
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
+}
+
+/* Responsive Table Wrapper Helper */
+.responsive-table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
