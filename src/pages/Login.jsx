@@ -12,6 +12,8 @@ import {
   CircularProgress,
 } from "@mui/material";
 
+import iconoPrincipal from "../assets/iconoPrincipal.png";
+
 export const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -70,17 +72,21 @@ export const Login = () => {
         }}>
         <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
           <Box sx={{ mb:3, textAlign: "center"}}>
-            <Typography
-              variant="h4"
-              component="h1"
+            <Box
+              component="img"
+              src={iconoPrincipal}
+              alt="DigitalArs"
               sx={{
-                fontWeight: 800,
-                letterSpacing: "-0.03em",
-                color: "#001639",
-                mb: 1,
-              }}>
-              DigitalArs
-            </Typography>
+                width: "100%",
+                maxWidth: 180,
+                height: "auto",
+                maxHeight: 70,
+                objectFit: "contain",
+                mx: "auto",
+                display: "block",
+                mb: 1.5,
+              }}
+            />
             <Typography variant="body2" sx={{ color: "#64748B", fontWeight: 500 }}>
               Debe iniciar sesion para continuar
             </Typography>
