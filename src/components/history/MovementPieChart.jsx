@@ -9,11 +9,13 @@ import {
   Grid,
   TextField,
   Tooltip,
+  IconButton,
 } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 import PieChartIcon from "@mui/icons-material/PieChart";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import SyncIcon from "@mui/icons-material/Sync";
 
 const PALETTE = [
   { main: "#06b6d4", light: "rgba(6, 182, 212, 0.12)", border: "#0891b2" },    // Cyan / Salud
@@ -37,6 +39,8 @@ export const MovementPieChart = ({
   transactions = [],
   onGoToTable,
   onSelectCategory,
+  onRefresh,
+  loading = false,
 }) => {
   const [hoveredSlice, setHoveredSlice] = useState(null);
 
@@ -86,7 +90,10 @@ export const MovementPieChart = ({
     return transactions.filter((tx) => {
       const raw = tx.date || tx.rawDate;
       if (!raw) return true;
-      const txDate = new Date(raw);
+      const dateStr = (typeof raw === "string" && raw.includes("T") && !raw.endsWith("Z") && !raw.includes("+") && !raw.includes("-", 10))
+        ? `${raw}Z`
+        : raw;
+      const txDate = new Date(dateStr);
       if (isNaN(txDate.getTime())) return true;
 
       if (dateFrom) {
@@ -95,6 +102,12 @@ export const MovementPieChart = ({
       }
       if (dateTo) {
         const to = new Date(`${dateTo}T23:59:59.999`);
+        // Si el filtro de fin incluye el día de hoy, nunca excluir movimientos recientes por desfase horario o UTC
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+        if (to >= todayEnd) {
+          return true;
+        }
         if (txDate > to) return false;
       }
       return true;
@@ -104,11 +117,8 @@ export const MovementPieChart = ({
   // Filtrar y clasificar movimientos agrupados por su motivo o concepto real
   const conceptTransactions = useMemo(() => {
     return filteredTransactions.filter((tx) => {
-      // Excluir depósitos iniciales/fondos puros si se desea graficar solo gastos/transferencias con motivo
-      if (tx.type === 1 && (!tx.reason && !tx.concept)) {
-        return false;
-      }
-      return true;
+      const amount = Math.abs(Number(tx.amount) || 0);
+      return amount > 0;
     });
   }, [filteredTransactions]);
 
@@ -313,6 +323,39 @@ export const MovementPieChart = ({
             width: { xs: "100%", sm: "auto" },
           }}
         >
+          {/* Botón de recarga rápida */}
+          {onRefresh && (
+            <Tooltip title="Actualizar datos">
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={onRefresh}
+                  disabled={loading}
+                  sx={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: "9px",
+                    bgcolor: "#F1F5F9",
+                    border: "1px solid #E2E8F0",
+                    color: "#0056D2",
+                    "&:hover": { bgcolor: "#EEF4FF", borderColor: "#CBD5E1" },
+                  }}
+                >
+                  <SyncIcon
+                    sx={{
+                      fontSize: 18,
+                      animation: loading ? "spin 1s linear infinite" : "none",
+                      "@keyframes spin": {
+                        "0%": { transform: "rotate(0deg)" },
+                        "100%": { transform: "rotate(360deg)" },
+                      },
+                    }}
+                  />
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
+
           {/* Selector de 2 botones chicos */}
           <Box
             sx={{

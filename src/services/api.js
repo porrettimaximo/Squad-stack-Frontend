@@ -9,16 +9,26 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5065/api",
   headers: {
     "Content-Type": "application/json",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
   },
-  timeout: 5000,
+  timeout: 7000,
 });
 
-// Interceptor de token
+// Interceptor de token y cache-busting
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // Evitar cache del navegador en peticiones GET
+    if (config.method === "get") {
+      config.params = {
+        ...config.params,
+        _t: Date.now(),
+      };
     }
     return config;
   },

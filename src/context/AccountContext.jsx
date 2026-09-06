@@ -204,6 +204,7 @@ export function AccountProvider({ children }) {
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const isoDate = now.toISOString();
     const newTx = {
       id: Date.now(),
       title: "Depósito de Fondos",
@@ -211,15 +212,26 @@ export function AccountProvider({ children }) {
       amount: num,
       type: 1,
       category: "DEPÓSITO",
+      reason: "Depósitos y ahorro",
+      concept: "Depósito de fondos",
+      motive: "Depósitos y ahorro",
       isIncome: true,
-      date: now.toISOString(),
+      date: isoDate,
+      rawDate: isoDate,
       counterpart: "Cuenta Propia (CVU)",
       status: "Completada",
     };
 
     setTransactions((prev) => [newTx, ...prev]);
+
+    // Sincronizar en segundo plano con el backend
+    setTimeout(() => {
+      refreshTransactions();
+      refreshAccount();
+    }, 100);
+
     return { success: true, newBalance };
-  }, [account.money]);
+  }, [account.money, refreshTransactions, refreshAccount]);
 
   /**
    * Realiza una transferencia (autónoma y reactiva).
@@ -244,6 +256,7 @@ export function AccountProvider({ children }) {
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const isoDate = now.toISOString();
     const newTx = {
       id: Date.now(),
       title: concept || `Transferencia a ${destination}`,
@@ -256,14 +269,22 @@ export function AccountProvider({ children }) {
       motive: concept || "Varios",
       isIncome: false,
       toAccountId: destinationAccountId || destination,
-      date: now.toISOString(),
+      date: isoDate,
+      rawDate: isoDate,
       counterpart: destination,
       status: "Completada",
     };
 
     setTransactions((prev) => [newTx, ...prev]);
+
+    // Sincronizar en segundo plano con el backend
+    setTimeout(() => {
+      refreshTransactions();
+      refreshAccount();
+    }, 100);
+
     return { success: true, newBalance };
-  }, [account.money]);
+  }, [account.money, refreshTransactions, refreshAccount]);
 
   return (
     <AccountContext.Provider

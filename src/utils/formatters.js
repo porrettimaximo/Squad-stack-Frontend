@@ -36,7 +36,10 @@ export function formatCurrency(amount, includeSymbol = true) {
  */
 export function formatTransactionDate(date) {
   if (!date) return "Reciente";
-  const d = new Date(date);
+  const dateStr = (typeof date === "string" && date.includes("T") && !date.endsWith("Z") && !date.includes("+") && !date.includes("-", 10))
+    ? `${date}Z`
+    : date;
+  const d = new Date(dateStr);
   if (isNaN(d.getTime())) return "Reciente";
 
   const now = new Date();

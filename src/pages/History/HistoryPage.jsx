@@ -30,6 +30,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import SyncIcon from "@mui/icons-material/Sync";
 import SouthWestIcon from "@mui/icons-material/SouthWest";
 import NorthEastIcon from "@mui/icons-material/NorthEast";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
@@ -150,6 +151,15 @@ export function HistoryPage() {
     loadHistory();
   }, [loadHistory]);
 
+  const handleRefresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      await Promise.all([loadChartData(), loadHistory()]);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadChartData, loadHistory]);
+
   const handleClearFilters = () => {
     setTypeFilter("all");
     setDateFrom("");
@@ -198,6 +208,8 @@ export function HistoryPage() {
                 transactions={chartTxSource}
                 onGoToTable={handleGoToTableWithFilter}
                 onSelectCategory={handleSelectCategory}
+                onRefresh={handleRefresh}
+                loading={loading}
               />
             </motion.div>
           ) : (
@@ -328,15 +340,23 @@ export function HistoryPage() {
               />
             </Box>
 
-            {/* 5. Botón Limpiar */}
-            <Box sx={{ gridColumn: { xs: "span 2", md: "span 1" }, display: "flex", flexDirection: "column", gap: 0.5, justifyContent: "flex-end", width: { xs: "100%", md: "auto" } }}>
+            {/* 5. Botones Limpiar y Actualizar */}
+            <Box
+              sx={{
+                gridColumn: { xs: "span 2", md: "span 1" },
+                display: "flex",
+                gap: 1,
+                justifyContent: "flex-end",
+                width: { xs: "100%", md: "auto" },
+              }}
+            >
               <Tooltip title="Restablecer todos los filtros">
                 <Button
-                  fullWidth
                   variant="outlined"
                   startIcon={<RestartAltIcon />}
                   onClick={handleClearFilters}
                   sx={{
+                    flex: 1,
                     height: 40,
                     borderRadius: "10px",
                     borderColor: "#CBD5E1",
@@ -344,12 +364,47 @@ export function HistoryPage() {
                     textTransform: "none",
                     fontWeight: 600,
                     fontSize: "0.85rem",
-                    px: 2,
+                    px: 1.8,
                     whiteSpace: "nowrap",
                     "&:hover": { bgcolor: "#F8FAFC", borderColor: "#94A3B8" },
                   }}
                 >
                   Limpiar
+                </Button>
+              </Tooltip>
+
+              <Tooltip title="Actualizar datos desde el servidor">
+                <Button
+                  variant="contained"
+                  disabled={loading}
+                  startIcon={
+                    <SyncIcon
+                      sx={{
+                        fontSize: 18,
+                        animation: loading ? "spin 1s linear infinite" : "none",
+                        "@keyframes spin": {
+                          "0%": { transform: "rotate(0deg)" },
+                          "100%": { transform: "rotate(360deg)" },
+                        },
+                      }}
+                    />
+                  }
+                  onClick={handleRefresh}
+                  sx={{
+                    flex: 1,
+                    height: 40,
+                    borderRadius: "10px",
+                    bgcolor: "#0056D2",
+                    color: "#FFFFFF",
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: "0.85rem",
+                    px: 1.8,
+                    whiteSpace: "nowrap",
+                    "&:hover": { bgcolor: "#0047B3" },
+                  }}
+                >
+                  Actualizar
                 </Button>
               </Tooltip>
             </Box>

@@ -67,12 +67,20 @@ export const transactionService = {
         return response.data.items.map((tx) => {
           const isIncome = tx.type === 1 || tx.type === 2;
           const categoryName = tx.type === 1 ? "DEPÓSITO" : tx.type === 2 ? "INGRESO" : "EGRESO";
-          const formattedDate = tx.date ? new Date(tx.date).toLocaleDateString("es-AR", {
-            day: "2-digit",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-          }) : "Reciente";
+          const rawDateStr = tx.date;
+          const utcDateStr = (typeof rawDateStr === "string" && rawDateStr.includes("T") && !rawDateStr.endsWith("Z") && !rawDateStr.includes("+") && !rawDateStr.includes("-", 10))
+            ? `${rawDateStr}Z`
+            : rawDateStr;
+
+          const txDateObj = utcDateStr ? new Date(utcDateStr) : null;
+          const formattedDate = txDateObj && !isNaN(txDateObj.getTime())
+            ? txDateObj.toLocaleDateString("es-AR", {
+                day: "2-digit",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "Reciente";
 
           let defaultTitle = "Movimiento";
           if (tx.type === 1) defaultTitle = "Depósito de Fondos";
@@ -93,7 +101,10 @@ export const transactionService = {
             motive,
             isIncome,
             toAccountId: tx.toAccountId,
-            date: tx.date,
+            counterpart: tx.toAccountId ? `Cuenta #${tx.toAccountId}` : (tx.type === 1 ? "Cuenta Propia (CVU)" : "Directo"),
+            date: utcDateStr,
+            rawDate: utcDateStr,
+            formattedDate,
           };
         });
       }
@@ -134,8 +145,15 @@ export const transactionService = {
         let items = response.data.items.map((tx) => {
           const isIncome = tx.type === 1 || tx.type === 2;
           const categoryName = tx.type === 1 ? "DEPÓSITO" : tx.type === 2 ? "INGRESO" : "EGRESO";
-          const formattedDate = tx.date
-            ? new Date(tx.date).toLocaleDateString("es-AR", {
+
+          const rawDateStr = tx.date;
+          const utcDateStr = (typeof rawDateStr === "string" && rawDateStr.includes("T") && !rawDateStr.endsWith("Z") && !rawDateStr.includes("+") && !rawDateStr.includes("-", 10))
+            ? `${rawDateStr}Z`
+            : rawDateStr;
+
+          const txDateObj = utcDateStr ? new Date(utcDateStr) : null;
+          const formattedDate = txDateObj && !isNaN(txDateObj.getTime())
+            ? txDateObj.toLocaleDateString("es-AR", {
                 day: "2-digit",
                 month: "short",
                 year: "numeric",
@@ -155,7 +173,8 @@ export const transactionService = {
             id: tx.id,
             title: tx.concept || defaultTitle,
             subtitle: `${formattedDate} · ${categoryName}`,
-            rawDate: tx.date,
+            date: utcDateStr,
+            rawDate: utcDateStr,
             formattedDate,
             type: tx.type,
             amount: tx.amount,
@@ -165,7 +184,7 @@ export const transactionService = {
             motive,
             isIncome,
             toAccountId: tx.toAccountId,
-            counterpart: tx.toAccountId ? `Cuenta #${tx.toAccountId}` : "Directo",
+            counterpart: tx.toAccountId ? `Cuenta #${tx.toAccountId}` : (tx.type === 1 ? "Cuenta Propia (CVU)" : "Directo"),
             status: "Completada",
           };
         });
