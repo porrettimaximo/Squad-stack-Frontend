@@ -80,7 +80,11 @@ export function DashboardPage() {
             {/* Barra de Navegación Superior Desktop */}
             <DashboardNavbar
               currentTab={currentTab}
-              onTabChange={(e, val) => setCurrentTab(val)}
+              onTabChange={(e, val) => {
+                setCurrentTab(val);
+                if (val === 1) navigate("/investments");
+                else if (val === 0) navigate("/dashboard");
+              }}
               userName={userName}
             />
 
@@ -146,7 +150,7 @@ export function DashboardPage() {
                     height="100%"
                     borderRadius="20px"
                     onTransfer={() => navigate("/transfer")}
-                    onInvestments={() => setCurrentTab(1)}
+                    onInvestments={() => navigate("/investments")}
                   />
                 </Box>
               </Box>
@@ -288,7 +292,7 @@ export function DashboardPage() {
                 height="380px"
                 borderRadius="20px"
                 onTransfer={() => navigate("/transfer")}
-                onInvestments={() => setCurrentTab(1)}
+                onInvestments={() => navigate("/investments")}
               />
             </Box>
           </Box>
