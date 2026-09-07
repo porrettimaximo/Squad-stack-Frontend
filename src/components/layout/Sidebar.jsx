@@ -33,7 +33,22 @@ import iconoSmall from "../../assets/icono.png";
  * Sidebar: Barra lateral izquierda fija (Desktop) o menú deslizable (Mobile).
  */
 export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose, isMobileDrawer = false }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("sidebar_collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleCollapse = (val) => {
+    setCollapsed(val);
+    try {
+      localStorage.setItem("sidebar_collapsed", String(val));
+    } catch (e) {
+      console.error("Error saving sidebar state:", e);
+    }
+  };
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -176,7 +191,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
               }}
             />
             <IconButton
-              onClick={() => setCollapsed(true)}
+              onClick={() => handleToggleCollapse(true)}
               aria-label="Colapsar menú"
               sx={{
                 color: "#8EA3BF",
@@ -222,7 +237,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
               }}
             />
             <IconButton
-              onClick={() => setCollapsed(false)}
+              onClick={() => handleToggleCollapse(false)}
               sx={{
                 position: "absolute",
                 color: "#8EA3BF",
