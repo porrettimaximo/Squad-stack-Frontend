@@ -19,15 +19,28 @@ body,
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Accesibilidad: Estilos de foco visible para navegación por teclado */
-:focus-visible {
+/* Reset outline en inputs y textareas ya que MUI maneja el foco estético mediante el fieldset */
+input,
+textarea,
+select,
+.MuiInputBase-input,
+.MuiOutlinedInput-root,
+.MuiInputBase-root {
+  outline: none !important;
+}
+
+/* Accesibilidad: Estilos de foco visible para navegación por teclado (botones, links, items) */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex="0"]:focus-visible {
   outline: 2px solid #0056D2 !important;
   outline-offset: 2px !important;
 }
 
-/* Evitar outline azul molesto al hacer click con mouse si el navegador no soporta focus-visible */
+/* Evitar outline al interactuar con el mouse */
 :focus:not(:focus-visible) {
-  outline: none;
+  outline: none !important;
 }
 
 /* Scrollbar styling */

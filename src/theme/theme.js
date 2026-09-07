@@ -134,17 +134,17 @@ export const theme = createTheme({
           backgroundColor: "#FFFFFF",
           "& fieldset": {
             borderColor: "#E2E8F0",
+            transition: "border-color 0.2s ease, border-width 0.2s ease",
           },
           "&:hover fieldset": {
-            borderColor: "#CBD5E1",
+            borderColor: "#94A3B8",
           },
           "&.Mui-focused fieldset": {
             borderColor: "#0056D2",
-            borderWidth: "1.5px",
+            borderWidth: "2px",
           },
-          "&:focus-visible": {
-            outline: "2px solid #0056D2",
-            outlineOffset: "2px",
+          "& input": {
+            outline: "none !important",
           },
         },
       },
