@@ -103,7 +103,7 @@ export function SupportPage() {
             boxShadow: "0 10px 30px rgba(0, 22, 57, 0.12)",
           }}
         >
-          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
             <Box
               sx={{
                 bgcolor: "rgba(56, 182, 255, 0.15)",
@@ -495,11 +495,13 @@ export function SupportPage() {
         >
           <Stack
             direction={{ xs: "column", sm: "row" }}
-            justifyContent="space-between"
-            alignItems={{ xs: "flex-start", sm: "center" }}
             spacing={2}
+            sx={{
+              justifyContent: "space-between",
+              alignItems: { xs: "flex-start", sm: "center" },
+            }}
           >
-            <Stack direction="row" spacing={1.5} alignItems="center">
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
               <HelpOutlineOutlinedIcon sx={{ color: "#0056D2", fontSize: 28 }} />
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#001639" }}>
@@ -572,7 +574,7 @@ export function SupportPage() {
                 textAlign: "left",
               }}
             >
-              <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
+              <Stack direction="row" sx={{ justifyContent: "space-between", mb: 1 }}>
                 <Typography variant="caption" sx={{ color: "#64748B" }}>
                   Número de Ticket:
                 </Typography>
@@ -580,7 +582,7 @@ export function SupportPage() {
                   {successTicket?.id}
                 </Typography>
               </Stack>
-              <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
+              <Stack direction="row" sx={{ justifyContent: "space-between", mb: 1 }}>
                 <Typography variant="caption" sx={{ color: "#64748B" }}>
                   Motivo:
                 </Typography>
@@ -588,7 +590,7 @@ export function SupportPage() {
                   {successTicket?.category}
                 </Typography>
               </Stack>
-              <Stack direction="row" justifyContent="space-between">
+              <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                 <Typography variant="caption" sx={{ color: "#64748B" }}>
                   Fecha y Hora:
                 </Typography>

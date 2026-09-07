@@ -144,7 +144,7 @@ export function HelpPage() {
           }}
         >
           <Box sx={{ position: "relative", zIndex: 2, maxWidth: 680 }}>
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
               <Box
                 sx={{
                   bgcolor: "rgba(56, 182, 255, 0.15)",
@@ -243,7 +243,7 @@ export function HelpPage() {
 
         {/* Lista de Preguntas Frecuentes (Acordeones) */}
         <Box sx={{ mb: 5 }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 700, color: "#001639" }}>
               Preguntas Frecuentes ({filteredFaqs.length})
             </Typography>
