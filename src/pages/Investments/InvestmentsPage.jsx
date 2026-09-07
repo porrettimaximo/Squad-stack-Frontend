@@ -270,23 +270,25 @@ export function InvestmentsPage() {
                     ? "El monto mínimo es de $ 1.000,00"
                     : `Tasa seleccionada: ${currentTnaRate}% TNA · Rendimiento garantizado`
                 }
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Typography sx={{ fontWeight: 800, color: "#0056D2", fontSize: "1.2rem" }}>$</Typography>
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Button
-                        size="small"
-                        onClick={handleSetMaxAmount}
-                        sx={{ textTransform: "none", fontWeight: 700, color: "#0056D2", bgcolor: "#EFF6FF", "&:hover": { bgcolor: "#DBEAFE" }, borderRadius: "8px", px: 1.5 }}
-                      >
-                        Máximo
-                      </Button>
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Typography sx={{ fontWeight: 800, color: "#0056D2", fontSize: "1.2rem" }}>$</Typography>
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Button
+                          size="small"
+                          onClick={handleSetMaxAmount}
+                          sx={{ textTransform: "none", fontWeight: 700, color: "#0056D2", bgcolor: "#EFF6FF", "&:hover": { bgcolor: "#DBEAFE" }, borderRadius: "8px", px: 1.5 }}
+                        >
+                          Máximo
+                        </Button>
+                      </InputAdornment>
+                    ),
+                  },
                 }}
                 sx={{
                   mb: 1.5,
@@ -590,7 +592,14 @@ export function InvestmentsPage() {
         </Box>
 
         {/* Modal de Confirmación */}
-        <Dialog open={confirmOpen} onClose={() => !submitting && setConfirmOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "20px", p: 1 } }}>
+        <Dialog
+          open={confirmOpen}
+          onClose={() => !submitting && setConfirmOpen(false)}
+          maxWidth="xs"
+          fullWidth
+          disableRestoreFocus
+          slotProps={{ paper: { sx: { borderRadius: "20px", p: 1 } } }}
+        >
           <DialogTitle component="div" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 800, color: "#0A192F" }}>
             Confirmar Plazo Fijo
             <IconButton onClick={() => setConfirmOpen(false)} disabled={submitting}>

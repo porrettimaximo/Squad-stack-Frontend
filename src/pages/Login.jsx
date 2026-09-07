@@ -10,13 +10,17 @@ import {
   Button,
   Alert,
   CircularProgress,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 import iconoPrincipal from "../assets/iconoPrincipal.png";
 
 export const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -48,6 +52,14 @@ export const Login = () => {
       setError(message);
       setLoading(false);
     }
+  };
+
+  const handleClickShowPassword = () => {
+    setShowPassword((prev) => !prev);
+  };
+
+  const handleMouseDownPassword = (e) => {
+    e.preventDefault();
   };
 
   return (
@@ -98,8 +110,12 @@ export const Login = () => {
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Typography
               variant="caption"
-              sx={{ fontWeight: 600, color: "#FFFFFF", mb: 0.5, display: "block" }}
-            >
+              sx={{
+                fontWeight: 600,
+                color: "#FFFFFF",
+                mb: 0.5,
+                display: "block",
+              }}>
               Correo Electrónico
             </Typography>
             <TextField
@@ -127,8 +143,12 @@ export const Login = () => {
 
             <Typography
               variant="caption"
-              sx={{ fontWeight: 600, color: "#FFFFFF", mb: 0.5, display: "block" }}
-            >
+              sx={{
+                fontWeight: 600,
+                color: "#FFFFFF",
+                mb: 0.5,
+                display: "block",
+              }}>
               Contraseña
             </Typography>
             <TextField
@@ -136,20 +156,44 @@ export const Login = () => {
               required
               fullWidth
               name="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               id="password"
               placeholder="********"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowPassword}
+                        onMouseDown={handleMouseDownPassword}
+                        edge="end"
+                        disabled={loading}
+                        size="small"
+                        sx={{ color: "#64748B", mr: 0.5 }}>
+                        {showPassword ? (
+                          <VisibilityOff fontSize="small" />
+                        ) : (
+                          <Visibility fontSize="small" />
+                        )}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
               sx={{
                 mb: 3,
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "12px",
                   backgroundColor: "#F8FAFC",
+                  pr: 1,
                   "& fieldset": { borderColor: "#CBD5E1" },
                   "&:hover fieldset": { borderColor: "#0056D2" },
+                  "& input": { color: "#0F172A" },
                 },
               }}
             />
