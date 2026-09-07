@@ -144,7 +144,7 @@ export function HelpPage() {
           }}
         >
           <Box sx={{ position: "relative", zIndex: 2, maxWidth: 680 }}>
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
               <Box
                 sx={{
                   bgcolor: "rgba(56, 182, 255, 0.15)",
@@ -243,7 +243,7 @@ export function HelpPage() {
 
         {/* Lista de Preguntas Frecuentes (Acordeones) */}
         <Box sx={{ mb: 5 }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 700, color: "#001639" }}>
               Preguntas Frecuentes ({filteredFaqs.length})
             </Typography>
@@ -339,9 +339,9 @@ export function HelpPage() {
             p: { xs: 2.5, sm: 3.5 },
           }}
         >
-          <Grid container spacing={3} alignItems="center">
-            <Grid item xs={12} sm={8}>
-              <Stack direction="row" spacing={2} alignItems="center">
+          <Grid container spacing={3} sx={{ alignItems: "center" }}>
+            <Grid size={{ xs: 12, sm: 8 }}>
+              <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                 <Box
                   sx={{
                     width: 54,
@@ -367,7 +367,7 @@ export function HelpPage() {
                 </Box>
               </Stack>
             </Grid>
-            <Grid item xs={12} sm={4} sx={{ textAlign: { xs: "left", sm: "right" } }}>
+            <Grid size={{ xs: 12, sm: 4 }} sx={{ textAlign: { xs: "left", sm: "right" } }}>
               <Button
                 variant="contained"
                 onClick={() => navigate("/support")}

@@ -1068,7 +1068,9 @@ export function ProfilePage() {
                             slotProps={{
                               input: {
                                 startAdornment: (
-                                  <LockOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
+                                  <InputAdornment position="start">
+                                    <LockOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
+                                  </InputAdornment>
                                 ),
                                 endAdornment: (
                                   <InputAdornment position="end">

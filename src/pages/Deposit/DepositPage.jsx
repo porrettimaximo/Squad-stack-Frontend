@@ -182,6 +182,7 @@ export function DepositPage() {
                   variant="outlined"
                   value={amount ? `$ ${Number(amount).toLocaleString("es-AR")}` : ""}
                   onChange={handleAmountChange}
+                  placeholder="$ 0,00"
                   slotProps={{
                     htmlInput: { inputMode: "numeric" },
                     input: {
@@ -218,8 +219,8 @@ export function DepositPage() {
                       value={motive}
                       onChange={(e) => setMotive(e.target.value)}
                       sx={{ borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.9rem" }}
-                      MenuProps={{
-                        PaperProps: {
+                      slotProps={{
+                        paper: {
                           sx: {
                             maxHeight: 240,
                             borderRadius: "12px",

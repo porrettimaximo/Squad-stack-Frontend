@@ -8,8 +8,10 @@ import {
   Snackbar,
   IconButton,
   Badge,
+  Drawer,
 } from "@mui/material";
 import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
+import MenuIcon from "@mui/icons-material/Menu";
 
 import { useAccount } from "../../hooks/useAccount";
 import { useAuth } from "../../context/AuthContext";
@@ -36,14 +38,16 @@ export function DashboardPage() {
   const [currentTab, setCurrentTab] = useState(0);
   const [activeSidebarItem, setActiveSidebarItem] = useState("inicio");
   const [activeMobileNav, setActiveMobileNav] = useState(0);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
 
   const handleLogout = () => {
+    setMobileDrawerOpen(false);
     logout();
     navigate("/login");
   };
 
-  const userName = user?.name || "Alejandro Silva";
+  const userName = user?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : user?.email || "Usuario");
 
   return (
     <Box sx={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", bgcolor: "#F8FAFC" }}>
@@ -168,9 +172,22 @@ export function DashboardPage() {
         >
           {/* Sección Superior Azul Oscura */}
           <Box sx={{ px: 2.5, pt: 2.5, pb: 3, bgcolor: "#001639", color: "#FFFFFF" }}>
-            {/* Cabecera DigitalArs + Notificaciones */}
+            {/* Cabecera DigitalArs + Notificaciones + Menú Hamburguesa */}
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <IconButton
+                  onClick={() => setMobileDrawerOpen(true)}
+                  aria-label="Abrir menú de navegación"
+                  sx={{
+                    bgcolor: "#0d2650",
+                    color: "#FFFFFF",
+                    width: 44,
+                    height: 44,
+                    "&:hover": { bgcolor: "#133368" },
+                  }}
+                >
+                  <MenuIcon />
+                </IconButton>
                 <Box
                   component="img"
                   src={iconoImg}
@@ -291,6 +308,43 @@ export function DashboardPage() {
               else if (val === 3) navigate("/profile");
             }}
           />
+
+          {/* Menú Lateral Deslizable para Mobile (Slide Drawer) */}
+          <Drawer
+            anchor="left"
+            open={mobileDrawerOpen}
+            onClose={() => setMobileDrawerOpen(false)}
+            disableRestoreFocus
+            ModalProps={{ keepMounted: true, disableRestoreFocus: true }}
+            slotProps={{
+              paper: {
+                sx: {
+                  bgcolor: "#02122c",
+                  backgroundImage: "none",
+                  border: "none",
+                  width: 280,
+                  boxShadow: "4px 0 24px rgba(0,0,0,0.4)",
+                },
+              },
+            }}
+          >
+            <Sidebar
+              activeItem="inicio"
+              onItemClick={(item) => {
+                setMobileDrawerOpen(false);
+                if (item === "inicio") navigate("/");
+                else if (item === "historial") navigate("/history");
+                else if (item === "inversiones") navigate("/investments");
+                else if (item === "perfil") navigate("/profile");
+                else if (item === "admin") navigate("/admin");
+                else if (item === "ayuda") navigate("/help");
+                else if (item === "soporte") navigate("/support");
+              }}
+              onLogout={handleLogout}
+              onClose={() => setMobileDrawerOpen(false)}
+              isMobileDrawer
+            />
+          </Drawer>
         </Box>
       )}
 
