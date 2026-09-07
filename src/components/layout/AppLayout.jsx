@@ -41,14 +41,15 @@ export function AppLayout({
   const { logout } = useAuth();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
-  // Ocultar pestañas de navegación superior en historial, perfil, ayuda, soporte e inversiones según corresponda
+  // Ocultar pestañas de navegación superior en historial, perfil, ayuda, soporte, inversiones y tarjetas según corresponda
   const isHistoryRoute = location.pathname.startsWith("/history") || location.pathname.startsWith("/historial");
   const isInvestmentsRoute = location.pathname.startsWith("/investments") || location.pathname.startsWith("/inversiones");
+  const isCardsRoute = location.pathname.startsWith("/cards") || location.pathname.startsWith("/tarjetas");
   const isProfileRoute = location.pathname.startsWith("/profile") || location.pathname.startsWith("/perfil");
   const isHelpRoute = location.pathname.startsWith("/help") || location.pathname.startsWith("/ayuda");
   const isSupportRoute = location.pathname.startsWith("/support") || location.pathname.startsWith("/soporte");
   const isDepositOrTransfer = location.pathname.startsWith("/deposit") || location.pathname.startsWith("/transfer");
-  const shouldShowTabs = showNavbarTabs !== undefined ? showNavbarTabs : (!isHistoryRoute && !isProfileRoute && !isHelpRoute && !isSupportRoute && !isDepositOrTransfer);
+  const shouldShowTabs = showNavbarTabs !== undefined ? showNavbarTabs : (!isHistoryRoute && !isProfileRoute && !isHelpRoute && !isSupportRoute && !isDepositOrTransfer && !isCardsRoute);
 
   // Determinar ítem activo según la ruta actual si no viene explícito
   let currentActiveItem = activeSidebarItem;
@@ -61,6 +62,8 @@ export function AppLayout({
   } else if (isInvestmentsRoute) {
     currentActiveItem = "inversiones";
     activeNavbarTab = 1;
+  } else if (isCardsRoute) {
+    currentActiveItem = "tarjetas";
   } else if (isProfileRoute) {
     currentActiveItem = "perfil";
     currentMobileIndex = 2;
@@ -79,6 +82,7 @@ export function AppLayout({
     if (item === "inicio") navigate("/");
     else if (item === "historial") navigate("/history");
     else if (item === "inversiones") navigate("/investments");
+    else if (item === "tarjetas") navigate("/cards");
     else if (item === "perfil") navigate("/profile");
     else if (item === "admin" || item === "admin-users") navigate("/admin");
     else if (item === "ayuda") navigate("/help");
