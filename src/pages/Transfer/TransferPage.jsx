@@ -130,20 +130,19 @@ export function TransferPage() {
 
   // ─── PERFIL COMPLETO DE MI CUENTA (ORIGEN) ───
   const myProfile = useMemo(() => {
-    const accId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "4");
-    const fromSeed = findContact(accId) || findContact(user?.id) || findContact(user?.email);
-    const email = user?.email || fromSeed?.email || `usuario${accId}@digitalars.com`;
-    const name = fromSeed?.name || (email.split("@")[0].replace(".", " ").replace(/\b\w/g, (l) => l.toUpperCase()));
-    const username = email.split("@")[0];
+    const accId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "1");
+    const email = user?.email || "usuario@digitalars.com";
+    const name = user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())));
+    const username = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, ".");
 
     return {
       name,
       email,
       accountId: accId,
-      accountNumber: fromSeed?.accountNumber || `0002-4892-0${accId}`,
-      cvu: fromSeed?.cvu || `000000310001000000000${accId}`,
-      alias: fromSeed?.alias || `${username}.ars`,
-      bank: fromSeed?.bank || "DigitalArs Billetera Virtual",
+      accountNumber: account?.accountNumber || `0002-4892-0${accId}`,
+      cvu: account?.cvu || (account?.id ? `000000310001000000000${account.id}` : "0000003100010000000004"),
+      alias: account?.alias || `${username}.ars`,
+      bank: "DigitalArs Billetera Virtual",
     };
   }, [user, account]);
 
@@ -323,13 +322,15 @@ export function TransferPage() {
                       variant="outlined"
                       value={destinationInput}
                       onChange={(e) => setDestinationInput(e.target.value)}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <PersonOutlineOutlinedIcon sx={{ color: "#94A3B8", fontSize: "1.2rem" }} />
-                          </InputAdornment>
-                        ),
-                        sx: { borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.95rem" },
+                      slotProps={{
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <PersonOutlineOutlinedIcon sx={{ color: "#94A3B8", fontSize: "1.2rem" }} />
+                            </InputAdornment>
+                          ),
+                          sx: { borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.95rem" },
+                        },
                       }}
                       placeholder="Buscar destinatario por nombre"
                     />
@@ -462,9 +463,11 @@ export function TransferPage() {
                   value={amount ? `$ ${Number(amount).toLocaleString("es-AR")}` : ""}
                   onChange={handleAmountChange}
                   placeholder="$ 0,00"
-                  inputProps={{ inputMode: "numeric" }}
-                  InputProps={{
-                    sx: { borderRadius: "12px", fontSize: "1.4rem", fontWeight: 800, color: "#0F172A", py: 0.2 },
+                  slotProps={{
+                    htmlInput: { inputMode: "numeric" },
+                    input: {
+                      sx: { borderRadius: "12px", fontSize: "1.4rem", fontWeight: 800, color: "#0F172A", py: 0.2 },
+                    },
                   }}
                   sx={{ mb: 2 }}
                 />
@@ -481,8 +484,8 @@ export function TransferPage() {
                     label="Motivo"
                     onChange={(e) => setMotive(e.target.value)}
                     sx={{ borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.9rem" }}
-                    MenuProps={{
-                      PaperProps: {
+                    slotProps={{
+                      paper: {
                         sx: {
                           maxHeight: 240,
                           borderRadius: "12px",

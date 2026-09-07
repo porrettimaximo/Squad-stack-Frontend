@@ -7,10 +7,10 @@ import { useAuth } from "./AuthContext";
 export const AccountContext = createContext(null);
 
 const INITIAL_USER = {
-  name: "Alejandro Silva",
-  firstName: "Alejandro",
-  lastName: "Silva",
-  email: "alejandro.silva@digitalars.com",
+  name: "Usuario",
+  firstName: "",
+  lastName: "",
+  email: "",
   role: "User",
   cardNumber: "4892",
 };

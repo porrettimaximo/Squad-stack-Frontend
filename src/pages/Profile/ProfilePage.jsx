@@ -717,13 +717,15 @@ export function ProfilePage() {
                             onChange={handleEditFormChange}
                             disabled={savingProfile}
                             autoFocus
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <PersonOutlineOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
-                                </InputAdornment>
-                              ),
-                              sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                            slotProps={{
+                              input: {
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <PersonOutlineOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
+                                  </InputAdornment>
+                                ),
+                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                              },
                             }}
                           />
                         </Grid>
@@ -741,13 +743,15 @@ export function ProfilePage() {
                             value={editFormData.lastName}
                             onChange={handleEditFormChange}
                             disabled={savingProfile}
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <PersonOutlineOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
-                                </InputAdornment>
-                              ),
-                              sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                            slotProps={{
+                              input: {
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <PersonOutlineOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
+                                  </InputAdornment>
+                                ),
+                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                              },
                             }}
                           />
                         </Grid>
@@ -772,17 +776,19 @@ export function ProfilePage() {
                             size="small"
                             value={profileData.email}
                             disabled
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <EmailOutlinedIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
-                                </InputAdornment>
-                              ),
-                              sx: {
-                                borderRadius: "10px",
-                                bgcolor: "#F1F5F9",
-                                fontSize: "0.9rem",
-                                "& input": { color: "#475569", cursor: "not-allowed" },
+                            slotProps={{
+                              input: {
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <EmailOutlinedIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
+                                  </InputAdornment>
+                                ),
+                                sx: {
+                                  borderRadius: "10px",
+                                  bgcolor: "#F1F5F9",
+                                  fontSize: "0.9rem",
+                                  "& input": { color: "#475569", cursor: "not-allowed" },
+                                },
                               },
                             }}
                           />
@@ -971,24 +977,26 @@ export function ProfilePage() {
                             onChange={handlePasswordChange}
                             disabled={savingPassword}
                             autoFocus
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <KeyIcon sx={{ color: "#0056D2", fontSize: 20 }} />
-                                </InputAdornment>
-                              ),
-                              endAdornment: (
-                                <InputAdornment position="end">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => setShowCurrentPassword((prev) => !prev)}
-                                    edge="end"
-                                  >
-                                    {showCurrentPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
-                                  </IconButton>
-                                </InputAdornment>
-                              ),
-                              sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                            slotProps={{
+                              input: {
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <KeyIcon sx={{ color: "#0056D2", fontSize: 20 }} />
+                                  </InputAdornment>
+                                ),
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => setShowCurrentPassword((prev) => !prev)}
+                                      edge="end"
+                                    >
+                                      {showCurrentPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
+                                    </IconButton>
+                                  </InputAdornment>
+                                ),
+                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                              },
                             }}
                           />
                         </Grid>
@@ -1007,24 +1015,26 @@ export function ProfilePage() {
                             value={passwordData.newPassword}
                             onChange={handlePasswordChange}
                             disabled={savingPassword}
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <LockOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
-                                </InputAdornment>
-                              ),
-                              endAdornment: (
-                                <InputAdornment position="end">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => setShowNewPassword((prev) => !prev)}
-                                    edge="end"
-                                  >
-                                    {showNewPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
-                                  </IconButton>
-                                </InputAdornment>
-                              ),
-                              sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                            slotProps={{
+                              input: {
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <LockOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
+                                  </InputAdornment>
+                                ),
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => setShowNewPassword((prev) => !prev)}
+                                      edge="end"
+                                    >
+                                      {showNewPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
+                                    </IconButton>
+                                  </InputAdornment>
+                                ),
+                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                              },
                             }}
                           />
                         </Grid>
@@ -1055,24 +1065,26 @@ export function ProfilePage() {
                                 ? "Las contraseñas no coinciden"
                                 : ""
                             }
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <LockOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
-                                </InputAdornment>
-                              ),
-                              endAdornment: (
-                                <InputAdornment position="end">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                                    edge="end"
-                                  >
-                                    {showConfirmPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
-                                  </IconButton>
-                                </InputAdornment>
-                              ),
-                              sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                            slotProps={{
+                              input: {
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <LockOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
+                                  </InputAdornment>
+                                ),
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                                      edge="end"
+                                    >
+                                      {showConfirmPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
+                                    </IconButton>
+                                  </InputAdornment>
+                                ),
+                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                              },
                             }}
                           />
                         </Grid>
