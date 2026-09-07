@@ -50,6 +50,7 @@ export function CardsPage() {
   const [revealing, setRevealing] = useState(false);
   const [freezing, setFreezing] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
+  const [copying, setCopying] = useState(false);
 
   // Modal confirmación baja
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -178,11 +179,26 @@ export function CardsPage() {
     }
   };
 
-  // Copiar número al portapapeles
-  const handleCopyNumber = (cardNumber) => {
-    const rawNumber = cardNumber.replace(/\s+/g, "");
-    navigator.clipboard.writeText(rawNumber);
-    showToast("Número copiado al portapapeles");
+  // Copiar número completo (16 dígitos) al portapapeles
+  const handleCopyNumber = async (card) => {
+    if (!card) return;
+    try {
+      setCopying(true);
+      let numberToCopy = "";
+      if (revealedCard && revealedCard.id === card.id && revealedCard.cardNumber) {
+        numberToCopy = revealedCard.cardNumber.replace(/\s+/g, "");
+      } else {
+        const fullData = await cardService.revealCard(card.id);
+        numberToCopy = fullData.cardNumber.replace(/\s+/g, "");
+      }
+      await navigator.clipboard.writeText(numberToCopy);
+      showToast("Número completo (16 dígitos) copiado al portapapeles");
+    } catch (err) {
+      console.error("Error al copiar número:", err);
+      showToast("No se pudo obtener el número completo para copiar.", "error");
+    } finally {
+      setCopying(false);
+    }
   };
 
   const activeVirtualCard = cards.find(
@@ -503,14 +519,15 @@ export function CardsPage() {
                 >
                   <Button
                     variant="outlined"
-                    startIcon={<ContentCopyIcon />}
-                    onClick={() =>
-                      handleCopyNumber(
-                        revealedCard
-                          ? revealedCard.cardNumber
-                          : activeVirtualCard.cardNumber
+                    startIcon={
+                      copying ? (
+                        <CircularProgress size={18} sx={{ color: "#334155" }} />
+                      ) : (
+                        <ContentCopyIcon />
                       )
                     }
+                    onClick={() => handleCopyNumber(activeVirtualCard)}
+                    disabled={copying}
                     sx={{
                       borderRadius: "12px",
                       textTransform: "none",
@@ -526,7 +543,7 @@ export function CardsPage() {
                       },
                     }}
                   >
-                    Copiar número
+                    {copying ? "Copiando..." : "Copiar número"}
                   </Button>
 
                   <Button
