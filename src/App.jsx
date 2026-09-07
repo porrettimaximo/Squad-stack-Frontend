@@ -12,6 +12,7 @@ import DepositPage from "./pages/Deposit/DepositPage";
 import TransferPage from "./pages/Transfer/TransferPage";
 import HistoryPage from "./pages/History/HistoryPage";
 import InvestmentsPage from "./pages/Investments/InvestmentsPage";
+import CardsPage from "./pages/Cards/CardsPage";
 import ProfilePage from "./pages/Profile/ProfilePage";
 import AdminUsersPage from "./pages/Admin/AdminUsersPage";
 import HelpPage from "./pages/Help/HelpPage";
@@ -52,6 +53,10 @@ export function App() {
                 {/* HU-33: Plazo Fijo / Inversiones */}
                 <Route path="/investments" element={<InvestmentsPage />} />
                 <Route path="/inversiones" element={<InvestmentsPage />} />
+
+                {/* HU-35: Tarjetas (Virtual, Física y Crédito) */}
+                <Route path="/cards" element={<CardsPage />} />
+                <Route path="/tarjetas" element={<CardsPage />} />
 
                 {/* HU-28: Pantalla de perfil de usuario */}
                 <Route path="/profile" element={<ProfilePage />} />

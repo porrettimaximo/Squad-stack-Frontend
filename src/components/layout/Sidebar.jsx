@@ -78,7 +78,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
       icon: <TrendingUpOutlinedIcon />,
       path: "/investments",
     },
-    { id: "tarjetas", label: "Tarjetas", icon: <CreditCardOutlinedIcon />, path: "/" },
+    { id: "tarjetas", label: "Tarjetas", icon: <CreditCardOutlinedIcon />, path: "/cards" },
     { id: "perfil", label: "Perfil", icon: <PersonOutlineOutlinedIcon />, path: "/profile" },
     ...(isAdmin
       ? [{ id: "admin", label: "Usuarios Admin", icon: <AdminPanelSettingsOutlinedIcon />, path: "/admin" }]
