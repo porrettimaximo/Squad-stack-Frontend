@@ -66,16 +66,6 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout }) {
 
   const mainNav = [
     { id: "inicio", label: "Inicio", icon: <HomeOutlinedIcon />, path: "/" },
-    ...(isAdmin
-      ? [
-          {
-            id: "admin-users",
-            label: "Usuarios",
-            icon: <AdminPanelSettingsOutlinedIcon />,
-            path: "/admin/users",
-          },
-        ]
-      : []),
     {
       id: "historial",
       label: "Historial",
