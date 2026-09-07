@@ -184,18 +184,20 @@ export function HelpPage() {
               placeholder="Buscá por palabra clave (ej. transferir, límite, comprobante)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "#0056D2" }} />
-                  </InputAdornment>
-                ),
-                sx: {
-                  bgcolor: "#FFFFFF",
-                  borderRadius: "14px",
-                  "& fieldset": { border: "none" },
-                  boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-                  fontSize: "0.95rem",
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: "#0056D2" }} />
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    bgcolor: "#FFFFFF",
+                    borderRadius: "14px",
+                    "& fieldset": { border: "none" },
+                    boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
+                    fontSize: "0.95rem",
+                  },
                 },
               }}
             />

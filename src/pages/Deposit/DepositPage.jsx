@@ -182,10 +182,11 @@ export function DepositPage() {
                   variant="outlined"
                   value={amount ? `$ ${Number(amount).toLocaleString("es-AR")}` : ""}
                   onChange={handleAmountChange}
-                  placeholder="$ 0,00"
-                  inputProps={{ inputMode: "numeric" }}
-                  InputProps={{
-                    sx: { borderRadius: "16px", fontSize: "1.6rem", fontWeight: 800, color: "#0F172A" }
+                  slotProps={{
+                    htmlInput: { inputMode: "numeric" },
+                    input: {
+                      sx: { borderRadius: "16px", fontSize: "1.6rem", fontWeight: 800, color: "#0F172A" },
+                    },
                   }}
                   sx={{ mb: 2 }}
                 />

@@ -336,13 +336,15 @@ export function HistoryPage() {
                 placeholder="Buscar por concepto..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
-                    </InputAdornment>
-                  ),
-                  sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.88rem", height: 40 },
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
+                    sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.88rem", height: 40 },
+                  },
                 }}
               />
             </Box>
@@ -375,8 +377,10 @@ export function HistoryPage() {
                 type="date"
                 value={dateFrom}
                 onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-                InputProps={{
-                  sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem", height: 40 },
+                slotProps={{
+                  input: {
+                    sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem", height: 40 },
+                  },
                 }}
               />
             </Box>
@@ -391,8 +395,10 @@ export function HistoryPage() {
                 type="date"
                 value={dateTo}
                 onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-                InputProps={{
-                  sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem", height: 40 },
+                slotProps={{
+                  input: {
+                    sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem", height: 40 },
+                  },
                 }}
               />
             </Box>
