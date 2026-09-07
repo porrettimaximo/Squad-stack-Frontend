@@ -109,20 +109,19 @@ export function HistoryPage() {
   const selectedTxReceiptData = useMemo(() => {
     if (!selectedTx) return null;
 
-    const myAccId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "4");
-    const mySeed = findContact(myAccId) || findContact(user?.id) || findContact(user?.email);
-    const myEmail = user?.email || mySeed?.email || `usuario${myAccId}@digitalars.com`;
-    const myName = mySeed?.name || (myEmail.split("@")[0].replace(".", " ").replace(/\b\w/g, (l) => l.toUpperCase()));
-    const myUsername = myEmail.split("@")[0];
+    const myAccId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "1");
+    const myEmail = user?.email || "usuario@digitalars.com";
+    const myName = user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (myEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())));
+    const myUsername = myEmail.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, ".");
 
     const myProfileData = {
       name: myName,
       email: myEmail,
       accountId: myAccId,
-      accountNumber: mySeed?.accountNumber || `0002-4892-0${myAccId}`,
-      cvu: mySeed?.cvu || `000000310001000000000${myAccId}`,
-      alias: mySeed?.alias || `${myUsername}.ars`,
-      bank: mySeed?.bank || "DigitalArs Billetera Virtual",
+      accountNumber: account?.accountNumber || `0002-4892-0${myAccId}`,
+      cvu: account?.cvu || (account?.id ? `000000310001000000000${account.id}` : "0000003100010000000004"),
+      alias: account?.alias || `${myUsername}.ars`,
+      bank: "DigitalArs Billetera Virtual",
     };
 
     // Contraparte
@@ -336,13 +335,15 @@ export function HistoryPage() {
                 placeholder="Buscar por concepto..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
-                    </InputAdornment>
-                  ),
-                  sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.88rem", height: 40 },
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
+                    sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.88rem", height: 40 },
+                  },
                 }}
               />
             </Box>
@@ -375,8 +376,10 @@ export function HistoryPage() {
                 type="date"
                 value={dateFrom}
                 onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-                InputProps={{
-                  sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem", height: 40 },
+                slotProps={{
+                  input: {
+                    sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem", height: 40 },
+                  },
                 }}
               />
             </Box>
@@ -391,8 +394,10 @@ export function HistoryPage() {
                 type="date"
                 value={dateTo}
                 onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-                InputProps={{
-                  sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem", height: 40 },
+                slotProps={{
+                  input: {
+                    sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem", height: 40 },
+                  },
                 }}
               />
             </Box>

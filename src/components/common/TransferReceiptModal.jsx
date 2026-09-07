@@ -67,12 +67,15 @@ export function TransferReceiptModal({ open, onClose, transferData }) {
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: "20px",
-          p: { xs: 0.5, sm: 1 },
-          bgcolor: "#FFFFFF",
-          boxShadow: "0 25px 50px -12px rgba(15, 23, 42, 0.25)",
+      disableRestoreFocus
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: "20px",
+            p: { xs: 0.5, sm: 1 },
+            bgcolor: "#FFFFFF",
+            boxShadow: "0 25px 50px -12px rgba(15, 23, 42, 0.25)",
+          },
         },
       }}
     >

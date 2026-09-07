@@ -1,4 +1,4 @@
-﻿*,
+*,
 *::before,
 *::after {
   box-sizing: border-box;
@@ -19,6 +19,30 @@ body,
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Reset outline en inputs y textareas ya que MUI maneja el foco estético mediante el fieldset */
+input,
+textarea,
+select,
+.MuiInputBase-input,
+.MuiOutlinedInput-root,
+.MuiInputBase-root {
+  outline: none !important;
+}
+
+/* Accesibilidad: Estilos de foco visible para navegación por teclado (botones, links, items) */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex="0"]:focus-visible {
+  outline: 2px solid #0056D2 !important;
+  outline-offset: 2px !important;
+}
+
+/* Evitar outline al interactuar con el mouse */
+:focus:not(:focus-visible) {
+  outline: none !important;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
@@ -36,4 +60,11 @@ body,
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
+}
+
+/* Responsive Table Wrapper Helper */
+.responsive-table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
