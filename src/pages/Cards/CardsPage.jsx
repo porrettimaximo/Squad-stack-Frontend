@@ -666,7 +666,7 @@ export function CardsPage() {
             <Grid container spacing={2.5}>
               {/* Tarjeta 1: Tarjeta Virtual (Si aún no la tiene) */}
               {!activeVirtualCard && (
-                <Grid item size={{ xs: 12 }}>
+                <Grid size={{ xs: 12 }}>
                   <motion.div
                     whileHover={{ y: -3 }}
                     transition={{ duration: 0.2 }}
@@ -770,7 +770,7 @@ export function CardsPage() {
               )}
 
               {/* Tarjeta 2: Tarjeta Física (Coming Soon) */}
-              <Grid item size={{ xs: 12 }}>
+              <Grid size={{ xs: 12 }}>
                 <Card
                   sx={{
                     borderRadius: "18px",
@@ -852,7 +852,7 @@ export function CardsPage() {
               </Grid>
 
               {/* Tarjeta 3: Tarjeta de Crédito (Coming Soon) */}
-              <Grid item size={{ xs: 12 }}>
+              <Grid size={{ xs: 12 }}>
                 <Card
                   sx={{
                     borderRadius: "18px",
