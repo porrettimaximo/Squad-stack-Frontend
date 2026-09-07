@@ -339,9 +339,9 @@ export function HelpPage() {
             p: { xs: 2.5, sm: 3.5 },
           }}
         >
-          <Grid container spacing={3} alignItems="center">
-            <Grid item xs={12} sm={8}>
-              <Stack direction="row" spacing={2} alignItems="center">
+          <Grid container spacing={3} sx={{ alignItems: "center" }}>
+            <Grid size={{ xs: 12, sm: 8 }}>
+              <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                 <Box
                   sx={{
                     width: 54,
@@ -367,7 +367,7 @@ export function HelpPage() {
                 </Box>
               </Stack>
             </Grid>
-            <Grid item xs={12} sm={4} sx={{ textAlign: { xs: "left", sm: "right" } }}>
+            <Grid size={{ xs: 12, sm: 4 }} sx={{ textAlign: { xs: "left", sm: "right" } }}>
               <Button
                 variant="contained"
                 onClick={() => navigate("/support")}

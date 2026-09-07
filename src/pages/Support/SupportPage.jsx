@@ -145,7 +145,7 @@ export function SupportPage() {
 
         <Grid container spacing={2.5} sx={{ mb: 4 }}>
           {/* WhatsApp */}
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Card
               sx={{
                 height: "100%",
@@ -214,7 +214,7 @@ export function SupportPage() {
           </Grid>
 
           {/* Email */}
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Card
               sx={{
                 height: "100%",
@@ -281,7 +281,7 @@ export function SupportPage() {
           </Grid>
 
           {/* Teléfono Urgencias */}
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Card
               sx={{
                 height: "100%",
@@ -376,7 +376,7 @@ export function SupportPage() {
 
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Grid container spacing={2.5}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" sx={{ fontWeight: 600, color: "#0F172A", mb: 0.5, display: "block" }}>
                   Nombre y Apellido *
                 </Typography>
@@ -391,7 +391,7 @@ export function SupportPage() {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" sx={{ fontWeight: 600, color: "#0F172A", mb: 0.5, display: "block" }}>
                   Correo Electrónico *
                 </Typography>
@@ -407,7 +407,7 @@ export function SupportPage() {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" sx={{ fontWeight: 600, color: "#0F172A", mb: 0.5, display: "block" }}>
                   Motivo de la consulta *
                 </Typography>
@@ -428,7 +428,7 @@ export function SupportPage() {
                 </TextField>
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" sx={{ fontWeight: 600, color: "#0F172A", mb: 0.5, display: "block" }}>
                   N° de Transacción / ID de Referencia (Opcional)
                 </Typography>
@@ -443,7 +443,7 @@ export function SupportPage() {
                 />
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography variant="caption" sx={{ fontWeight: 600, color: "#0F172A", mb: 0.5, display: "block" }}>
                   Descripción detallada *
                 </Typography>
@@ -459,7 +459,7 @@ export function SupportPage() {
                 />
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Button
                   type="submit"
                   variant="contained"

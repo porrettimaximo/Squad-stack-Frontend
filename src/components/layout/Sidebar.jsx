@@ -100,7 +100,8 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
       onMouseLeave={() => setIsHovered(false)}
       sx={{
         width: isMobileDrawer ? 280 : (collapsed ? 80 : 240),
-        height: "100vh",
+        height: "100%",
+        maxHeight: "100vh",
         bgcolor: "#02122c",
         color: "#FFFFFF",
         display: "flex",
@@ -108,19 +109,21 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
         flexShrink: 0,
         borderRight: "1px solid rgba(255, 255, 255, 0.05)",
         transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        overflow: "hidden",
+        overflowY: "auto",
+        overflowX: "hidden",
       }}
     >
       {/* Cabecera: Logo Principal PNG y Botón de Colapsar / Cerrar */}
       <Box
         sx={{
           px: collapsed && !isMobileDrawer ? 1 : 2.5,
-          pt: 3,
-          pb: 2,
+          pt: 2.5,
+          pb: 1.5,
           display: "flex",
           justifyContent: collapsed && !isMobileDrawer ? "center" : "space-between",
           alignItems: "center",
-          minHeight: 70,
+          minHeight: 64,
+          flexShrink: 0,
         }}
       >
         {isMobileDrawer ? (
@@ -137,7 +140,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
                 width: "100%",
                 maxWidth: 130,
                 height: "auto",
-                maxHeight: 65,
+                maxHeight: 60,
                 objectFit: "contain",
                 cursor: "pointer",
               }}
@@ -167,7 +170,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
                 width: "100%",
                 maxWidth: 140,
                 height: "auto",
-                maxHeight: 80,
+                maxHeight: 70,
                 objectFit: "contain",
                 cursor: "pointer",
               }}
@@ -242,11 +245,22 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
       </Box>
 
       {/* Menú Principal */}
-      <List sx={{ px: collapsed ? 1 : 1.5, py: 1, flex: 1 }}>
+      <List
+        sx={{
+          px: collapsed ? 1 : 1.5,
+          py: 0.5,
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          overflowX: "hidden",
+          "&::-webkit-scrollbar": { width: 4 },
+          "&::-webkit-scrollbar-thumb": { bgcolor: "rgba(255, 255, 255, 0.15)", borderRadius: 2 },
+        }}
+      >
         {mainNav.map((item) => {
           const isActive = activeItem === item.id;
           return (
-            <ListItem key={item.id} disablePadding sx={{ mb: 0.6 }}>
+            <ListItem key={item.id} disablePadding sx={{ mb: 0.4 }}>
               <ListItemButton
                 component={motion.div}
                 whileHover={collapsed ? {} : { x: 4 }}
@@ -263,7 +277,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
                 sx={{
                   width: "100%",
                   borderRadius: "8px",
-                  py: 1.1,
+                  py: 0.85,
                   px: collapsed ? 0 : 2,
                   justifyContent: collapsed ? "center" : "flex-start",
                   bgcolor: isActive ? "#0056D2" : "transparent",
@@ -297,7 +311,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
                     primary={item.label}
                     slotProps={{
                       primary: {
-                        fontSize: "0.925rem",
+                        fontSize: "0.9rem",
                         fontWeight: isActive ? 700 : 500,
                       },
                     }}
@@ -310,14 +324,22 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
       </List>
 
       {/* Sección Inferior: Soporte, Ayuda y Cerrar Sesión */}
-      <Box sx={{ px: collapsed ? 1 : 2, pb: 3, pt: 1 }}>
-        <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)", mb: 2 }} />
+      <Box
+        sx={{
+          px: collapsed ? 1 : 2,
+          pb: isMobileDrawer ? 3.5 : 2,
+          pt: 1,
+          flexShrink: 0,
+          mt: "auto",
+        }}
+      >
+        <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)", mb: 1.5 }} />
 
-        <List disablePadding sx={{ mb: 2 }}>
+        <List disablePadding sx={{ mb: 1.5 }}>
           {bottomNav.map((item) => {
             const isActive = activeItem === item.id;
             return (
-              <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
+              <ListItem key={item.id} disablePadding sx={{ mb: 0.4 }}>
                 <ListItemButton
                   component={motion.div}
                   whileHover={collapsed ? {} : { x: 3 }}
@@ -332,7 +354,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
                   tabIndex={0}
                   sx={{
                     width: "100%",
-                    py: 0.75,
+                    py: 0.7,
                     px: collapsed ? 0 : 1.5,
                     justifyContent: collapsed ? "center" : "flex-start",
                     borderRadius: "6px",
@@ -392,13 +414,13 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
             color: "#D0D9E5",
             borderColor: "rgba(255, 255, 255, 0.2)",
             borderRadius: "10px",
-            py: 1,
+            py: 0.85,
             minWidth: collapsed ? "auto" : "auto",
             px: collapsed ? 0 : 2,
             justifyContent: collapsed ? "center" : "flex-start",
             textTransform: "none",
             fontWeight: 600,
-            fontSize: "0.875rem",
+            fontSize: "0.85rem",
             "&:hover": {
               borderColor: "rgba(255, 255, 255, 0.4)",
               bgcolor: "rgba(255, 255, 255, 0.05)",
