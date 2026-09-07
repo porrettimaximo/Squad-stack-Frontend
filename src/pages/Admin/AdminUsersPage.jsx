@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -44,10 +45,17 @@ import Sidebar from "../../components/layout/Sidebar";
 import DashboardNavbar from "../../components/layout/DashboardNavbar";
 import userService from "../../services/userService";
 import authService from "../../services/authService";
+import { useAccount } from "../../hooks/useAccount";
 
 export function AdminUsersPage() {
+  const navigate = useNavigate();
+  const { user: currentAuthUser } = useAccount();
   const muiTheme = useTheme();
   const isDesktop = useMediaQuery(muiTheme.breakpoints.up("md"));
+
+  const userName = currentAuthUser?.name
+    ? `${currentAuthUser.name} ${currentAuthUser.lastName || ""}`.trim()
+    : "Administrador";
 
   // Estados de la tabla y filtros
   const [users, setUsers] = useState([]);
@@ -305,7 +313,7 @@ export function AdminUsersPage() {
       }}
     >
       {/* Sidebar Desktop */}
-      {isDesktop && <Sidebar activeItem="admin-users" />}
+      {isDesktop && <Sidebar activeItem="admin" />}
 
       {/* Contenedor Principal */}
       <Box
@@ -317,7 +325,14 @@ export function AdminUsersPage() {
           overflowY: "auto",
         }}
       >
-        <DashboardNavbar currentTab={0} onTabChange={() => { }} />
+        <DashboardNavbar
+          showTabs={false}
+          userName={userName}
+          onTabChange={(e, val) => {
+            if (val === 0) navigate("/dashboard");
+            else if (val === 1) navigate("/investments");
+          }}
+        />
 
         <Box
           sx={{
