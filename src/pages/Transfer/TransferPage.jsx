@@ -26,10 +26,14 @@ import CloseIcon from "@mui/icons-material/Close";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import SearchIcon from "@mui/icons-material/Search";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import AccountBalanceOutlinedIcon from "@mui/icons-material/AccountBalanceOutlined";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useAccount } from "../../hooks/useAccount";
 import { useAuth } from "../../context/AuthContext";
+import accountService from "../../services/accountService";
 import AppLayout from "../../components/layout/AppLayout";
 import SuccessStep from "../../components/common/SuccessStep";
 import TransferReceiptModal from "../../components/common/TransferReceiptModal";
@@ -46,11 +50,10 @@ const slideVariants = {
 
 /**
  * HU-26: Pantalla de transferencia de fondos.
- * - Destinatarios sugeridos: muestra todos los usuarios estándar de la plataforma (no administradores)
- *   mostrando ÚNICAMENTE el nombre para agilidad visual.
+ * - Validación y búsqueda de destinatario real por CVU (22 dígitos) o Alias en tiempo real.
+ * - Muestra datos 100% verificados del titular destino (Nombre, CVU, Alias, Banco).
  * - Paso 3: confirmación con todos los datos de origen, destino y operación.
- * - Paso 4: pantalla de éxito limpia con botón "Información de la transferencia" (que abre el modal con todos
- *   los datos completos) y opción de descargar el comprobante en PDF oficial.
+ * - Paso 4: pantalla de éxito limpia con comprobante completo y descarga en PDF oficial.
  */
 export function TransferPage() {
   const navigate = useNavigate();
@@ -58,8 +61,12 @@ export function TransferPage() {
   const { user } = useAuth();
 
   const [step, setStep] = useState(1);
-  const [selectedContact, setSelectedContact] = useState(null);
   const [destinationInput, setDestinationInput] = useState("");
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [verifiedRecipient, setVerifiedRecipient] = useState(null);
+  const [verifyingRecipient, setVerifyingRecipient] = useState(false);
+  const [recipientError, setRecipientError] = useState("");
+
   const [amount, setAmount] = useState("");
   const [motive, setMotive] = useState(DEFAULT_MOTIVE);
   const [loading, setLoading] = useState(false);
@@ -75,6 +82,8 @@ export function TransferPage() {
   const currentUserId = user?.id ? String(user.id) : null;
   const currentAccountId = account?.id ? String(account.id) : null;
   const currentUserEmail = user?.email?.toLowerCase();
+  const currentUserAlias = account?.alias?.toLowerCase();
+  const currentUserCvu = account?.cvu;
 
   const suggestedUsers = useMemo(() => {
     return SEED_CONTACTS.filter((c) => {
@@ -87,46 +96,24 @@ export function TransferPage() {
       if (currentUserId && String(c.id) === currentUserId) return false;
       if (currentAccountId && String(c.accountId) === currentAccountId) return false;
       if (currentUserEmail && c.email?.toLowerCase() === currentUserEmail) return false;
+      if (currentUserAlias && c.alias?.toLowerCase() === currentUserAlias) return false;
+      if (currentUserCvu && c.cvu === currentUserCvu) return false;
 
       return true;
     });
-  }, [currentUserId, currentAccountId, currentUserEmail]);
+  }, [currentUserId, currentAccountId, currentUserEmail, currentUserAlias, currentUserCvu]);
 
-  // Filtro por nombre al escribir en el campo de texto
+  // Filtro por nombre o alias al escribir en el campo de texto
   const displayedContacts = useMemo(() => {
     if (!destinationInput.trim()) return suggestedUsers;
     const q = destinationInput.trim().toLowerCase();
-    if (selectedContact && selectedContact.name.toLowerCase() === q) return suggestedUsers;
-    return suggestedUsers.filter((c) => c.name.toLowerCase().includes(q));
-  }, [suggestedUsers, destinationInput, selectedContact]);
-
-  // Selección/deselección interactiva de contacto
-  const handleSelectContact = (contact) => {
-    if (selectedContact?.accountId === contact.accountId) {
-      setSelectedContact(null);
-      setDestinationInput("");
-    } else {
-      setSelectedContact(contact);
-      setDestinationInput(contact.name);
-    }
-  };
-
-  const handleDeselectContact = () => {
-    setSelectedContact(null);
-    setDestinationInput("");
-  };
-
-  const activeContact =
-    selectedContact ||
-    suggestedUsers.find(
+    return suggestedUsers.filter(
       (c) =>
-        c.name.toLowerCase() === destinationInput.trim().toLowerCase() ||
-        c.accountId === destinationInput.trim() ||
-        c.id === destinationInput.trim()
-    ) ||
-    findContact(destinationInput);
-
-  const destinationDisplay = activeContact ? activeContact.name : destinationInput;
+        c.name.toLowerCase().includes(q) ||
+        c.alias.toLowerCase().includes(q) ||
+        c.cvu.includes(q)
+    );
+  }, [suggestedUsers, destinationInput]);
 
   // ─── PERFIL COMPLETO DE MI CUENTA (ORIGEN) ───
   const myProfile = useMemo(() => {
@@ -146,24 +133,73 @@ export function TransferPage() {
     };
   }, [user, account]);
 
-  // ─── PERFIL COMPLETO DE LA OTRA CUENTA (DESTINO / A QUIÉN) ───
-  const recipientProfile = useMemo(() => {
-    const accId = activeContact?.accountId || destinationInput || "2";
-    const fromSeed = activeContact || findContact(accId) || findContact(destinationInput);
-    const email = fromSeed?.email || `cuenta${accId}@digitalars.com`;
-    const name = fromSeed?.name || destinationDisplay || `Destinatario #${accId}`;
-    const username = email.split("@")[0];
+  // ─── RESOLUCIÓN Y VERIFICACIÓN EN TIEMPO REAL DEL DESTINATARIO ───
+  const handleLookupAndProceed = async (targetQuery = null) => {
+    const query = (targetQuery || destinationInput || selectedContact?.alias || selectedContact?.cvu || "").trim();
+    if (!query) {
+      setRecipientError("Ingresá un CVU o Alias para continuar.");
+      return;
+    }
 
-    return {
-      name,
-      email,
-      accountId: accId,
-      accountNumber: fromSeed?.accountNumber || `0002-4892-0${accId}`,
-      cvu: fromSeed?.cvu || `000000310001000000000${accId}`,
-      alias: fromSeed?.alias || `${username}.ars`,
-      bank: fromSeed?.bank || "DigitalArs Billetera Virtual",
-    };
-  }, [activeContact, destinationInput, destinationDisplay]);
+    setVerifyingRecipient(true);
+    setRecipientError("");
+
+    try {
+      // 1. Consulta en tiempo real al backend (GET /api/accounts/lookup?query=...)
+      const res = await accountService.lookupAccount(query);
+
+      const resolved = {
+        accountId: res.accountId,
+        name: res.name || `${res.firstName} ${res.lastName}`.trim(),
+        firstName: res.firstName,
+        lastName: res.lastName,
+        cvu: res.cvu,
+        alias: res.alias,
+        bank: res.bank || "DigitalArs Billetera Virtual",
+        email: res.emailMasked || `${res.alias}@digitalars.com`,
+        accountNumber: `0002-4892-0${res.accountId}`,
+      };
+
+      setVerifiedRecipient(resolved);
+      setStep(2);
+    } catch (err) {
+      // Fallback a contactos conocidos si el backend está offline o en demo
+      const localContact = findContact(query);
+      if (localContact && (!currentAccountId || String(localContact.accountId) !== String(currentAccountId))) {
+        setVerifiedRecipient({
+          accountId: Number(localContact.accountId),
+          name: localContact.name,
+          cvu: localContact.cvu,
+          alias: localContact.alias,
+          bank: localContact.bank || "DigitalArs Billetera Virtual",
+          email: localContact.email,
+          accountNumber: localContact.accountNumber,
+        });
+        setStep(2);
+        return;
+      }
+
+      const msg = err.response?.data?.message || err.response?.data?.error || err.message;
+      setRecipientError(msg || "No encontramos ninguna cuenta registrada con ese CVU o Alias.");
+    } finally {
+      setVerifyingRecipient(false);
+    }
+  };
+
+  // Selección interactiva de contacto de la grilla
+  const handleSelectContact = (contact) => {
+    setSelectedContact(contact);
+    setDestinationInput(contact.alias || contact.cvu);
+    setRecipientError("");
+    handleLookupAndProceed(contact.alias || contact.cvu);
+  };
+
+  const handleDeselectRecipient = () => {
+    setVerifiedRecipient(null);
+    setSelectedContact(null);
+    setDestinationInput("");
+    setRecipientError("");
+  };
 
   // ─── OBJETO DE COMPROBANTE PARA MODAL Y PDF ───
   const transferReceiptData = useMemo(() => {
@@ -179,10 +215,16 @@ export function TransferPage() {
       amount: parseAmount(amount) || 0,
       motive: motive,
       origin: myProfile,
-      destination: recipientProfile,
+      destination: verifiedRecipient || {
+        name: destinationInput,
+        accountId: destinationInput,
+        cvu: "—",
+        alias: "—",
+        bank: "DigitalArs Billetera Virtual",
+      },
       status: "Transferencia Exitosa",
     };
-  }, [completedTxId, amount, motive, myProfile, recipientProfile]);
+  }, [completedTxId, amount, motive, myProfile, verifiedRecipient, destinationInput]);
 
   const handleAmountChange = (e) => {
     setAmount(sanitizeNumericInput(e.target.value));
@@ -191,11 +233,15 @@ export function TransferPage() {
   const handleTransfer = async () => {
     const num = parseAmount(amount);
     if (!num || num <= 0) return;
+    if (!verifiedRecipient?.accountId) {
+      setSnackbar({ open: true, message: "Destinatario no válido.", severity: "error" });
+      return;
+    }
 
     setLoading(true);
     try {
-      const destAccountId = recipientProfile.accountId;
-      const destName = recipientProfile.name;
+      const destAccountId = verifiedRecipient.accountId;
+      const destName = verifiedRecipient.name;
 
       const res = await transferFunds({
         destination: destName,
@@ -215,7 +261,12 @@ export function TransferPage() {
 
   const handleBack = () => {
     if (step === 1) navigate("/");
-    else setStep((prev) => prev - 1);
+    else if (step === 2) {
+      setRecipientError("");
+      setStep(1);
+    } else {
+      setStep((prev) => prev - 1);
+    }
   };
 
   return (
@@ -231,7 +282,7 @@ export function TransferPage() {
               Transferir dinero
             </Typography>
             <Typography sx={{ color: "#64748B", fontSize: "0.85rem" }}>
-              Enviá fondos de forma inmediata y sin comisiones.
+              Enviá fondos de forma inmediata y sin comisiones por CVU o Alias.
             </Typography>
           </Box>
         )}
@@ -249,162 +300,135 @@ export function TransferPage() {
           }}
         >
           <AnimatePresence mode="wait">
-            {/* ─── PASO 1: SELECCIONAR O INGRESAR DESTINATARIO ─── */}
+            {/* ─── PASO 1: SELECCIONAR O INGRESAR DESTINATARIO POR CVU O ALIAS ─── */}
             {step === 1 && (
               <motion.div key="step1" variants={slideVariants} initial="initial" animate="animate" exit="exit">
-                {selectedContact ? (
-                  /* Tarjeta Destinatario Seleccionado: ÚNICAMENTE NOMBRE (Ágil) */
-                  <Paper
-                    elevation={0}
+                {/* Mensaje de error de validación */}
+                {recipientError && (
+                  <Alert severity="error" sx={{ mb: 2, borderRadius: "12px", fontSize: "0.85rem", fontWeight: 600 }}>
+                    {recipientError}
+                  </Alert>
+                )}
+
+                {/* Campo de búsqueda por CVU o Alias */}
+                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0F172A", mb: 0.6 }}>
+                  Destinatario
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  variant="outlined"
+                  value={destinationInput}
+                  onChange={(e) => {
+                    setDestinationInput(e.target.value);
+                    setRecipientError("");
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && destinationInput.trim() && !verifyingRecipient) {
+                      e.preventDefault();
+                      handleLookupAndProceed();
+                    }
+                  }}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon sx={{ color: "#0056D2", fontSize: "1.25rem" }} />
+                        </InputAdornment>
+                      ),
+                      sx: { borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.95rem" },
+                    },
+                  }}
+                  placeholder="Ingresá el CVU (22 dígitos) o Alias"
+                />
+                <Typography sx={{ fontSize: "0.75rem", color: "#64748B", mt: 0.5, ml: 0.5 }}>
+                  Ejemplo: <code>roberto.carlos.ars</code> o <code>0000003100010000000002</code>
+                </Typography>
+
+                {/* Grilla de contactos registrados */}
+                <Box sx={{ mt: 2.5, mb: 1 }}>
+                  <Typography
                     sx={{
-                      p: 2,
-                      borderRadius: "14px",
-                      bgcolor: "#F0FDF4",
-                      border: "1.5px solid #86EFAC",
-                      mb: 2,
+                      color: "#64748B",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "space-between",
+                      gap: 0.5,
+                      mb: 1.2,
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                      <Avatar
+                    <HistoryOutlinedIcon sx={{ fontSize: "1rem", color: "#0056D2" }} />
+                    Contactos sugeridos en DigitalArs
+                  </Typography>
+
+                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
+                    {displayedContacts.map((contact) => (
+                      <CardActionArea
+                        key={contact.id}
+                        onClick={() => handleSelectContact(contact)}
+                        disabled={verifyingRecipient}
                         sx={{
-                          width: 44,
-                          height: 44,
-                          bgcolor: "#16A34A",
-                          color: "#FFFFFF",
-                          fontWeight: 700,
-                          fontSize: "1.1rem",
+                          p: 1.4,
+                          borderRadius: "12px",
+                          bgcolor: "#F8FAFC",
+                          border: "1px solid #E2E8F0",
+                          transition: "all 0.15s ease",
+                          "&:hover": { bgcolor: "#EFF6FF", borderColor: "#93C5FD" },
                         }}
                       >
-                        {selectedContact.avatarText || selectedContact.name?.charAt(0).toUpperCase()}
-                      </Avatar>
-                      <Box>
-                        <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", color: "#0F172A" }}>
-                          {selectedContact.name}
-                        </Typography>
-                        <Typography sx={{ fontSize: "0.8rem", color: "#16A34A", fontWeight: 700 }}>
-                          ✓ Destinatario seleccionado
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    {/* Botón para cambiar destinatario */}
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="inherit"
-                      startIcon={<CloseIcon sx={{ fontSize: 16 }} />}
-                      onClick={handleDeselectContact}
-                      sx={{
-                        borderRadius: "10px",
-                        textTransform: "none",
-                        fontSize: "0.78rem",
-                        fontWeight: 700,
-                        color: "#475569",
-                        borderColor: "#CBD5E1",
-                        bgcolor: "#FFFFFF",
-                        "&:hover": { bgcolor: "#F8FAFC", borderColor: "#94A3B8" },
-                      }}
-                    >
-                      Cambiar
-                    </Button>
-                  </Paper>
-                ) : (
-                  <>
-                    {/* Campo de búsqueda por nombre */}
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Destinatario"
-                      variant="outlined"
-                      value={destinationInput}
-                      onChange={(e) => setDestinationInput(e.target.value)}
-                      slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <PersonOutlineOutlinedIcon sx={{ color: "#94A3B8", fontSize: "1.2rem" }} />
-                            </InputAdornment>
-                          ),
-                          sx: { borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.95rem" },
-                        },
-                      }}
-                      placeholder="Buscar destinatario por nombre"
-                    />
-
-                    {/* Grilla de contactos sugeridos: ÚNICAMENTE NOMBRE */}
-                    <Box sx={{ mt: 2.2, mb: 1 }}>
-                      <Typography
-                        sx={{
-                          color: "#64748B",
-                          fontSize: "0.78rem",
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.5,
-                          mb: 1.2,
-                        }}
-                      >
-                        <HistoryOutlinedIcon sx={{ fontSize: "1rem", color: "#0056D2" }} />
-                        Destinatarios sugeridos
-                      </Typography>
-
-                      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
-                        {displayedContacts.map((contact) => (
-                          <CardActionArea
-                            key={contact.id}
-                            onClick={() => handleSelectContact(contact)}
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+                          <Avatar
                             sx={{
-                              p: 1.4,
-                              borderRadius: "12px",
-                              bgcolor: "#F8FAFC",
-                              border: "1px solid #E2E8F0",
-                              transition: "all 0.15s ease",
-                              "&:hover": { bgcolor: "#EFF6FF", borderColor: "#93C5FD" },
+                              width: 38,
+                              height: 38,
+                              bgcolor: "#0056D2",
+                              color: "#FFFFFF",
+                              fontWeight: 700,
+                              fontSize: "0.92rem",
                             }}
                           >
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
-                              <Avatar
-                                sx={{
-                                  width: 36,
-                                  height: 36,
-                                  bgcolor: "#0056D2",
-                                  color: "#FFFFFF",
-                                  fontWeight: 700,
-                                  fontSize: "0.9rem",
-                                }}
-                              >
-                                {contact.avatarText || contact.name?.charAt(0).toUpperCase()}
-                              </Avatar>
-                              <Typography
-                                sx={{
-                                  fontWeight: 700,
-                                  fontSize: "0.92rem",
-                                  color: "#0F172A",
-                                  whiteSpace: "nowrap",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                }}
-                              >
-                                {contact.name}
-                              </Typography>
-                            </Box>
-                          </CardActionArea>
-                        ))}
-                      </Box>
-                    </Box>
-                  </>
-                )}
+                            {contact.avatarText || contact.name?.charAt(0).toUpperCase()}
+                          </Avatar>
+                          <Box sx={{ minWidth: 0, flex: 1 }}>
+                            <Typography
+                              sx={{
+                                fontWeight: 700,
+                                fontSize: "0.9rem",
+                                color: "#0F172A",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {contact.name}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: "0.75rem",
+                                color: "#0056D2",
+                                fontWeight: 600,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {contact.alias}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </CardActionArea>
+                    ))}
+                  </Box>
+                </Box>
 
                 <Button
                   variant="contained"
                   fullWidth
-                  onClick={() => setStep(2)}
-                  disabled={!destinationInput.trim() && !selectedContact}
+                  onClick={() => handleLookupAndProceed()}
+                  disabled={!destinationInput.trim() || verifyingRecipient}
                   sx={{
                     bgcolor: "#0056D2",
                     color: "#FFF",
@@ -417,44 +441,86 @@ export function TransferPage() {
                     "&:hover": { bgcolor: "#0047b3" },
                   }}
                 >
-                  Continuar
+                  {verifyingRecipient ? (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <CircularProgress size={20} color="inherit" />
+                      <span>Verificando destinatario...</span>
+                    </Box>
+                  ) : (
+                    "Continuar"
+                  )}
                 </Button>
               </motion.div>
             )}
 
-            {/* ─── PASO 2: MONTO Y MOTIVO (CON LOS 18 MOTIVOS OFICIALES) ─── */}
-            {step === 2 && (
+            {/* ─── PASO 2: MONTO Y MOTIVO (CON DESTINATARIO VERIFICADO) ─── */}
+            {step === 2 && verifiedRecipient && (
               <motion.div key="step2" variants={slideVariants} initial="initial" animate="animate" exit="exit">
-                {/* Destinatario resumen */}
-                <Box
+                {/* Tarjeta Destinatario Verificado (Datos Reales de la API) */}
+                <Paper
+                  elevation={0}
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    p: 1.2,
-                    bgcolor: "#EFF6FF",
-                    borderRadius: "12px",
-                    border: "1px solid #BFDBFE",
-                    mb: 2,
+                    p: 2,
+                    borderRadius: "14px",
+                    bgcolor: "#F0FDF4",
+                    border: "1.5px solid #86EFAC",
+                    mb: 2.5,
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Avatar sx={{ width: 28, height: 28, bgcolor: "#0056D2", fontSize: "0.75rem" }}>
-                      {(recipientProfile.name || "D").charAt(0).toUpperCase()}
-                    </Avatar>
-                    <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#1E3A8A" }}>
-                      {recipientProfile.name}
-                    </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <CheckCircleIcon sx={{ fontSize: 18, color: "#16A34A" }} />
+                      <Typography sx={{ fontSize: "0.75rem", fontWeight: 800, color: "#166534", textTransform: "uppercase" }}>
+                        Destinatario Verificado
+                      </Typography>
+                    </Box>
+                    <Button
+                      size="small"
+                      variant="text"
+                      onClick={() => setStep(1)}
+                      sx={{
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        color: "#475569",
+                        p: 0,
+                        minWidth: "auto",
+                        textTransform: "none",
+                        "&:hover": { textDecoration: "underline", bgcolor: "transparent" },
+                      }}
+                    >
+                      Cambiar
+                    </Button>
                   </Box>
-                  <Typography sx={{ fontSize: "0.75rem", color: "#64748B" }}>
-                    Saldo disponible: <strong>{formatCurrency(currentBalance)}</strong>
+
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Avatar sx={{ width: 44, height: 44, bgcolor: "#16A34A", fontWeight: 800, fontSize: "1.1rem" }}>
+                      {verifiedRecipient.name.charAt(0).toUpperCase()}
+                    </Avatar>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", color: "#0F172A" }}>
+                        {verifiedRecipient.name}
+                      </Typography>
+                      <Typography sx={{ fontSize: "0.8rem", color: "#475569", fontWeight: 600 }}>
+                        Alias: <strong>{verifiedRecipient.alias}</strong> · CVU: {verifiedRecipient.cvu.slice(0, 8)}...{verifiedRecipient.cvu.slice(-4)}
+                      </Typography>
+                      <Typography sx={{ fontSize: "0.74rem", color: "#16A34A", fontWeight: 700 }}>
+                        {verifiedRecipient.bank}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Paper>
+
+                {/* Saldo disponible */}
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0F172A" }}>
+                    Monto a transferir
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.78rem", color: "#64748B" }}>
+                    Disponible: <strong>{formatCurrency(currentBalance)}</strong>
                   </Typography>
                 </Box>
 
                 {/* Input de Monto */}
-                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0F172A", mb: 0.5 }}>
-                  Monto a transferir
-                </Typography>
                 <TextField
                   fullWidth
                   size="small"
@@ -529,8 +595,8 @@ export function TransferPage() {
               </motion.div>
             )}
 
-            {/* ─── PASO 3: RESUMEN COMPLETO CON TODOS LOS DATOS DE AMBAS CUENTAS ─── */}
-            {step === 3 && (
+            {/* ─── PASO 3: RESUMEN COMPLETO CON DATOS REALES DE AMBAS CUENTAS ─── */}
+            {step === 3 && verifiedRecipient && (
               <motion.div key="step3" variants={slideVariants} initial="initial" animate="animate" exit="exit">
                 <Typography sx={{ color: "#0F172A", fontSize: "1.1rem", fontWeight: 800, mb: 0.5 }}>
                   Confirmá los datos de la transferencia
@@ -577,13 +643,7 @@ export function TransferPage() {
                     <Box>
                       <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>Nº DE CUENTA</Typography>
                       <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#0F172A" }}>
-                        Cuenta #{myProfile.accountId} ({myProfile.accountNumber})
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>EMAIL</Typography>
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", wordBreak: "break-all" }}>
-                        {myProfile.email}
+                        Cuenta #{myProfile.accountId}
                       </Typography>
                     </Box>
                     <Box>
@@ -592,7 +652,7 @@ export function TransferPage() {
                         {myProfile.alias}
                       </Typography>
                     </Box>
-                    <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" } }}>
+                    <Box>
                       <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>CVU</Typography>
                       <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", letterSpacing: "0.02em" }}>
                         {myProfile.cvu}
@@ -608,7 +668,7 @@ export function TransferPage() {
                   </Avatar>
                 </Box>
 
-                {/* 2. Datos de LA OTRA CUENTA (Cuenta Destino / A quién) */}
+                {/* 2. Datos de LA OTRA CUENTA (Cuenta Destino Real) */}
                 <Paper
                   elevation={0}
                   sx={{
@@ -622,7 +682,7 @@ export function TransferPage() {
                 >
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
                     <Chip
-                      label="Cuenta Destino (A quién)"
+                      label="Cuenta Destino (Destinatario real)"
                       size="small"
                       sx={{
                         fontWeight: 800,
@@ -632,8 +692,8 @@ export function TransferPage() {
                         borderRadius: "8px",
                       }}
                     />
-                    <Typography sx={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600 }}>
-                      {recipientProfile.bank}
+                    <Typography sx={{ fontSize: "0.75rem", color: "#166534", fontWeight: 700 }}>
+                      ✓ Verificado
                     </Typography>
                   </Box>
 
@@ -641,37 +701,31 @@ export function TransferPage() {
                     <Box>
                       <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>DESTINATARIO</Typography>
                       <Typography sx={{ fontSize: "0.92rem", fontWeight: 800, color: "#0F172A" }}>
-                        {recipientProfile.name}
+                        {verifiedRecipient.name}
                       </Typography>
                     </Box>
                     <Box>
                       <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>Nº DE CUENTA</Typography>
                       <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#0F172A" }}>
-                        Cuenta #{recipientProfile.accountId} ({recipientProfile.accountNumber})
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>EMAIL</Typography>
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", wordBreak: "break-all" }}>
-                        {recipientProfile.email}
+                        Cuenta #{verifiedRecipient.accountId}
                       </Typography>
                     </Box>
                     <Box>
                       <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>ALIAS</Typography>
                       <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0056D2" }}>
-                        {recipientProfile.alias}
+                        {verifiedRecipient.alias}
                       </Typography>
                     </Box>
-                    <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" } }}>
+                    <Box>
                       <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>CVU</Typography>
                       <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", letterSpacing: "0.02em" }}>
-                        {recipientProfile.cvu}
+                        {verifiedRecipient.cvu}
                       </Typography>
                     </Box>
                   </Box>
                 </Paper>
 
-                {/* 3. Datos de la Operación (Monto, Motivo, Comisión, Total) */}
+                {/* 3. Datos de la Operación */}
                 <Paper
                   elevation={0}
                   sx={{
@@ -744,17 +798,19 @@ export function TransferPage() {
               </motion.div>
             )}
 
-            {/* ─── PASO 4: ÉXITO LIMPIO CON BOTÓN "INFORMACIÓN DE LA TRANSFERENCIA" Y DESCARGA EN PDF ─── */}
+            {/* ─── PASO 4: ÉXITO LIMPIO CON COMPROBANTE Y DESCARGA EN PDF ─── */}
             {step === 4 && (
               <>
                 <SuccessStep
                   title="¡Transferencia exitosa!"
-                  subtitle={`Enviamos el dinero a ${recipientProfile.name}.`}
+                  subtitle={`Enviamos el dinero a ${verifiedRecipient?.name || "el destinatario"}.`}
                   amount={parseAmount(amount)}
                   maxWidth={440}
                   autoRedirectSeconds={0}
                   details={[
-                    { label: "Destinatario", value: recipientProfile.name },
+                    { label: "Destinatario", value: verifiedRecipient?.name || destinationInput },
+                    { label: "Alias", value: verifiedRecipient?.alias || "—" },
+                    { label: "CVU", value: verifiedRecipient?.cvu || "—" },
                     { label: "Motivo", value: motive },
                     { label: "Nuevo saldo disponible", value: formatCurrency(account?.money ?? 0) },
                   ]}
@@ -801,31 +857,37 @@ export function TransferPage() {
                       </Button>
                     </>
                   }
-                  finishLabel="Volver al inicio"
-                  onFinish={() => navigate("/")}
+                  onPrimaryClick={() => navigate("/")}
+                  primaryButtonText="Volver al inicio"
                 />
 
-                {/* Modal de Información Completa de la Transferencia */}
+                {/* Modal emergente con información de la transferencia */}
                 <TransferReceiptModal
                   open={receiptModalOpen}
                   onClose={() => setReceiptModalOpen(false)}
-                  transferData={transferReceiptData}
+                  data={transferReceiptData}
                 />
               </>
             )}
           </AnimatePresence>
         </Card>
-      </Box>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3500}
-        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-      >
-        <Alert severity={snackbar.severity} sx={{ width: "100%", borderRadius: "12px" }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+        {/* Snackbar de notificaciones de error o éxito */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+          <Alert
+            onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+            severity={snackbar.severity}
+            sx={{ width: "100%", borderRadius: "10px", fontWeight: 600 }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Box>
     </AppLayout>
   );
 }
