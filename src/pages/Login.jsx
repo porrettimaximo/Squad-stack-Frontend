@@ -74,21 +74,27 @@ export const Login = () => {
       sx={{
         position: "relative",
         width: "100vw",
-        height: "100vh",
-        overflow: "hidden",
+        minHeight: "100dvh",
+        height: "auto",
+        overflowY: "auto",
+        overflowX: "hidden",
         display: "flex",
+        flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
         backgroundColor: "#001639",
+        py: { xs: 3, sm: 4 },
+        px: 2,
       }}>
       <Box
         sx={{
-          position: "absolute",
+          position: "fixed",
           top: 0,
           left: 0,
-          width: "100%",
-          height: "100%",
+          width: "100vw",
+          height: "100vh",
           zIndex: 0,
+          pointerEvents: "none",
         }}>
         <DotGrid
           dotSize={5}
@@ -109,28 +115,28 @@ export const Login = () => {
           zIndex: 1,
           maxWidth: 420,
           width: "100%",
-          borderRadius: "20px",
+          borderRadius: { xs: "18px", sm: "20px" },
           border: "1px solid rgba(255, 255, 255, 0.1)",
           backgroundColor: "rgba(2, 18, 44, 0.85)",
           backdropFilter: "blur(8px)",
           boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.5)",
-          m: 2,
+          my: "auto",
         }}>
-        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-          <Box sx={{ mb: 3, textAlign: "center" }}>
+        <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+          <Box sx={{ mb: { xs: 2, sm: 3 }, textAlign: "center" }}>
             <Box
               component="img"
               src={iconoPrincipal}
               alt="DigitalArs"
               sx={{
                 width: "100%",
-                maxWidth: 240,
+                maxWidth: { xs: 180, sm: 230 },
                 height: "auto",
-                maxHeight: 110,
+                maxHeight: { xs: 80, sm: 105 },
                 objectFit: "contain",
                 mx: "auto",
                 display: "block",
-                mb: 1.5,
+                mb: 1,
               }}
             />
           </Box>
