@@ -813,7 +813,7 @@ export function AdminUsersPage() {
                       initialBalance: e.target.value,
                     })
                   }
-                  inputProps={{ min: 0, step: "100" }}
+                  slotProps={{ htmlInput: { min: 0, step: "100" } }}
                 />
               </Box>
             </Box>

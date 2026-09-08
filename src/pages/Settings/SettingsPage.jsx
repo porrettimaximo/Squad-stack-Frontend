@@ -111,7 +111,7 @@ export function SettingsPage() {
                 checked={darkMode}
                 onChange={toggleTheme}
                 color="primary"
-                inputProps={{ "aria-label": "Alternar modo oscuro" }}
+                slotProps={{ input: { "aria-label": "Alternar modo oscuro" } }}
               />
             </Box>
           </CardContent>
