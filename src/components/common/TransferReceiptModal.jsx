@@ -28,10 +28,11 @@ import { downloadTransferReceiptPdf } from "../../utils/pdfGenerator";
  * Se utiliza tanto al finalizar una transferencia como al hacer clic en una transferencia desde el Historial.
  * Permite ver todos los datos de origen, destino y descargar el comprobante en PDF oficial.
  */
-export function TransferReceiptModal({ open, onClose, transferData }) {
+export function TransferReceiptModal({ open, onClose, transferData, data }) {
   const [copied, setCopied] = useState(false);
 
-  if (!transferData) return null;
+  const payload = transferData || data;
+  if (!payload) return null;
 
   const {
     operationId = "TX-0001",
@@ -41,7 +42,7 @@ export function TransferReceiptModal({ open, onClose, transferData }) {
     origin = {},
     destination = {},
     status = "Completada / Exitosa",
-  } = transferData;
+  } = payload;
 
   const handleCopyId = () => {
     navigator.clipboard?.writeText(String(operationId));

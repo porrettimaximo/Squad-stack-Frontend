@@ -15,21 +15,25 @@ export function SuccessStep({
   amount = 0,
   details = [],
   onFinish,
+  onPrimaryClick,
   autoRedirectSeconds = 3,
   maxWidth = 420,
   extraActions = null,
   finishLabel = "Volver al inicio",
+  primaryButtonText,
 }) {
+  const handleAction = onFinish || onPrimaryClick;
+  const label = primaryButtonText || finishLabel;
   const [secondsLeft, setSecondsLeft] = useState(autoRedirectSeconds);
 
   useEffect(() => {
-    if (!autoRedirectSeconds || autoRedirectSeconds <= 0 || !onFinish) return;
+    if (!autoRedirectSeconds || autoRedirectSeconds <= 0 || !handleAction) return;
 
     const timer = setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          onFinish();
+          handleAction();
           return 0;
         }
         return prev - 1;
@@ -37,7 +41,7 @@ export function SuccessStep({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [autoRedirectSeconds, onFinish]);
+  }, [autoRedirectSeconds, handleAction]);
 
   return (
     <motion.div
@@ -179,7 +183,7 @@ export function SuccessStep({
         variant="contained"
         fullWidth
         endIcon={<ArrowForwardIcon />}
-        onClick={onFinish}
+        onClick={handleAction}
         sx={{
           maxWidth: maxWidth,
           bgcolor: "#0056D2",
@@ -193,7 +197,7 @@ export function SuccessStep({
           "&:hover": { bgcolor: "#0047b3" },
         }}
       >
-        {finishLabel} {secondsLeft > 0 ? `(${secondsLeft}s)` : ""}
+        {label} {secondsLeft > 0 ? `(${secondsLeft}s)` : ""}
       </Button>
     </motion.div>
   );

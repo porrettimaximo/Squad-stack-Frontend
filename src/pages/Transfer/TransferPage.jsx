@@ -857,7 +857,9 @@ export function TransferPage() {
                       </Button>
                     </>
                   }
+                  onFinish={() => navigate("/")}
                   onPrimaryClick={() => navigate("/")}
+                  finishLabel="Volver al inicio"
                   primaryButtonText="Volver al inicio"
                 />
 
@@ -865,6 +867,7 @@ export function TransferPage() {
                 <TransferReceiptModal
                   open={receiptModalOpen}
                   onClose={() => setReceiptModalOpen(false)}
+                  transferData={transferReceiptData}
                   data={transferReceiptData}
                 />
               </>
