@@ -14,6 +14,21 @@ function resolveMotive(tx) {
     return "Varios";
   }
 
+  // Pagos de servicios: "Servicio: Electricidad (Luz)" → preservar tal cual
+  if (lower.startsWith("servicio:")) {
+    return concept;
+  }
+
+  // Movimientos de reservas: "Reserva: Vacaciones" → preservar tal cual
+  if (lower.startsWith("reserva:")) {
+    return concept;
+  }
+
+  // Inversiones (Plazo Fijo)
+  if (lower.startsWith("constitución de plazo fijo") || lower.startsWith("constitucion de plazo fijo")) {
+    return "Inversión: Plazo Fijo";
+  }
+
   // Si incluye un motivo después de un separador (ej: "Transferencia recibida · Salud")
   if (concept.includes("·")) {
     const parts = concept.split("·");
@@ -130,10 +145,11 @@ export const transactionService = {
   } = {}) {
     const params = { page, pageSize };
     if (type !== null && type !== "" && type !== "all") {
-      params.type = type;
+      params.movementType = type;
     }
     if (dateFrom) params.dateFrom = dateFrom;
     if (dateTo) params.dateTo = dateTo;
+    if (search && search.trim()) params.search = search.trim();
 
     try {
       const response = await api.get("/transactions/me", { params });
@@ -185,18 +201,6 @@ export const transactionService = {
           };
         });
 
-
-        if (search && search.trim()) {
-          const q = search.toLowerCase().trim();
-          items = items.filter(
-            (item) =>
-              item.title?.toLowerCase().includes(q) ||
-              item.category?.toLowerCase().includes(q) ||
-              item.subtitle?.toLowerCase().includes(q) ||
-              item.counterpart?.toLowerCase().includes(q)
-          );
-        }
-
         return {
           items,
           page: response.data.page || page,
@@ -206,6 +210,7 @@ export const transactionService = {
         };
       }
     } catch {
+
       // Fallback a filtrado en memoria solo si no hay sesión
     }
 
@@ -275,7 +280,7 @@ export const transactionService = {
    * POST /api/transactions/transfer
    * Body: { destinationAccountId, amount }
    */
-  async transfer({ destination, destinationAccountId, amount, concept }) {
+  async transfer({ destination, destinationAccountId, amount, concept, reserveId }) {
     let destId = destinationAccountId || destination;
     const contact = findContact(destId);
     if (contact?.accountId) {
@@ -286,6 +291,7 @@ export const transactionService = {
       destinationAccountId: Number(destId),
       amount: Number(amount),
       concept: concept || null,
+      reserveId: reserveId ? Number(reserveId) : null,
     });
     return response.data;
   },

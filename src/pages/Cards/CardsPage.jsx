@@ -214,7 +214,7 @@ export function CardsPage() {
             variant="h4"
             sx={{
               fontWeight: 800,
-              color: "#0F172A",
+              color: "text.primary",
               fontSize: { xs: "1.75rem", sm: "2.25rem" },
               letterSpacing: "-0.02em",
               mb: 1,
@@ -222,7 +222,7 @@ export function CardsPage() {
           >
             {activeVirtualCard ? "Mis Tarjetas" : "Escoge tu Tarjeta DigitalArs"}
           </Typography>
-          <Typography variant="body1" sx={{ color: "#64748B", fontSize: "1rem" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary", fontSize: "1rem" }}>
             {activeVirtualCard
               ? "Administrá tu tarjeta virtual al instante, gestioná su seguridad y visualizá tus beneficios."
               : "Operá de forma ágil, segura y sin comisiones ocultas tanto en comercios locales como del exterior."}
@@ -521,7 +521,7 @@ export function CardsPage() {
                     variant="outlined"
                     startIcon={
                       copying ? (
-                        <CircularProgress size={18} sx={{ color: "#334155" }} />
+                        <CircularProgress size={18} sx={{ color: "text.secondary" }} />
                       ) : (
                         <ContentCopyIcon />
                       )
@@ -533,12 +533,12 @@ export function CardsPage() {
                       textTransform: "none",
                       fontWeight: 600,
                       borderColor: "#CBD5E1",
-                      color: "#334155",
-                      bgcolor: "#FFFFFF",
+                      color: "text.secondary",
+                      bgcolor: "background.paper",
                       px: 2,
                       py: 1,
                       "&:hover": {
-                        bgcolor: "#F1F5F9",
+                        bgcolor: "action.hover",
                         borderColor: "#94A3B8",
                       },
                     }}
@@ -559,7 +559,7 @@ export function CardsPage() {
                       fontWeight: 600,
                       borderColor: "#CBD5E1",
                       color: "#0056D2",
-                      bgcolor: "#FFFFFF",
+                      bgcolor: "background.paper",
                       px: 2,
                       py: 1,
                       "&:hover": {
@@ -586,13 +586,13 @@ export function CardsPage() {
                       borderRadius: "12px",
                       textTransform: "none",
                       fontWeight: 600,
-                      borderColor: activeVirtualCard.isFrozen ? "#0284C7" : "#CBD5E1",
-                      color: activeVirtualCard.isFrozen ? "#0284C7" : "#475569",
-                      bgcolor: activeVirtualCard.isFrozen ? "#F0F9FF" : "#FFFFFF",
+                      borderColor: activeVirtualCard.isFrozen ? "#0284C7" : "divider",
+                      color: activeVirtualCard.isFrozen ? "#0284C7" : "text.primary",
+                      bgcolor: activeVirtualCard.isFrozen ? "rgba(2, 132, 199, 0.12)" : "background.paper",
                       px: 2,
                       py: 1,
                       "&:hover": {
-                        bgcolor: activeVirtualCard.isFrozen ? "#E0F2FE" : "#F8FAFC",
+                        bgcolor: activeVirtualCard.isFrozen ? "rgba(2, 132, 199, 0.2)" : "action.hover",
                         borderColor: "#0284C7",
                       },
                     }}
@@ -629,17 +629,17 @@ export function CardsPage() {
                   severity="info"
                   sx={{
                     borderRadius: "14px",
-                    bgcolor: "rgba(0, 86, 210, 0.05)",
-                    color: "#0F172A",
-                    border: "1px solid rgba(0, 86, 210, 0.15)",
+                    bgcolor: "rgba(0, 86, 210, 0.08)",
+                    color: "text.primary",
+                    border: "1px solid rgba(0, 86, 210, 0.2)",
                     mb: 5,
-                    "& .MuiAlert-icon": { color: "#0056D2" },
+                    "& .MuiAlert-icon": { color: "#38BDF8" },
                   }}
                 >
                   <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.3 }}>
                     Seguridad y protección DigitalArs
                   </Typography>
-                  <Typography variant="body2" sx={{ color: "#475569", fontSize: "0.85rem" }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
                     Tu tarjeta virtual está protegida contra fraudes y compras no autorizadas.
                     Podés congelarla al instante cuando no la uses o regenerarla dándola de baja y
                     solicitando una nueva.
@@ -653,7 +653,7 @@ export function CardsPage() {
               variant="h6"
               sx={{
                 fontWeight: 700,
-                color: "#1E293B",
+                color: "text.primary",
                 mb: 2.5,
                 fontSize: "1.2rem",
               }}
@@ -677,7 +677,7 @@ export function CardsPage() {
                         border: "1.5px solid #0056D2",
                         boxShadow: "0 10px 25px -5px rgba(0, 86, 210, 0.12)",
                         p: { xs: 2.5, sm: 3 },
-                        bgcolor: "#FFFFFF",
+                        bgcolor: "background.paper",
                         display: "flex",
                         flexDirection: { xs: "column", sm: "row" },
                         alignItems: { xs: "flex-start", sm: "center" },
@@ -714,7 +714,7 @@ export function CardsPage() {
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
                             <Typography
                               variant="h6"
-                              sx={{ fontWeight: 700, color: "#0F172A", fontSize: "1.1rem" }}
+                              sx={{ fontWeight: 700, color: "text.primary", fontSize: "1.1rem" }}
                             >
                               Tarjeta virtual
                             </Typography>
@@ -730,7 +730,7 @@ export function CardsPage() {
                               }}
                             />
                           </Box>
-                          <Box component="ul" sx={{ pl: 2, m: 0, color: "#64748B", fontSize: "0.88rem" }}>
+                          <Box component="ul" sx={{ pl: 2, m: 0, color: "text.secondary", fontSize: "0.88rem" }}>
                             <li>Instantánea, prepaga, gratuita con cashback en tus compras.</li>
                             <li>Sin impuesto del 30% en compras internacionales seleccionadas.</li>
                             <li>Activación y disponibilidad inmediata en tu cuenta.</li>
@@ -774,9 +774,9 @@ export function CardsPage() {
                 <Card
                   sx={{
                     borderRadius: "18px",
-                    border: "1px solid #E2E8F0",
+                    border: "1px solid", borderColor: "divider",
                     p: { xs: 2.5, sm: 3 },
-                    bgcolor: "#FFFFFF",
+                    bgcolor: "background.paper",
                     display: "flex",
                     flexDirection: { xs: "column", sm: "row" },
                     alignItems: { xs: "flex-start", sm: "center" },
@@ -807,7 +807,7 @@ export function CardsPage() {
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
                         <Typography
                           variant="h6"
-                          sx={{ fontWeight: 700, color: "#0F172A", fontSize: "1.1rem" }}
+                          sx={{ fontWeight: 700, color: "text.primary", fontSize: "1.1rem" }}
                         >
                           DigitalArs Card (Física)
                         </Typography>
@@ -815,15 +815,15 @@ export function CardsPage() {
                           label="PRÓXIMAMENTE"
                           size="small"
                           sx={{
-                            bgcolor: "#F1F5F9",
-                            color: "#475569",
+                            bgcolor: "action.hover",
+                            color: "text.secondary",
                             fontWeight: 700,
                             fontSize: "0.68rem",
                             height: 22,
                           }}
                         />
                       </Box>
-                      <Box component="ul" sx={{ pl: 2, m: 0, color: "#64748B", fontSize: "0.88rem" }}>
+                      <Box component="ul" sx={{ pl: 2, m: 0, color: "text.secondary", fontSize: "0.88rem" }}>
                         <li>Prepaga, gratuita y con envío a tu domicilio sin cargo.</li>
                         <li>Tecnología Contactless para compras presenciales en comercios.</li>
                         <li>Extracciones en toda la red de cajeros del país.</li>
@@ -856,9 +856,9 @@ export function CardsPage() {
                 <Card
                   sx={{
                     borderRadius: "18px",
-                    border: "1px solid #E2E8F0",
+                    border: "1px solid", borderColor: "divider",
                     p: { xs: 2.5, sm: 3 },
-                    bgcolor: "#FFFFFF",
+                    bgcolor: "background.paper",
                     display: "flex",
                     flexDirection: { xs: "column", sm: "row" },
                     alignItems: { xs: "flex-start", sm: "center" },
@@ -889,7 +889,7 @@ export function CardsPage() {
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
                         <Typography
                           variant="h6"
-                          sx={{ fontWeight: 700, color: "#0F172A", fontSize: "1.1rem" }}
+                          sx={{ fontWeight: 700, color: "text.primary", fontSize: "1.1rem" }}
                         >
                           DigitalArs Credit Card
                         </Typography>
@@ -897,15 +897,15 @@ export function CardsPage() {
                           label="PRÓXIMAMENTE"
                           size="small"
                           sx={{
-                            bgcolor: "#F1F5F9",
-                            color: "#475569",
+                            bgcolor: "action.hover",
+                            color: "text.secondary",
                             fontWeight: 700,
                             fontSize: "0.68rem",
                             height: 22,
                           }}
                         />
                       </Box>
-                      <Box component="ul" sx={{ pl: 2, m: 0, color: "#64748B", fontSize: "0.88rem" }}>
+                      <Box component="ul" sx={{ pl: 2, m: 0, color: "text.secondary", fontSize: "0.88rem" }}>
                         <li>Respaldada con tu saldo e inversiones en la plataforma.</li>
                         <li>Financiación en cuotas fijas sin trámites burocráticos.</li>
                         <li>Sin historial crediticio previo requerido.</li>
@@ -949,11 +949,11 @@ export function CardsPage() {
             },
           }}
         >
-          <DialogTitle sx={{ fontWeight: 700, color: "#0F172A", pb: 1 }}>
+          <DialogTitle sx={{ fontWeight: 700, color: "text.primary", pb: 1 }}>
             ¿Dar de baja tu Tarjeta Virtual?
           </DialogTitle>
           <DialogContent>
-            <DialogContentText sx={{ color: "#64748B", fontSize: "0.95rem" }}>
+            <DialogContentText sx={{ color: "text.secondary", fontSize: "0.95rem" }}>
               Esta acción es <strong>definitiva e irreversible</strong>. Una vez dada de baja,
               la tarjeta quedará inhabilitada de forma permanente para compras o suscripciones.
               Podrás solicitar una nueva tarjeta virtual en cualquier momento cuando lo desees.
@@ -964,7 +964,7 @@ export function CardsPage() {
               onClick={() => setDeleteModalOpen(false)}
               disabled={deactivating}
               sx={{
-                color: "#64748B",
+                color: "text.secondary",
                 textTransform: "none",
                 fontWeight: 600,
                 borderRadius: "10px",

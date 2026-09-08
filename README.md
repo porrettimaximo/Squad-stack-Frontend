@@ -1,4 +1,4 @@
-﻿# DigitalArs — Billetera Virtual
+# DigitalArs — Billetera Virtual
 
 > **Proyecto:** Billetera Virtual (Digital Wallet) para la aceleración técnica en **Alchemie Acceleration Tech**.  
 > **Equipo:** **Squad-stack** — Emmanuel, Andrés, Micaela y Máximo.
@@ -28,9 +28,9 @@ La selección tecnológica fue concebida para balancear robustez empresarial, ac
 | **[@mui/icons-material](https://mui.com/material-ui/material-icons/)** | `v6 / v9` | **Catálogo de Iconografía Vectorial**: Biblioteca unificada de glifos SVG vectoriales optimizados para la barra lateral (navegación), indicadores de estado, accesos directos y categorización de movimientos financieros. |
 | **[Motion (motion.dev)](https://motion.dev/) / Framer Motion** | `13` | **Motor de Animaciones y Físicas Declarativas**: Orquesta microinteracciones orgánicas mediante físicas de resorte (*spring physics*), retroalimentación táctil de pulsación (`whileTap`), elevaciones dinámicas al posar el cursor (`whileHover`), animación en keyframes de alertas y entradas escalonadas (*staggered delays*). |
 | **[React Bits](https://reactbits.dev/)** | *Design Patterns* | **Catálogo de Patrones Visuales Avanzados**: Referencia de diseño para componentes fintech de alto impacto visual, integrando tarjetas con resplandor focal (*Glow Spotlight*), efectos de levitación de tarjetas (*Card Hover Lift*), microinteracciones en badges y transiciones direccionales en listas. |
-| **[Tailwind CSS](https://tailwindcss.com/)** | `v4` | **Utilidades CSS de Maquetación**: Complementa el sistema estructural de Material UI con utilidades de espaciado granular, micro-alineaciones responsivas y flexbox/grid ágil sin sobrecarga de especificidad. |
 | **[Axios](https://axios-http.com/)** | `1.20` | **Cliente de Comunicación HTTP**: Centraliza la capa de consumo hacia el backend mediante una instancia singleton (`src/services/api.js`). Incorpora interceptores automáticos de petición (inyección del encabezado `Authorization: Bearer <token>`) y de respuesta (detección del código `401 Unauthorized` para expiración y cierre de sesión). |
-| **[React Router DOM](https://reactrouter.com/)** | `7` | **Enrutador Declarativo SPA**: Gestiona el enrutamiento del lado del cliente sin recargas de página, historial de navegación por URL y orquestación de rutas públicas y protegidas. |
+| **[React Router DOM](https://reactrouter.com/)** | `7` | **Enrutador Declarativo SPA**: Gestiona el enrutamiento del lado del cliente sin recargas de página, historial de navegación por URL y orquestación de rutas públicas, protegidas y por rol. |
+| **[jsPDF](https://github.com/parallax/jsPDF)** | `4.2` | **Generación de Comprobantes Oficiales PDF**: Motor cliente para maquetar y descargar comprobantes bancarios digitales en formato PDF (transferencias, depósitos y pago de servicios) con metadatos oficiales y numeración de operación. |
 | **Vite Environment Variables** | *Nativo* | **Aislamiento de Configuraciones**: Manejo desacoplado de variables de entorno mediante `import.meta.env.VITE_API_URL`, permitiendo intercalar entre entornos locales y productivos sin alterar código fuente. |
 
 ---
@@ -98,38 +98,45 @@ El proyecto sigue una estructura limpia, desacoplada por responsabilidades y lib
 ```text
 Squad-stack-Frontend/
 ├── docs/
-│   └── dashboard-ui-effects.md   # Documentación exhaustiva de componentes y efectos UI
-├── public/                       # Activos públicos estáticos
+│   └── dashboard-ui-effects.md       # Documentación de microinteracciones y efectos UI
+├── public/                           # Favicon y activos estáticos del cliente
 ├── src/
-│   ├── assets/                   # Recursos gráficos
+│   ├── assets/                       # Logotipos, íconos y banners de carrusel
 │   ├── components/
-│   │   ├── dashboard/
-│   │   │   ├── BalanceCard.jsx   # Tarjeta de saldo destacada con glow y físicas
-│   │   │   ├── QuickActions.jsx  # Grid 2x2 / 1x4 de accesos directos con feedback
-│   │   │   └── RecentActivity.jsx # Listado de últimos 5 movimientos con badges
-│   │   └── layout/
-│   │       ├── DashboardNavbar.jsx # Barra superior con pestañas y campana animada
-│   │       ├── MobileBottomNav.jsx # Barra fija inferior con cápsula de navegación móvil
-│   │       └── Sidebar.jsx       # Barra lateral fija de navegación (Desktop)
-│   ├── context/                  # Estados globales con Context API
-│   ├── hooks/                    # Custom hooks reutilizables
-│   ├── pages/
-│   │   └── Dashboard/
-│   │       └── DashboardPage.jsx # Página orquestadora del Dashboard (Desktop y Mobile)
-│   ├── services/
-│   │   ├── accountService.js     # Consumo de cuentas, saldo y depósitos
-│   │   ├── transactionService.js # Consumo de transacciones e historial paginado
-│   │   └── api.js                # Cliente Axios singleton con interceptores JWT y 401
-│   ├── theme/
-│   │   └── theme.js              # Configuración y tokens del tema Material UI
-│   ├── App.css                   # Estilos auxiliares
-│   ├── App.jsx                   # Enrutador principal de la aplicación
-│   ├── index.css                 # Reset global de ventana (100vw / 100vh)
-│   └── main.jsx                  # Punto de entrada de la aplicación Vite
-├── .env                          # Variables de entorno locales
-├── index.html                    # Documento HTML raíz
-├── package.json                  # Definición de dependencias y scripts
-└── vite.config.js                # Configuración de compilación Vite
+│   │   ├── common/                   # Componentes reutilizables (EmptyState, ErrorState, LoadingSkeleton, Modales, ProtectedRoute)
+│   │   ├── dashboard/                # Componentes exclusivos del Dashboard (BalanceCard, QuickActions, RecentActivity, ImageCarousel)
+│   │   ├── history/                  # Gráfica interactiva MovementPieChart
+│   │   ├── layout/                   # Layout unificado AppLayout, Sidebar, DashboardNavbar, MobileBottomNav
+│   │   └── services/                 # Proveedores de servicios y modales de pago
+│   ├── constants/                    # Contactos de prueba y motivos de transferencias/depósitos
+│   ├── context/                      # Contextos globales (AuthContext, AccountContext, ThemeContext)
+│   ├── hooks/                        # Custom hooks reactivos (useAccount)
+│   ├── pages/                        # Vistas de la aplicación
+│   │   ├── Admin/                    # Gestión de usuarios y roles
+│   │   ├── Cards/                    # Emisión y control de tarjetas físicas y virtuales
+│   │   ├── Dashboard/                # Dashboard principal para usuarios
+│   │   ├── Deposit/                  # Carga de saldo / depósitos
+│   │   ├── Forbidden/                # Error 403 de acceso denegado
+│   │   ├── Help/                     # Centro de ayuda y preguntas frecuentes
+│   │   ├── History/                  # Historial de transacciones con filtros y gráficos
+│   │   ├── Investments/              # Simulador y constitución de plazos fijos
+│   │   ├── NotFound/                 # Error 404
+│   │   ├── Profile/                  # Edición de perfil y seguridad
+│   │   ├── Reserves/                 # Apartados de dinero / metas de ahorro
+│   │   ├── Services/                 # Pago de servicios públicos y privados
+│   │   ├── Settings/                 # Configuración de apariencia y modo oscuro
+│   │   ├── Support/                  # Canales de atención al cliente
+│   │   ├── Transfer/                 # Envío de dinero por CVU / Alias
+│   │   └── Login.jsx                 # Acceso y autenticación
+│   ├── services/                     # Capa de consumo API REST (Axios)
+│   ├── theme/                        # Tema semántico claro/oscuro de Material UI
+│   ├── utils/                        # Formateadores numéricos y generador de comprobantes PDF
+│   ├── App.jsx                       # Enrutador central con permisos por rol
+│   ├── index.css                     # Reset global y reglas de modo oscuro
+│   └── main.jsx                      # Punto de entrada de React 19 + Vite
+├── index.html                        # Documento HTML raíz
+├── package.json                      # Definición de dependencias
+└── vite.config.js                    # Configuración de bundler Vite
 ```
 
 ---

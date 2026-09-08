@@ -41,10 +41,15 @@ export const Login = () => {
     try {
       setLoading(true);
       // Persiste sesión en AuthContext
-      await login({ email, password });
+      const authData = await login({ email, password });
 
-      // Redirección al Dashboard principal para todos los roles (HU-22 / HU-23)
-      navigate("/dashboard", { replace: true });
+      // Redirección según el rol del usuario (Admin a su panel, User a la billetera)
+      const role = authData?.role?.toLowerCase();
+      if (role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     } catch (err) {
       const message =
         err.response?.data?.message ||
@@ -134,7 +139,7 @@ export const Login = () => {
                 mb: 2,
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "12px",
-                  backgroundColor: "#F8FAFC",
+                  backgroundColor: "action.hover",
                   "& fieldset": { borderColor: "#CBD5E1" },
                   "&:hover fieldset": { borderColor: "#0056D2" },
                 },
@@ -174,7 +179,7 @@ export const Login = () => {
                         edge="end"
                         disabled={loading}
                         size="small"
-                        sx={{ color: "#64748B", mr: 0.5 }}>
+                        sx={{ color: "text.secondary", mr: 0.5 }}>
                         {showPassword ? (
                           <VisibilityOff fontSize="small" />
                         ) : (
@@ -189,11 +194,11 @@ export const Login = () => {
                 mb: 3,
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "12px",
-                  backgroundColor: "#F8FAFC",
+                  backgroundColor: "action.hover",
                   pr: 1,
                   "& fieldset": { borderColor: "#CBD5E1" },
                   "&:hover fieldset": { borderColor: "#0056D2" },
-                  "& input": { color: "#0F172A" },
+                  "& input": { color: "text.primary" },
                 },
               }}
             />

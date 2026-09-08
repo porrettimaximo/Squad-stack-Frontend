@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
@@ -6,14 +6,18 @@ import {
   IconButton,
   Typography,
   Drawer,
+  Badge,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MenuIcon from "@mui/icons-material/Menu";
+import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
 import Sidebar from "./Sidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import MobileBottomNav from "./MobileBottomNav";
+import NotificationPopover from "../common/NotificationPopover";
+import notificationService from "../../services/notificationService";
 import { useAccount } from "../../hooks/useAccount";
 import { useAuth } from "../../context/AuthContext";
 import iconoSmall from "../../assets/icono.png";
@@ -37,53 +41,76 @@ export function AppLayout({
   const location = useLocation();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
-  const { user } = useAccount();
+  const { user, refreshAccount, refreshTransactions } = useAccount();
   const { logout } = useAuth();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [mobileNotificationsAnchor, setMobileNotificationsAnchor] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  // Ocultar pestañas de navegación superior en historial, perfil, ayuda, soporte, inversiones y tarjetas según corresponda
-  const isHistoryRoute = location.pathname.startsWith("/history") || location.pathname.startsWith("/historial");
-  const isInvestmentsRoute = location.pathname.startsWith("/investments") || location.pathname.startsWith("/inversiones");
-  const isCardsRoute = location.pathname.startsWith("/cards") || location.pathname.startsWith("/tarjetas");
-  const isProfileRoute = location.pathname.startsWith("/profile") || location.pathname.startsWith("/perfil");
-  const isHelpRoute = location.pathname.startsWith("/help") || location.pathname.startsWith("/ayuda");
-  const isSupportRoute = location.pathname.startsWith("/support") || location.pathname.startsWith("/soporte");
-  const isDepositOrTransfer = location.pathname.startsWith("/deposit") || location.pathname.startsWith("/transfer");
-  const shouldShowTabs = showNavbarTabs !== undefined ? showNavbarTabs : (!isHistoryRoute && !isProfileRoute && !isHelpRoute && !isSupportRoute && !isDepositOrTransfer && !isCardsRoute);
+  const fetchUnread = React.useCallback(async () => {
+    try {
+      const count = await notificationService.getUnreadNotificationCount();
+      setUnreadCount(count || 0);
+    } catch {
+      setUnreadCount(0);
+    }
+  }, []);
 
-  // Determinar ítem activo según la ruta actual si no viene explícito
+  // Sincronización automática de saldo, historial y notificaciones al cambiar de sección
+  useEffect(() => {
+    refreshAccount();
+    refreshTransactions();
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 15000);
+    return () => clearInterval(interval);
+  }, [location.pathname, refreshAccount, refreshTransactions, fetchUnread]);
+
+  // Determinar ítem activo según la ruta actual
+  const path = location.pathname.toLowerCase();
   let currentActiveItem = activeSidebarItem;
   let currentMobileIndex = 0;
-  let activeNavbarTab = currentTab;
 
-  if (isHistoryRoute) {
-    currentActiveItem = "historial";
-    currentMobileIndex = 1;
-  } else if (isInvestmentsRoute) {
-    currentActiveItem = "inversiones";
-    activeNavbarTab = 1;
-  } else if (isCardsRoute) {
-    currentActiveItem = "tarjetas";
-  } else if (isProfileRoute) {
-    currentActiveItem = "perfil";
-    currentMobileIndex = 2;
-  } else if (isHelpRoute) {
-    currentActiveItem = "ayuda";
-  } else if (isSupportRoute) {
-    currentActiveItem = "soporte";
-  } else if (location.pathname === "/" || location.pathname === "/dashboard") {
+  if (path === "/" || path === "/dashboard") {
     currentActiveItem = "inicio";
     currentMobileIndex = 0;
-    activeNavbarTab = 0;
+  } else if (path.startsWith("/services") || path.startsWith("/servicios")) {
+    currentActiveItem = "servicios";
+  } else if (path.startsWith("/reserves") || path.startsWith("/reservas")) {
+    currentActiveItem = "reservas";
+  } else if (path.startsWith("/history") || path.startsWith("/historial")) {
+    currentActiveItem = "historial";
+    currentMobileIndex = 1;
+  } else if (path.startsWith("/investments") || path.startsWith("/inversiones")) {
+    currentActiveItem = "inversiones";
+  } else if (path.startsWith("/cards") || path.startsWith("/tarjetas")) {
+    currentActiveItem = "tarjetas";
+  } else if (path.startsWith("/profile") || path.startsWith("/perfil")) {
+    currentActiveItem = "perfil";
+    currentMobileIndex = 2;
+  } else if (path.startsWith("/settings") || path.startsWith("/configuracion")) {
+    currentActiveItem = "configuracion";
+  } else if (path.startsWith("/admin")) {
+    currentActiveItem = "admin";
+  } else if (path.startsWith("/help") || path.startsWith("/ayuda")) {
+    currentActiveItem = "ayuda";
+  } else if (path.startsWith("/support") || path.startsWith("/soporte")) {
+    currentActiveItem = "soporte";
+  } else if (!currentActiveItem) {
+    currentActiveItem = "inicio";
   }
+
+  const isAdmin = user?.role?.toLowerCase() === "admin";
 
   const handleSidebarClick = (item) => {
     setMobileDrawerOpen(false);
-    if (item === "inicio") navigate("/");
+    if (item === "inicio") navigate(isAdmin ? "/admin" : "/");
+    else if (item === "servicios") navigate("/services");
+    else if (item === "reservas") navigate("/reserves");
     else if (item === "historial") navigate("/history");
     else if (item === "inversiones") navigate("/investments");
     else if (item === "tarjetas") navigate("/cards");
     else if (item === "perfil") navigate("/profile");
+    else if (item === "configuracion") navigate("/settings");
     else if (item === "admin" || item === "admin-users") navigate("/admin");
     else if (item === "ayuda") navigate("/help");
     else if (item === "soporte") navigate("/support");
@@ -110,7 +137,7 @@ export function AppLayout({
   const userName = user?.name || "Usuario";
 
   return (
-    <Box sx={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", bgcolor: "#F8FAFC" }}>
+    <Box sx={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", bgcolor: "background.default" }}>
       {/* 1. Vista Desktop: Barra Lateral Fija */}
       {isDesktop && (
         <Sidebar
@@ -159,17 +186,17 @@ export function AppLayout({
           display: "flex",
           flexDirection: "column",
           overflowY: "auto",
-          bgcolor: "#F8FAFC",
+          bgcolor: "background.default",
           pb: { xs: 10, md: 4 },
         }}
       >
         {/* Navbar Superior (Desktop) */}
         {isDesktop && (
           <DashboardNavbar
-            currentTab={activeNavbarTab}
+            currentTab={currentTab}
             onTabChange={onTabChange || handleDefaultTabChange}
             userName={userName}
-            showTabs={shouldShowTabs}
+            showTabs={showNavbarTabs}
           />
         )}
 
@@ -204,7 +231,7 @@ export function AppLayout({
                 <MenuIcon />
               </IconButton>
               <Box
-                onClick={() => navigate("/")}
+                onClick={() => navigate(isAdmin ? "/admin" : "/")}
                 sx={{ display: "flex", alignItems: "center", gap: 1, cursor: "pointer" }}
               >
                 <Box
@@ -219,7 +246,37 @@ export function AppLayout({
               </Box>
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+              <IconButton
+                onClick={(e) => setMobileNotificationsAnchor(e.currentTarget)}
+                aria-label="Ver notificaciones"
+                sx={{
+                  color: "#FFFFFF",
+                  p: 0.8,
+                  bgcolor: Boolean(mobileNotificationsAnchor) ? "rgba(255, 255, 255, 0.15)" : "rgba(255, 255, 255, 0.08)",
+                  "&:hover": { bgcolor: "rgba(255, 255, 255, 0.15)" },
+                }}
+              >
+                <Badge
+                  badgeContent={unreadCount}
+                  color="error"
+                  max={9}
+                  sx={{
+                    "& .MuiBadge-badge": {
+                      bgcolor: "#EF4444",
+                      fontSize: "0.68rem",
+                      fontWeight: 800,
+                      height: 16,
+                      minWidth: 16,
+                      top: 1,
+                      right: 1,
+                    },
+                  }}
+                >
+                  <NotificationsNoneOutlinedIcon sx={{ fontSize: "1.25rem" }} />
+                </Badge>
+              </IconButton>
+
               <Typography
                 variant="caption"
                 sx={{
@@ -233,6 +290,16 @@ export function AppLayout({
               >
                 {userName}
               </Typography>
+
+              <NotificationPopover
+                anchorEl={mobileNotificationsAnchor}
+                open={Boolean(mobileNotificationsAnchor)}
+                onClose={() => {
+                  setMobileNotificationsAnchor(null);
+                  fetchUnread();
+                }}
+                onNotificationsChange={fetchUnread}
+              />
             </Box>
           </Box>
         )}
@@ -264,14 +331,6 @@ export function AppLayout({
           {children}
         </Box>
       </Box>
-
-      {/* 4. Vista Mobile: Barra de Navegación Inferior */}
-      {!isDesktop && (
-        <MobileBottomNav
-          activeNav={currentMobileIndex}
-          onChange={handleMobileNavChange}
-        />
-      )}
     </Box>
   );
 }

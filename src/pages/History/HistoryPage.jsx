@@ -105,29 +105,128 @@ export function HistoryPage() {
   // Estado del modal de comprobante
   const [selectedTx, setSelectedTx] = useState(null);
 
+  // Perfil del usuario actual para resolución de emisor / receptor
+  const myProfileData = useMemo(() => {
+    const myAccId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "1");
+    const mySeed = findContact(myAccId) || findContact(user?.id) || findContact(user?.email);
+    const myEmail = user?.email || mySeed?.email || "usuario@digitalars.com";
+    const myName = user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (mySeed?.name || myEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())));
+    const myUsername = myEmail.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, ".");
+
+    return {
+      name: myName,
+      email: myEmail,
+      accountId: myAccId,
+      accountNumber: account?.accountNumber || mySeed?.accountNumber || `0002-4892-0${myAccId}`,
+      cvu: account?.cvu || mySeed?.cvu || (account?.id ? `000000310001000000000${account.id}` : "0000003100010000000004"),
+      alias: account?.alias || mySeed?.alias || `${myUsername}.ars`,
+      bank: "DigitalArs Billetera Virtual",
+    };
+  }, [account, user]);
+
+  // Helper para resolver emisor y receptor de cada transacción
+  const resolvePartyInfo = useCallback((tx) => {
+    const isDeposit = tx.type === 1 || (tx.category && tx.category.toUpperCase().includes("DEPÓSITO"));
+    const isIncomingTransfer = tx.type === 2 || (tx.isIncome && !isDeposit);
+
+    if (isDeposit) {
+      return {
+        sender: {
+          name: myProfileData.name,
+          account: "Transferencia / Débito Ext.",
+          detail: "Medio de Pago Externo",
+          isMe: true,
+        },
+        receiver: {
+          name: myProfileData.name,
+          account: `Cuenta #${myProfileData.accountId}`,
+          detail: "DigitalArs",
+          isMe: true,
+        },
+        isDeposit: true,
+      };
+    }
+
+    if (isIncomingTransfer) {
+      const counterpartAccId = tx.toAccountId ? String(tx.toAccountId) : "2";
+      const rawTitleName = tx.title?.replace(/transferencia (recibida )?de /i, "").trim();
+      const counterpartSeed = findContact(counterpartAccId) || findContact(tx.counterpart) || findContact(rawTitleName);
+      const counterpartName = counterpartSeed?.name || tx.counterpart || rawTitleName || `Cuenta #${counterpartAccId}`;
+
+      return {
+        sender: {
+          name: counterpartName,
+          account: counterpartAccId ? `Cuenta #${counterpartAccId}` : "Cuenta Externa",
+          detail: counterpartSeed?.bank || "Billetera Virtual",
+          isMe: false,
+        },
+        receiver: {
+          name: myProfileData.name,
+          account: `Cuenta #${myProfileData.accountId}`,
+          detail: "DigitalArs",
+          isMe: true,
+        },
+        isDeposit: false,
+      };
+    }
+
+    // Egreso / Transferencia Enviada / Pagos
+    const counterpartAccId = tx.toAccountId ? String(tx.toAccountId) : null;
+    const rawTitleName = tx.title?.replace(/transferencia (enviada )?a /i, "").trim();
+    const counterpartSeed = findContact(counterpartAccId) || findContact(tx.counterpart) || findContact(rawTitleName);
+    const counterpartName = counterpartSeed?.name || tx.counterpart || rawTitleName || (counterpartAccId ? `Cuenta #${counterpartAccId}` : "Comercio / Entidad");
+
+    return {
+      sender: {
+        name: myProfileData.name,
+        account: `Cuenta #${myProfileData.accountId}`,
+        detail: "DigitalArs",
+        isMe: true,
+      },
+      receiver: {
+        name: counterpartName,
+        account: counterpartAccId ? `Cuenta #${counterpartAccId}` : "Comercio / Servicio",
+        detail: counterpartSeed?.bank || "Entidad de Cobro",
+        isMe: false,
+      },
+      isDeposit: false,
+    };
+  }, [myProfileData]);
+
   // Mapeo completo de datos para el Comprobante y descarga en PDF
   const selectedTxReceiptData = useMemo(() => {
     if (!selectedTx) return null;
 
-    const myAccId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "1");
-    const myEmail = user?.email || "usuario@digitalars.com";
-    const myName = user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (myEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())));
-    const myUsername = myEmail.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, ".");
+    const isDeposit = selectedTx.type === 1 || (selectedTx.category && selectedTx.category.toUpperCase().includes("DEPÓSITO"));
+    const isIncoming = selectedTx.type === 2 || (selectedTx.isIncome && !isDeposit);
 
-    const myProfileData = {
-      name: myName,
-      email: myEmail,
-      accountId: myAccId,
-      accountNumber: account?.accountNumber || `0002-4892-0${myAccId}`,
-      cvu: account?.cvu || (account?.id ? `000000310001000000000${account.id}` : "0000003100010000000004"),
-      alias: account?.alias || `${myUsername}.ars`,
-      bank: "DigitalArs Billetera Virtual",
-    };
+    if (isDeposit) {
+      const depositOrigin = {
+        name: myProfileData.name,
+        email: myProfileData.email,
+        accountId: "Ext.",
+        accountNumber: "Transferencia Bancaria / Tarjeta Débito",
+        cvu: "Entidad Bancaria Externa",
+        alias: "Ingreso de Fondos",
+        bank: "Transferencia Bancaria (CVU/CBU) / Tarjeta de Débito",
+      };
 
-    // Contraparte
+      return {
+        operationId: `TX-${String(selectedTx.id).padStart(4, "0")}`,
+        date: selectedTx.formattedDate || formatTransactionDate(selectedTx.date || selectedTx.rawDate),
+        amount: Number(selectedTx.amount) || 0,
+        motive: selectedTx.concept || selectedTx.reason || selectedTx.title || "Depósito de fondos",
+        origin: depositOrigin,
+        destination: myProfileData,
+        status: selectedTx.status || "Depósito Acreditado",
+        isDeposit: true,
+      };
+    }
+
+    // Contraparte para transferencias
     const counterpartAccId = selectedTx.toAccountId
       ? String(selectedTx.toAccountId)
-      : (selectedTx.accountId && String(selectedTx.accountId) !== myAccId ? String(selectedTx.accountId) : "2");
+      : (selectedTx.accountId && String(selectedTx.accountId) !== myProfileData.accountId ? String(selectedTx.accountId) : "2");
 
     const rawTitleName = selectedTx.title?.replace(/transferencia (enviada )?a /i, "").replace(/transferencia (recibida )?de /i, "").trim();
     const counterpartSeed = findContact(counterpartAccId) || findContact(selectedTx.counterpart) || findContact(rawTitleName);
@@ -145,18 +244,17 @@ export function HistoryPage() {
       bank: counterpartSeed?.bank || "DigitalArs Billetera Virtual",
     };
 
-    const isIncoming = selectedTx.type === 2 || selectedTx.isIncome;
-
     return {
       operationId: `TX-${String(selectedTx.id).padStart(4, "0")}`,
       date: selectedTx.formattedDate || formatTransactionDate(selectedTx.date || selectedTx.rawDate),
       amount: Number(selectedTx.amount) || 0,
-      motive: selectedTx.concept || selectedTx.title || "Varios",
+      motive: selectedTx.concept || selectedTx.reason || selectedTx.title || "Varios",
       origin: isIncoming ? counterpartProfileData : myProfileData,
       destination: isIncoming ? myProfileData : counterpartProfileData,
       status: selectedTx.status || "Operación Exitosa",
+      isDeposit: false,
     };
-  }, [selectedTx, account, user]);
+  }, [selectedTx, myProfileData]);
 
   // Carga todas las transacciones sin paginar para alimentar la gráfica de motivos
   const loadChartData = useCallback(async () => {
@@ -291,7 +389,7 @@ export function HistoryPage() {
                     fontSize: "0.85rem",
                     borderColor: "#CBD5E1",
                     color: "#0056D2",
-                    bgcolor: "#FFFFFF",
+                    bgcolor: "background.paper",
                     px: 2.5,
                     py: 0.9,
                     boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
@@ -311,8 +409,8 @@ export function HistoryPage() {
               sx={{
                 p: { xs: 1.5, sm: 2 },
                 borderRadius: { xs: "14px", sm: "16px" },
-                bgcolor: "#FFFFFF",
-                border: "1px solid #E2E8F0",
+                bgcolor: "background.paper",
+                border: "1px solid", borderColor: "divider",
                 mb: 2.5,
                 boxShadow: "0 2px 10px -2px rgba(15, 23, 42, 0.03)",
               }}
@@ -327,7 +425,7 @@ export function HistoryPage() {
           >
             {/* 1. Búsqueda por concepto */}
             <Box sx={{ gridColumn: { xs: "span 2", md: "span 1" }, display: "flex", flexDirection: "column", gap: 0.5 }}>
-              <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#64748B" }}>
+              <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "text.secondary" }}>
                 Concepto / Operación
               </Typography>
               <TextField
@@ -342,7 +440,7 @@ export function HistoryPage() {
                         <SearchIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
                       </InputAdornment>
                     ),
-                    sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.88rem", height: 40 },
+                    sx: { borderRadius: "10px", bgcolor: "action.hover", fontSize: "0.88rem", height: 40 },
                   },
                 }}
               />
@@ -350,25 +448,26 @@ export function HistoryPage() {
 
             {/* 2. Tipo de movimiento */}
             <Box sx={{ gridColumn: { xs: "span 2", md: "span 1" }, display: "flex", flexDirection: "column", gap: 0.5 }}>
-              <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#64748B" }}>
+              <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "text.secondary" }}>
                 Tipo de Movimiento
               </Typography>
               <FormControl size="small">
                 <Select
                   value={typeFilter}
                   onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
-                  sx={{ borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.88rem", height: 40 }}
+                  sx={{ borderRadius: "10px", bgcolor: "action.hover", fontSize: "0.88rem", height: 40 }}
                 >
                   <MenuItem value="all">Todos los tipos</MenuItem>
                   <MenuItem value="income">Ingresos</MenuItem>
                   <MenuItem value="expense">Egresos</MenuItem>
                 </Select>
               </FormControl>
+
             </Box>
 
             {/* 3. Fecha Desde */}
             <Box sx={{ gridColumn: { xs: "span 1", md: "span 1" }, display: "flex", flexDirection: "column", gap: 0.5 }}>
-              <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#64748B" }}>
+              <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "text.secondary" }}>
                 Desde
               </Typography>
               <TextField
@@ -378,7 +477,7 @@ export function HistoryPage() {
                 onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
                 slotProps={{
                   input: {
-                    sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem", height: 40 },
+                    sx: { borderRadius: "10px", bgcolor: "action.hover", fontSize: "0.85rem", height: 40 },
                   },
                 }}
               />
@@ -386,7 +485,7 @@ export function HistoryPage() {
 
             {/* 4. Fecha Hasta */}
             <Box sx={{ gridColumn: { xs: "span 1", md: "span 1" }, display: "flex", flexDirection: "column", gap: 0.5 }}>
-              <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#64748B" }}>
+              <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "text.secondary" }}>
                 Hasta
               </Typography>
               <TextField
@@ -396,7 +495,7 @@ export function HistoryPage() {
                 onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
                 slotProps={{
                   input: {
-                    sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem", height: 40 },
+                    sx: { borderRadius: "10px", bgcolor: "action.hover", fontSize: "0.85rem", height: 40 },
                   },
                 }}
               />
@@ -422,13 +521,13 @@ export function HistoryPage() {
                     height: 40,
                     borderRadius: "10px",
                     borderColor: "#CBD5E1",
-                    color: "#475569",
+                    color: "text.secondary",
                     textTransform: "none",
                     fontWeight: 600,
                     fontSize: "0.85rem",
                     px: 1.8,
                     whiteSpace: "nowrap",
-                    "&:hover": { bgcolor: "#F8FAFC", borderColor: "#94A3B8" },
+                    "&:hover": { bgcolor: "action.hover", borderColor: "#94A3B8" },
                   }}
                 >
                   Limpiar
@@ -478,8 +577,8 @@ export function HistoryPage() {
           elevation={0}
           sx={{
             borderRadius: { xs: "14px", sm: "20px" },
-            bgcolor: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            bgcolor: "background.paper",
+            border: "1px solid", borderColor: "divider",
             overflow: "hidden",
             boxShadow: "0 8px 30px -10px rgba(15, 23, 42, 0.06)",
           }}
@@ -506,7 +605,7 @@ export function HistoryPage() {
                   width: 70,
                   height: 70,
                   borderRadius: "50%",
-                  bgcolor: "#F1F5F9",
+                  bgcolor: "action.hover",
                   color: "#94A3B8",
                   display: "flex",
                   alignItems: "center",
@@ -516,10 +615,10 @@ export function HistoryPage() {
               >
                 <ReceiptLongOutlinedIcon sx={{ fontSize: 36 }} />
               </Box>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: "#0F172A", mb: 0.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary", mb: 0.5 }}>
                 No se encontraron movimientos
               </Typography>
-              <Typography sx={{ color: "#64748B", fontSize: "0.9rem", maxWidth: 420, mb: 2.5 }}>
+              <Typography sx={{ color: "text.secondary", fontSize: "0.9rem", maxWidth: 420, mb: 2.5 }}>
                 No hay operaciones que coincidan con los filtros seleccionados. Probá modificando el tipo de movimiento o el rango de fechas.
               </Typography>
               <Button
@@ -542,29 +641,32 @@ export function HistoryPage() {
               {/* ─── VISTA ESCRITORIO: TABLA COMPLETA (md en adelante) ─── */}
               <Box sx={{ display: { xs: "none", md: "block" } }}>
                 <TableContainer sx={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-                  <Table sx={{ minWidth: 700 }}>
-                    <TableHead sx={{ bgcolor: "#F8FAFC" }}>
+                  <Table sx={{ minWidth: 850 }}>
+                    <TableHead sx={{ bgcolor: "action.hover" }}>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
-                          Operación / Concepto
+                        <TableCell sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                          Operación / Motivo
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
-                          Destinatario / Contraparte
+                        <TableCell sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                          Emisor (Origen)
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                        <TableCell sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                          Receptor (Destino)
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.78rem", textTransform: "uppercase" }}>
                           Tipo
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                        <TableCell sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.78rem", textTransform: "uppercase" }}>
                           Fecha
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                        <TableCell sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.78rem", textTransform: "uppercase" }}>
                           Estado
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                        <TableCell align="right" sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.78rem", textTransform: "uppercase" }}>
                           Monto
                         </TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 700, color: "#64748B", fontSize: "0.78rem", textTransform: "uppercase" }}>
-                          Detalle
+                        <TableCell align="center" sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.78rem", textTransform: "uppercase" }}>
+                          Comprobante
                         </TableCell>
                       </TableRow>
                     </TableHead>
@@ -579,13 +681,11 @@ export function HistoryPage() {
                         );
                         const iconBg = isIncome ? "#DCFCE7" : "#FEE2E2";
                         const iconColor = isIncome ? "#16A34A" : "#DC2626";
-                        const chipLabel = isIncome ? "INGRESO" : "EGRESO";
-                        const chipBg = isIncome ? "#DCFCE7" : "#FEE2E2";
-                        const chipColor = isIncome ? "#15803D" : "#B91C1C";
+                        const chipLabel = tx.type === 1 ? "DEPÓSITO" : isIncome ? "INGRESO" : "EGRESO";
+                        const chipBg = tx.type === 1 ? "#EFF6FF" : isIncome ? "#DCFCE7" : "#FEE2E2";
+                        const chipColor = tx.type === 1 ? "#1D4ED8" : isIncome ? "#15803D" : "#B91C1C";
 
-                        const counterpartDisplay =
-                          tx.counterpart ||
-                          (tx.toAccountId ? `Cuenta #${tx.toAccountId}` : "Cuenta Propia");
+                        const party = resolvePartyInfo(tx);
 
                         return (
                           <TableRow
@@ -612,22 +712,37 @@ export function HistoryPage() {
                                   {icon}
                                 </Avatar>
                                 <Box>
-                                  <Typography sx={{ fontWeight: 700, fontSize: "0.92rem", color: "#0F172A" }}>
+                                  <Typography sx={{ fontWeight: 700, fontSize: "0.92rem", color: "text.primary" }}>
                                     {tx.title}
                                   </Typography>
-                                  <Typography sx={{ fontSize: "0.78rem", color: "#64748B" }}>
-                                    {(tx.subtitle || tx.category || "").replace("DEPÓSITO", "INGRESO")}
+                                  <Typography sx={{ fontSize: "0.78rem", color: "text.secondary" }}>
+                                    {tx.concept || tx.reason || tx.category || "General"}
                                   </Typography>
                                 </Box>
                               </Box>
                             </TableCell>
 
-                            {/* 2. Contraparte / Destinatario */}
-                            <TableCell sx={{ color: "#334155", fontSize: "0.85rem", fontWeight: 600 }}>
-                              {counterpartDisplay}
+                            {/* 2. Emisor (Origen) */}
+                            <TableCell>
+                              <Typography sx={{ color: "text.primary", fontSize: "0.85rem", fontWeight: 700 }}>
+                                {party.sender.name}
+                              </Typography>
+                              <Typography sx={{ color: "text.secondary", fontSize: "0.75rem", fontWeight: 500 }}>
+                                {party.sender.account}
+                              </Typography>
                             </TableCell>
 
-                            {/* 3. Tipo (Chip) */}
+                            {/* 3. Receptor (Destino) */}
+                            <TableCell>
+                              <Typography sx={{ color: "text.primary", fontSize: "0.85rem", fontWeight: 700 }}>
+                                {party.receiver.name}
+                              </Typography>
+                              <Typography sx={{ color: "text.secondary", fontSize: "0.75rem", fontWeight: 500 }}>
+                                {party.receiver.account}
+                              </Typography>
+                            </TableCell>
+
+                            {/* 4. Tipo (Chip) */}
                             <TableCell>
                               <Chip
                                 label={chipLabel}
@@ -642,12 +757,12 @@ export function HistoryPage() {
                               />
                             </TableCell>
 
-                            {/* 4. Fecha */}
-                            <TableCell sx={{ color: "#475569", fontSize: "0.85rem", fontWeight: 500 }}>
+                            {/* 5. Fecha */}
+                            <TableCell sx={{ color: "text.secondary", fontSize: "0.85rem", fontWeight: 500 }}>
                               {tx.formattedDate || formatTransactionDate(tx.date || tx.rawDate)}
                             </TableCell>
 
-                            {/* 5. Estado */}
+                            {/* 6. Estado */}
                             <TableCell>
                               <Chip
                                 icon={<CheckCircleOutlinedIcon sx={{ fontSize: "14px !important", color: "#16A34A !important" }} />}
@@ -663,20 +778,20 @@ export function HistoryPage() {
                               />
                             </TableCell>
 
-                            {/* 6. Monto */}
+                            {/* 7. Monto */}
                             <TableCell align="right">
                               <Typography
                                 sx={{
                                   fontWeight: 800,
                                   fontSize: "0.95rem",
-                                  color: isIncome ? "#16A34A" : "#0F172A",
+                                  color: isIncome ? "#16A34A" : "text.primary",
                                 }}
                               >
                                 {isIncome ? "+" : "-"}{formatCurrency(tx.amount)}
                               </Typography>
                             </TableCell>
 
-                            {/* 7. Botón Ver Detalle */}
+                            {/* 8. Botón Ver Detalle */}
                             <TableCell align="center" onClick={(e) => e.stopPropagation()}>
                               <Tooltip title="Ver comprobante digital">
                                 <IconButton
@@ -707,10 +822,11 @@ export function HistoryPage() {
                   const icon = isIncome ? <SouthWestIcon sx={{ fontSize: 18 }} /> : <NorthEastIcon sx={{ fontSize: 18 }} />;
                   const iconBg = isIncome ? "#DCFCE7" : "#FEE2E2";
                   const iconColor = isIncome ? "#16A34A" : "#DC2626";
-                  const chipLabel = isIncome ? "INGRESO" : "EGRESO";
-                  const chipBg = isIncome ? "#DCFCE7" : "#FEE2E2";
-                  const chipColor = isIncome ? "#15803D" : "#B91C1C";
-                  const counterpartDisplay = tx.counterpart || (tx.toAccountId ? `Cuenta #${tx.toAccountId}` : "Cuenta Propia");
+                  const chipLabel = tx.type === 1 ? "DEPÓSITO" : isIncome ? "INGRESO" : "EGRESO";
+                  const chipBg = tx.type === 1 ? "#EFF6FF" : isIncome ? "#DCFCE7" : "#FEE2E2";
+                  const chipColor = tx.type === 1 ? "#1D4ED8" : isIncome ? "#15803D" : "#B91C1C";
+
+                  const party = resolvePartyInfo(tx);
 
                   return (
                     <Paper
@@ -721,8 +837,8 @@ export function HistoryPage() {
                         p: 1.5,
                         mb: 1.2,
                         borderRadius: "14px",
-                        border: "1px solid #E2E8F0",
-                        bgcolor: "#FFFFFF",
+                        border: "1px solid", borderColor: "divider",
+                        bgcolor: "background.paper",
                         cursor: "pointer",
                         transition: "all 0.15s ease",
                         "&:hover": {
@@ -730,7 +846,7 @@ export function HistoryPage() {
                           bgcolor: "#FAFAFA",
                         },
                         "&:active": {
-                          bgcolor: "#F1F5F9",
+                          bgcolor: "action.hover",
                           transform: "scale(0.99)",
                         },
                         "&:last-child": {
@@ -757,7 +873,7 @@ export function HistoryPage() {
                               sx={{
                                 fontWeight: 800,
                                 fontSize: "0.88rem",
-                                color: "#0F172A",
+                                color: "text.primary",
                                 lineHeight: 1.2,
                                 whiteSpace: "nowrap",
                                 overflow: "hidden",
@@ -769,7 +885,7 @@ export function HistoryPage() {
                             <Typography
                               sx={{
                                 fontSize: "0.74rem",
-                                color: "#64748B",
+                                color: "text.secondary",
                                 fontWeight: 500,
                                 whiteSpace: "nowrap",
                                 overflow: "hidden",
@@ -777,7 +893,7 @@ export function HistoryPage() {
                                 mt: 0.2,
                               }}
                             >
-                              {(tx.subtitle || tx.category || "").replace("DEPÓSITO", "INGRESO")}
+                              {tx.concept || tx.reason || tx.category || "General"}
                             </Typography>
                           </Box>
                         </Box>
@@ -787,7 +903,7 @@ export function HistoryPage() {
                             sx={{
                               fontWeight: 800,
                               fontSize: "0.95rem",
-                              color: isIncome ? "#16A34A" : "#0F172A",
+                              color: isIncome ? "#16A34A" : "text.primary",
                               lineHeight: 1.2,
                             }}
                           >
@@ -796,64 +912,90 @@ export function HistoryPage() {
                         </Box>
                       </Box>
 
-                      {/* Fila Inferior: Contraparte + Fecha + Chips + Flecha */}
+                      {/* Fila Inferior: Emisor y Receptor + Fecha + Chips + Flecha */}
                       <Box
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
                           mt: 1.2,
                           pt: 1,
                           borderTop: "1px dashed #F1F5F9",
-                          gap: 1,
-                          flexWrap: "wrap",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 0.6,
                         }}
                       >
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, minWidth: 0 }}>
-                          <Typography
-                            sx={{
-                              fontSize: "0.74rem",
-                              color: "#475569",
-                              fontWeight: 600,
-                              maxWidth: { xs: 130, sm: 200 },
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
-                            {counterpartDisplay}
-                          </Typography>
-                          <Typography sx={{ fontSize: "0.7rem", color: "#CBD5E1" }}>•</Typography>
-                          <Typography sx={{ fontSize: "0.73rem", color: "#64748B", fontWeight: 500 }}>
-                            {tx.formattedDate || formatTransactionDate(tx.date || tx.rawDate)}
-                          </Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
+                            <Typography sx={{ fontSize: "0.72rem", color: "text.secondary", fontWeight: 600 }}>De:</Typography>
+                            <Typography
+                              sx={{
+                                fontSize: "0.75rem",
+                                color: "text.primary",
+                                fontWeight: 700,
+                                maxWidth: { xs: 110, sm: 180 },
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {party.sender.name}
+                            </Typography>
+                            <Typography sx={{ fontSize: "0.68rem", color: "text.secondary" }}>
+                              ({party.sender.account})
+                            </Typography>
+                          </Box>
+
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
+                            <Typography sx={{ fontSize: "0.72rem", color: "text.secondary", fontWeight: 600 }}>Para:</Typography>
+                            <Typography
+                              sx={{
+                                fontSize: "0.75rem",
+                                color: "text.primary",
+                                fontWeight: 700,
+                                maxWidth: { xs: 110, sm: 180 },
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {party.receiver.name}
+                            </Typography>
+                            <Typography sx={{ fontSize: "0.68rem", color: "text.secondary" }}>
+                              ({party.receiver.account})
+                            </Typography>
+                          </Box>
                         </Box>
 
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, flexShrink: 0 }}>
-                          <Chip
-                            label={chipLabel}
-                            size="small"
-                            sx={{
-                              bgcolor: chipBg,
-                              color: chipColor,
-                              fontWeight: 800,
-                              fontSize: "0.66rem",
-                              height: 19,
-                              borderRadius: "6px",
-                              px: 0.2,
-                            }}
-                          />
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              color: "#0056D2",
-                              bgcolor: "#EFF6FF",
-                              borderRadius: "6px",
-                              p: 0.2,
-                            }}
-                          >
-                            <ChevronRightIcon sx={{ fontSize: 16 }} />
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 0.4 }}>
+                          <Typography sx={{ fontSize: "0.73rem", color: "text.secondary", fontWeight: 500 }}>
+                            {tx.formattedDate || formatTransactionDate(tx.date || tx.rawDate)}
+                          </Typography>
+
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, flexShrink: 0 }}>
+                            <Chip
+                              label={chipLabel}
+                              size="small"
+                              sx={{
+                                bgcolor: chipBg,
+                                color: chipColor,
+                                fontWeight: 800,
+                                fontSize: "0.66rem",
+                                height: 19,
+                                borderRadius: "6px",
+                                px: 0.2,
+                              }}
+                            />
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                color: "#0056D2",
+                                bgcolor: "#EFF6FF",
+                                borderRadius: "6px",
+                                p: 0.2,
+                              }}
+                            >
+                              <ChevronRightIcon sx={{ fontSize: 16 }} />
+                            </Box>
                           </Box>
                         </Box>
                       </Box>
@@ -877,7 +1019,7 @@ export function HistoryPage() {
                 }
                 sx={{
                   borderTop: "1px solid #E2E8F0",
-                  color: "#64748B",
+                  color: "text.secondary",
                   "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
                     fontSize: { xs: "0.78rem", sm: "0.85rem" },
                     fontWeight: 600,

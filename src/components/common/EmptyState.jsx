@@ -29,7 +29,7 @@ export function EmptyState({
         alignItems: "center",
         justifyContent: "center",
         textAlign: "center",
-        bgcolor: "#FFFFFF",
+        bgcolor: "background.paper",
         borderRadius: "16px",
         border: "1px dashed #CBD5E1",
         width: "100%",
@@ -42,8 +42,8 @@ export function EmptyState({
           width: 64,
           height: 64,
           borderRadius: "50%",
-          bgcolor: "#F1F5F9",
-          color: "#64748B",
+          bgcolor: "action.hover",
+          color: "text.secondary",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -56,7 +56,7 @@ export function EmptyState({
       <Typography
         variant="h6"
         sx={{
-          color: "#0F172A",
+          color: "text.primary",
           fontWeight: 700,
           fontSize: "1.1rem",
           mb: 0.5,
@@ -68,7 +68,7 @@ export function EmptyState({
       <Typography
         variant="body2"
         sx={{
-          color: "#64748B",
+          color: "text.secondary",
           maxWidth: 400,
           mb: actionLabel && onAction ? 2.5 : 0,
         }}

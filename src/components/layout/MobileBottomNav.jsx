@@ -22,8 +22,9 @@ export function MobileBottomNav({ activeNav = 0, onChange }) {
         left: 0,
         right: 0,
         display: { xs: "block", md: "none" },
-        bgcolor: "#FFFFFF",
-        borderTop: "1px solid #E2E8F0",
+        bgcolor: "background.paper",
+        borderTop: "1px solid",
+        borderColor: "divider",
         zIndex: 1300,
         height: 68,
       }}
@@ -53,9 +54,9 @@ export function MobileBottomNav({ activeNav = 0, onChange }) {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  bgcolor: isActive ? "#EEF4FF" : "transparent",
-                  color: isActive ? "#0056D2" : "#64748B",
-                  border: isActive ? "1px solid #D0E1FD" : "none",
+                  bgcolor: isActive ? "rgba(0, 86, 210, 0.15)" : "transparent",
+                  color: isActive ? "primary.main" : "text.secondary",
+                  border: isActive ? "1px solid rgba(0, 86, 210, 0.3)" : "none",
                   transition: "all 0.15s ease",
                 }}
               >
@@ -67,7 +68,7 @@ export function MobileBottomNav({ activeNav = 0, onChange }) {
                 sx={{
                   fontSize: "0.72rem",
                   fontWeight: isActive ? 700 : 500,
-                  color: isActive ? "#0056D2" : "#64748B",
+                  color: isActive ? "primary.main" : "text.secondary",
                   mt: 0.25,
                 }}
               >

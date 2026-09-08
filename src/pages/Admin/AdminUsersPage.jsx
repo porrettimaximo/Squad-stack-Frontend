@@ -329,7 +329,7 @@ export function AdminUsersPage() {
                 variant="h4"
                 sx={{
                   fontWeight: 800,
-                  color: "#0A192F",
+                  color: "text.primary",
                   fontSize: { xs: "1.5rem", md: "1.85rem" },
                 }}
               >
@@ -338,7 +338,7 @@ export function AdminUsersPage() {
             </Box>
             <Typography
               variant="body2"
-              sx={{ color: "#64748B", fontWeight: 500 }}
+              sx={{ color: "text.secondary", fontWeight: 500 }}
             >
               Administra los usuarios de la plataforma, roles, estado y
               cuentas bancarias.
@@ -350,12 +350,12 @@ export function AdminUsersPage() {
               <IconButton
                 onClick={loadUsers}
                 sx={{
-                  bgcolor: "#FFFFFF",
-                  border: "1px solid #E2E8F0",
+                  bgcolor: "background.paper",
+                  border: "1px solid", borderColor: "divider",
                   borderRadius: "10px",
                 }}
               >
-                <RefreshOutlinedIcon sx={{ color: "#475569" }} />
+                <RefreshOutlinedIcon sx={{ color: "text.secondary" }} />
               </IconButton>
             </Tooltip>
 
@@ -391,8 +391,8 @@ export function AdminUsersPage() {
             p: 2,
             mb: 3,
             borderRadius: "14px",
-            border: "1px solid #E2E8F0",
-            bgcolor: "#FFFFFF",
+            border: "1px solid", borderColor: "divider",
+            bgcolor: "background.paper",
             display: "flex",
             gap: 2,
             flexWrap: "wrap",
@@ -450,10 +450,10 @@ export function AdminUsersPage() {
             onClick={handleClearFilters}
             sx={{
               borderRadius: "8px",
-              borderColor: "#E2E8F0",
-              color: "#64748B",
+              borderColor: "divider",
+              color: "text.secondary",
               textTransform: "none",
-              "&:hover": { bgcolor: "#F8FAFC", borderColor: "#CBD5E1" },
+              "&:hover": { bgcolor: "action.hover", borderColor: "#CBD5E1" },
             }}
           >
             Limpiar
@@ -465,8 +465,8 @@ export function AdminUsersPage() {
           elevation={0}
           sx={{
             borderRadius: "16px",
-            border: "1px solid #E2E8F0",
-            bgcolor: "#FFFFFF",
+            border: "1px solid", borderColor: "divider",
+            bgcolor: "background.paper",
             overflow: "hidden",
             boxShadow: "0 4px 20px rgba(0, 22, 57, 0.04)",
           }}
@@ -474,11 +474,11 @@ export function AdminUsersPage() {
           <TableContainer>
             <Table>
               <TableHead>
-                <TableRow sx={{ bgcolor: "#F8FAFC" }}>
+                <TableRow sx={{ bgcolor: "action.hover" }}>
                   <TableCell
                     sx={{
                       fontWeight: 700,
-                      color: "#475569",
+                      color: "text.secondary",
                       fontSize: "0.8rem",
                       textTransform: "uppercase",
                     }}
@@ -488,7 +488,7 @@ export function AdminUsersPage() {
                   <TableCell
                     sx={{
                       fontWeight: 700,
-                      color: "#475569",
+                      color: "text.secondary",
                       fontSize: "0.8rem",
                       textTransform: "uppercase",
                     }}
@@ -498,7 +498,7 @@ export function AdminUsersPage() {
                   <TableCell
                     sx={{
                       fontWeight: 700,
-                      color: "#475569",
+                      color: "text.secondary",
                       fontSize: "0.8rem",
                       textTransform: "uppercase",
                     }}
@@ -508,7 +508,7 @@ export function AdminUsersPage() {
                   <TableCell
                     sx={{
                       fontWeight: 700,
-                      color: "#475569",
+                      color: "text.secondary",
                       fontSize: "0.8rem",
                       textTransform: "uppercase",
                     }}
@@ -519,7 +519,7 @@ export function AdminUsersPage() {
                     align="right"
                     sx={{
                       fontWeight: 700,
-                      color: "#475569",
+                      color: "text.secondary",
                       fontSize: "0.8rem",
                       textTransform: "uppercase",
                     }}
@@ -549,7 +549,7 @@ export function AdminUsersPage() {
                       key={user.id}
                       hover
                       sx={{
-                        "&:hover": { bgcolor: "#F8FAFC" },
+                        "&:hover": { bgcolor: "action.hover" },
                         transition: "background-color 0.15s ease",
                       }}
                     >
@@ -566,7 +566,7 @@ export function AdminUsersPage() {
                             sx={{
                               bgcolor:
                                 user.role === "Admin"
-                                  ? "#0A192F"
+                                  ? "#7C3AED"
                                   : "#0056D2",
                               color: "#FFFFFF",
                               fontWeight: 700,
@@ -582,13 +582,13 @@ export function AdminUsersPage() {
                           <Box>
                             <Typography
                               variant="subtitle2"
-                              sx={{ fontWeight: 700, color: "#0A192F" }}
+                              sx={{ fontWeight: 700, color: "text.primary" }}
                             >
                               {user.firstName} {user.lastName}
                             </Typography>
                             <Typography
                               variant="caption"
-                              sx={{ color: "#64748B" }}
+                              sx={{ color: "text.secondary" }}
                             >
                               {user.email}
                             </Typography>
@@ -606,18 +606,18 @@ export function AdminUsersPage() {
                             fontSize: "0.75rem",
                             bgcolor:
                               user.role === "Admin"
-                                ? "rgba(10, 25, 47, 0.08)"
-                                : "rgba(0, 86, 210, 0.08)",
+                                ? "rgba(124, 58, 237, 0.15)"
+                                : "rgba(0, 86, 210, 0.12)",
                             color:
-                              user.role === "Admin" ? "#0A192F" : "#0056D2",
-                            border: `1px solid ${user.role === "Admin" ? "rgba(10, 25, 47, 0.2)" : "rgba(0, 86, 210, 0.2)"}`,
+                              user.role === "Admin" ? "#A78BFA" : "#38BDF8",
+                            border: `1px solid ${user.role === "Admin" ? "rgba(124, 58, 237, 0.3)" : "rgba(0, 86, 210, 0.3)"}`,
                             borderRadius: "6px",
                           }}
                         />
                       </TableCell>
 
                       {/* Columna Saldo */}
-                      <TableCell sx={{ fontWeight: 700, color: "#0A192F" }}>
+                      <TableCell sx={{ fontWeight: 700, color: "text.primary" }}>
                         {formatCurrency(user.balance)}
                       </TableCell>
 
@@ -707,7 +707,7 @@ export function AdminUsersPage() {
             labelDisplayedRows={({ from, to, count }) =>
               `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
             }
-            sx={{ borderTop: "1px solid #E2E8F0" }}
+            sx={{ borderTop: "1px solid", borderColor: "divider" }}
           />
         </Paper>
       </Box>
@@ -730,7 +730,7 @@ export function AdminUsersPage() {
             pb: 1,
             fontWeight: 800,
             fontSize: "1.25rem",
-            color: "#0A192F",
+            color: "text.primary",
           }}
         >
           Nuevo Usuario
@@ -743,7 +743,7 @@ export function AdminUsersPage() {
         </DialogTitle>
 
         <form onSubmit={handleCreateSubmit}>
-          <DialogContent dividers sx={{ borderColor: "#E2E8F0" }}>
+          <DialogContent dividers sx={{ borderColor: "divider" }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <Box sx={{ display: "flex", gap: 2 }}>
                 <TextField
@@ -823,7 +823,7 @@ export function AdminUsersPage() {
             <Button
               onClick={() => setCreateOpen(false)}
               disabled={submitting}
-              sx={{ color: "#64748B", textTransform: "none" }}
+              sx={{ color: "text.secondary", textTransform: "none" }}
             >
               Cancelar
             </Button>
@@ -867,7 +867,7 @@ export function AdminUsersPage() {
             pb: 1,
             fontWeight: 800,
             fontSize: "1.25rem",
-            color: "#0A192F",
+            color: "text.primary",
           }}
         >
           Editar Usuario #{selectedUser?.id}
@@ -877,7 +877,7 @@ export function AdminUsersPage() {
         </DialogTitle>
 
         <form onSubmit={handleEditSubmit}>
-          <DialogContent dividers sx={{ borderColor: "#E2E8F0" }}>
+          <DialogContent dividers sx={{ borderColor: "divider" }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <Box sx={{ display: "flex", gap: 2 }}>
                 <TextField
@@ -930,7 +930,7 @@ export function AdminUsersPage() {
             <Button
               onClick={() => setEditOpen(false)}
               disabled={submitting}
-              sx={{ color: "#64748B", textTransform: "none" }}
+              sx={{ color: "text.secondary", textTransform: "none" }}
             >
               Cancelar
             </Button>
@@ -969,7 +969,7 @@ export function AdminUsersPage() {
           ¿Dar de baja usuario?
         </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: "#475569" }}>
+          <DialogContentText sx={{ color: "text.secondary" }}>
             Estás por realizar la baja lógica del usuario{" "}
             <strong>{selectedUser?.email}</strong>. El usuario no podrá iniciar
             sesión en la plataforma.
@@ -979,7 +979,7 @@ export function AdminUsersPage() {
           <Button
             onClick={() => setDeleteOpen(false)}
             disabled={submitting}
-            sx={{ color: "#64748B", textTransform: "none" }}
+            sx={{ color: "text.secondary", textTransform: "none" }}
           >
             Cancelar
           </Button>

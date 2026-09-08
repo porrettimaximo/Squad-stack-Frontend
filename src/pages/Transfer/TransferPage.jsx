@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -26,6 +26,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
+import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useAccount } from "../../hooks/useAccount";
@@ -37,6 +39,7 @@ import { formatCurrency } from "../../utils/formatters";
 import { downloadTransferReceiptPdf } from "../../utils/pdfGenerator";
 import { TRANSFER_MOTIVES, DEFAULT_MOTIVE } from "../../constants/motives";
 import { SEED_CONTACTS, findContact } from "../../constants/contacts";
+import { getReserves } from "../../services/reservesService";
 
 const slideVariants = {
   initial: { opacity: 0, x: 16 },
@@ -65,11 +68,31 @@ export function TransferPage() {
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
+  // Origen de los fondos (Cuenta vs Reserva)
+  const [reserves, setReserves] = useState([]);
+  const [sourceType, setSourceType] = useState("account");
+  const [selectedReserveId, setSelectedReserveId] = useState(null);
+
   // Control del modal de información completa y comprobante
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const [completedTxId, setCompletedTxId] = useState(null);
 
   const currentBalance = account?.money ?? 0;
+
+  useEffect(() => {
+    getReserves()
+      .then((data) => setReserves(data || []))
+      .catch((err) => console.error("Error loading reserves:", err));
+  }, []);
+
+  const selectedReserve = useMemo(() => {
+    if (sourceType === "reserve" && selectedReserveId) {
+      return reserves.find((r) => r.id === selectedReserveId);
+    }
+    return null;
+  }, [reserves, sourceType, selectedReserveId]);
+
+  const availableSourceBalance = sourceType === "reserve" ? (selectedReserve?.currentBalance ?? 0) : currentBalance;
 
   // ─── USUARIOS DE LA PLATAFORMA (DESTINATARIOS SUGERIDOS) ───
   const currentUserId = user?.id ? String(user.id) : null;
@@ -178,11 +201,14 @@ export function TransferPage() {
       }),
       amount: Number(amount) || 0,
       motive: motive,
-      origin: myProfile,
+      origin: {
+        ...myProfile,
+        sourceLabel: sourceType === "reserve" ? `Reserva "${selectedReserve?.name || "Apartado"}"` : "Cuenta Corriente",
+      },
       destination: recipientProfile,
       status: "Transferencia Exitosa",
     };
-  }, [completedTxId, amount, motive, myProfile, recipientProfile]);
+  }, [completedTxId, amount, motive, myProfile, recipientProfile, sourceType, selectedReserve]);
 
   const handleAmountChange = (e) => {
     const val = e.target.value.replace(/[^0-9]/g, "");
@@ -203,6 +229,7 @@ export function TransferPage() {
         destinationAccountId: Number(destAccountId),
         amount: num,
         concept: motive,
+        reserveId: sourceType === "reserve" ? selectedReserveId : null,
       });
 
       const txId = res?.id ? `TX-${String(res.id).padStart(4, "0")}` : `TX-${Date.now().toString().slice(-4)}`;
@@ -227,11 +254,11 @@ export function TransferPage() {
           <Box sx={{ mb: 2 }}>
             <Typography
               variant="h5"
-              sx={{ fontWeight: 800, color: "#0F172A", fontSize: { xs: "1.5rem", md: "1.75rem" } }}
+              sx={{ fontWeight: 800, color: "text.primary", fontSize: { xs: "1.5rem", md: "1.75rem" } }}
             >
               Transferir dinero
             </Typography>
-            <Typography sx={{ color: "#64748B", fontSize: "0.85rem" }}>
+            <Typography sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
               Enviá fondos de forma inmediata y sin comisiones.
             </Typography>
           </Box>
@@ -242,8 +269,8 @@ export function TransferPage() {
           sx={{
             borderRadius: "20px",
             p: { xs: 2.5, md: 3 },
-            bgcolor: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            bgcolor: "background.paper",
+            border: "1px solid", borderColor: "divider",
             boxShadow: "0 8px 25px -8px rgba(15, 23, 42, 0.08)",
             display: "flex",
             flexDirection: "column",
@@ -282,7 +309,7 @@ export function TransferPage() {
                         {selectedContact.avatarText || selectedContact.name?.charAt(0).toUpperCase()}
                       </Avatar>
                       <Box>
-                        <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", color: "#0F172A" }}>
+                        <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", color: "text.primary" }}>
                           {selectedContact.name}
                         </Typography>
                         <Typography sx={{ fontSize: "0.8rem", color: "#16A34A", fontWeight: 700 }}>
@@ -303,10 +330,10 @@ export function TransferPage() {
                         textTransform: "none",
                         fontSize: "0.78rem",
                         fontWeight: 700,
-                        color: "#475569",
+                        color: "text.secondary",
                         borderColor: "#CBD5E1",
-                        bgcolor: "#FFFFFF",
-                        "&:hover": { bgcolor: "#F8FAFC", borderColor: "#94A3B8" },
+                        bgcolor: "background.paper",
+                        "&:hover": { bgcolor: "action.hover", borderColor: "#94A3B8" },
                       }}
                     >
                       Cambiar
@@ -329,7 +356,7 @@ export function TransferPage() {
                               <PersonOutlineOutlinedIcon sx={{ color: "#94A3B8", fontSize: "1.2rem" }} />
                             </InputAdornment>
                           ),
-                          sx: { borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.95rem" },
+                          sx: { borderRadius: "12px", bgcolor: "action.hover", fontSize: "0.95rem" },
                         },
                       }}
                       placeholder="Buscar destinatario por nombre"
@@ -339,7 +366,7 @@ export function TransferPage() {
                     <Box sx={{ mt: 2.2, mb: 1 }}>
                       <Typography
                         sx={{
-                          color: "#64748B",
+                          color: "text.secondary",
                           fontSize: "0.78rem",
                           fontWeight: 700,
                           textTransform: "uppercase",
@@ -362,8 +389,8 @@ export function TransferPage() {
                             sx={{
                               p: 1.4,
                               borderRadius: "12px",
-                              bgcolor: "#F8FAFC",
-                              border: "1px solid #E2E8F0",
+                              bgcolor: "action.hover",
+                              border: "1px solid", borderColor: "divider",
                               transition: "all 0.15s ease",
                               "&:hover": { bgcolor: "#EFF6FF", borderColor: "#93C5FD" },
                             }}
@@ -385,7 +412,7 @@ export function TransferPage() {
                                 sx={{
                                   fontWeight: 700,
                                   fontSize: "0.92rem",
-                                  color: "#0F172A",
+                                  color: "text.primary",
                                   whiteSpace: "nowrap",
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
@@ -447,13 +474,56 @@ export function TransferPage() {
                       {recipientProfile.name}
                     </Typography>
                   </Box>
-                  <Typography sx={{ fontSize: "0.75rem", color: "#64748B" }}>
-                    Saldo disponible: <strong>{formatCurrency(currentBalance)}</strong>
+                  <Typography sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
+                    Saldo disponible: <strong>{formatCurrency(availableSourceBalance)}</strong>
                   </Typography>
                 </Box>
 
+                {/* Selector de Origen de los Fondos (Cuenta vs Reservas) */}
+                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mb: 0.5 }}>
+                  Origen de los fondos
+                </Typography>
+                <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                  <Select
+                    value={sourceType === "account" ? "account" : `reserve-${selectedReserveId}`}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "account") {
+                        setSourceType("account");
+                        setSelectedReserveId(null);
+                      } else {
+                        const rId = Number(val.replace("reserve-", ""));
+                        setSourceType("reserve");
+                        setSelectedReserveId(rId);
+                      }
+                    }}
+                    sx={{ borderRadius: "12px", bgcolor: "action.hover", fontSize: "0.9rem" }}
+                  >
+                    <MenuItem value="account">
+                      <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <AccountBalanceWalletOutlinedIcon sx={{ fontSize: "1.1rem", color: "#0056D2" }} />
+                          <span>Saldo en Cuenta Principal</span>
+                        </Box>
+                        <strong style={{ color: "#0056D2" }}>{formatCurrency(currentBalance)}</strong>
+                      </Box>
+                    </MenuItem>
+                    {reserves.map((r) => (
+                      <MenuItem key={r.id} value={`reserve-${r.id}`}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <SavingsOutlinedIcon sx={{ fontSize: "1.1rem", color: "#10B981" }} />
+                            <span>Reserva: {r.name}</span>
+                          </Box>
+                          <strong style={{ color: "#10B981" }}>{formatCurrency(r.currentBalance)}</strong>
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
                 {/* Input de Monto */}
-                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0F172A", mb: 0.5 }}>
+                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mb: 0.5 }}>
                   Monto a transferir
                 </Typography>
                 <TextField
@@ -466,14 +536,14 @@ export function TransferPage() {
                   slotProps={{
                     htmlInput: { inputMode: "numeric" },
                     input: {
-                      sx: { borderRadius: "12px", fontSize: "1.4rem", fontWeight: 800, color: "#0F172A", py: 0.2 },
+                      sx: { borderRadius: "12px", fontSize: "1.4rem", fontWeight: 800, color: "text.primary", py: 0.2 },
                     },
                   }}
                   sx={{ mb: 2 }}
                 />
 
                 {/* Selector de Motivo (18 motivos oficiales) */}
-                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0F172A", mb: 0.5 }}>
+                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mb: 0.5 }}>
                   Motivo de la transferencia
                 </Typography>
                 <FormControl fullWidth size="small" sx={{ mb: 2 }}>
@@ -483,7 +553,7 @@ export function TransferPage() {
                     value={motive}
                     label="Motivo"
                     onChange={(e) => setMotive(e.target.value)}
-                    sx={{ borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.9rem" }}
+                    sx={{ borderRadius: "12px", bgcolor: "action.hover", fontSize: "0.9rem" }}
                     slotProps={{
                       paper: {
                         sx: {
@@ -506,7 +576,12 @@ export function TransferPage() {
                   variant="contained"
                   fullWidth
                   onClick={() => setStep(3)}
-                  disabled={!amount || Number(amount) <= 0 || Number(amount) > currentBalance}
+                  disabled={
+                    !amount ||
+                    Number(amount) <= 0 ||
+                    Number(amount) > availableSourceBalance ||
+                    (sourceType === "reserve" && !selectedReserveId)
+                  }
                   sx={{
                     bgcolor: "#0056D2",
                     color: "#FFF",
@@ -526,10 +601,10 @@ export function TransferPage() {
             {/* ─── PASO 3: RESUMEN COMPLETO CON TODOS LOS DATOS DE AMBAS CUENTAS ─── */}
             {step === 3 && (
               <motion.div key="step3" variants={slideVariants} initial="initial" animate="animate" exit="exit">
-                <Typography sx={{ color: "#0F172A", fontSize: "1.1rem", fontWeight: 800, mb: 0.5 }}>
+                <Typography sx={{ color: "text.primary", fontSize: "1.1rem", fontWeight: 800, mb: 0.5 }}>
                   Confirmá los datos de la transferencia
                 </Typography>
-                <Typography sx={{ color: "#64748B", fontSize: "0.85rem", mb: 2 }}>
+                <Typography sx={{ color: "text.secondary", fontSize: "0.85rem", mb: 2 }}>
                   Revisá la cuenta de origen, la cuenta de destino y el detalle antes de confirmar.
                 </Typography>
 
@@ -539,8 +614,8 @@ export function TransferPage() {
                   sx={{
                     p: 2,
                     borderRadius: "14px",
-                    bgcolor: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    bgcolor: "action.hover",
+                    border: "1px solid", borderColor: "divider",
                     mb: 1.5,
                   }}
                 >
@@ -556,41 +631,55 @@ export function TransferPage() {
                         borderRadius: "8px",
                       }}
                     />
-                    <Typography sx={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600 }}>
+                    <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 600 }}>
                       {myProfile.bank}
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>TITULAR</Typography>
-                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#0F172A" }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>TITULAR</Typography>
+                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "text.primary" }}>
                         {myProfile.name}
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>Nº DE CUENTA</Typography>
-                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#0F172A" }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>Nº DE CUENTA</Typography>
+                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "text.primary" }}>
                         Cuenta #{myProfile.accountId} ({myProfile.accountNumber})
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>EMAIL</Typography>
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", wordBreak: "break-all" }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>EMAIL</Typography>
+                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.secondary", wordBreak: "break-all" }}>
                         {myProfile.email}
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>ALIAS</Typography>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>ALIAS</Typography>
                       <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0056D2" }}>
                         {myProfile.alias}
                       </Typography>
                     </Box>
                     <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" } }}>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>CVU</Typography>
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", letterSpacing: "0.02em" }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>CVU</Typography>
+                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.secondary", letterSpacing: "0.02em" }}>
                         {myProfile.cvu}
                       </Typography>
+                    </Box>
+                    <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" }, mt: 0.5, pt: 0.8, borderTop: "1px dashed #CBD5E1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <Typography sx={{ fontSize: "0.74rem", color: "text.secondary", fontWeight: 600 }}>FONDOS DEBITADOS DE</Typography>
+                      <Chip
+                        label={sourceType === "reserve" ? `Reserva: ${selectedReserve?.name || "Apartado"}` : "Saldo Principal de Cuenta"}
+                        size="small"
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: "0.74rem",
+                          bgcolor: sourceType === "reserve" ? "#DCFCE7" : "#EFF6FF",
+                          color: sourceType === "reserve" ? "#15803D" : "#0056D2",
+                          borderRadius: "8px",
+                        }}
+                      />
                     </Box>
                   </Box>
                 </Paper>
@@ -626,39 +715,39 @@ export function TransferPage() {
                         borderRadius: "8px",
                       }}
                     />
-                    <Typography sx={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600 }}>
+                    <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 600 }}>
                       {recipientProfile.bank}
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>DESTINATARIO</Typography>
-                      <Typography sx={{ fontSize: "0.92rem", fontWeight: 800, color: "#0F172A" }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>DESTINATARIO</Typography>
+                      <Typography sx={{ fontSize: "0.92rem", fontWeight: 800, color: "text.primary" }}>
                         {recipientProfile.name}
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>Nº DE CUENTA</Typography>
-                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#0F172A" }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>Nº DE CUENTA</Typography>
+                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "text.primary" }}>
                         Cuenta #{recipientProfile.accountId} ({recipientProfile.accountNumber})
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>EMAIL</Typography>
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", wordBreak: "break-all" }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>EMAIL</Typography>
+                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.secondary", wordBreak: "break-all" }}>
                         {recipientProfile.email}
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>ALIAS</Typography>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>ALIAS</Typography>
                       <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0056D2" }}>
                         {recipientProfile.alias}
                       </Typography>
                     </Box>
                     <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" } }}>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>CVU</Typography>
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", letterSpacing: "0.02em" }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>CVU</Typography>
+                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.secondary", letterSpacing: "0.02em" }}>
                         {recipientProfile.cvu}
                       </Typography>
                     </Box>
@@ -671,8 +760,8 @@ export function TransferPage() {
                   sx={{
                     p: 2,
                     borderRadius: "14px",
-                    bgcolor: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    bgcolor: "action.hover",
+                    border: "1px solid", borderColor: "divider",
                     mb: 2,
                     display: "flex",
                     flexDirection: "column",
@@ -680,19 +769,19 @@ export function TransferPage() {
                   }}
                 >
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>Monto a transferir</Typography>
-                    <Typography sx={{ fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+                    <Typography sx={{ fontSize: "0.85rem", color: "text.secondary" }}>Monto a transferir</Typography>
+                    <Typography sx={{ fontSize: "1.05rem", fontWeight: 800, color: "text.primary" }}>
                       {formatCurrency(Number(amount))}
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>Motivo</Typography>
+                    <Typography sx={{ fontSize: "0.85rem", color: "text.secondary" }}>Motivo</Typography>
                     <Chip label={motive} size="small" sx={{ fontWeight: 700, bgcolor: "#EFF6FF", color: "#0056D2" }} />
                   </Box>
 
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>Comisión de transferencia</Typography>
+                    <Typography sx={{ fontSize: "0.85rem", color: "text.secondary" }}>Comisión de transferencia</Typography>
                     <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#10B981" }}>
                       Gratis ($ 0,00)
                     </Typography>
@@ -708,7 +797,7 @@ export function TransferPage() {
                       borderTop: "1px dashed #CBD5E1",
                     }}
                   >
-                    <Typography sx={{ fontWeight: 800, color: "#0F172A", fontSize: "0.95rem" }}>
+                    <Typography sx={{ fontWeight: 800, color: "text.primary", fontSize: "0.95rem" }}>
                       Total a debitar
                     </Typography>
                     <Typography sx={{ fontWeight: 800, color: "#0056D2", fontSize: "1.25rem" }}>
@@ -783,12 +872,12 @@ export function TransferPage() {
                           borderRadius: "14px",
                           py: 1.2,
                           fontWeight: 700,
-                          color: "#475569",
+                          color: "text.secondary",
                           borderColor: "#CBD5E1",
-                          bgcolor: "#FFFFFF",
+                          bgcolor: "background.paper",
                           textTransform: "none",
                           fontSize: "0.92rem",
-                          "&:hover": { bgcolor: "#F8FAFC", borderColor: "#94A3B8" },
+                          "&:hover": { bgcolor: "action.hover", borderColor: "#94A3B8" },
                         }}
                       >
                         Descargar en PDF

@@ -192,7 +192,7 @@ export function HelpPage() {
                     </InputAdornment>
                   ),
                   sx: {
-                    bgcolor: "#FFFFFF",
+                    bgcolor: "background.paper",
                     borderRadius: "14px",
                     "& fieldset": { border: "none" },
                     boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
@@ -206,7 +206,7 @@ export function HelpPage() {
 
         {/* Categorías (Pills) */}
         <Box sx={{ mb: 3.5 }}>
-          <Typography variant="subtitle2" sx={{ color: "#64748B", fontWeight: 600, mb: 1.5 }}>
+          <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 600, mb: 1.5 }}>
             FILTRAR POR CATEGORÍA
           </Typography>
           <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
@@ -224,15 +224,16 @@ export function HelpPage() {
                     px: 1.5,
                     py: 2.2,
                     borderRadius: "12px",
-                    bgcolor: isSelected ? "#0056D2" : "#FFFFFF",
-                    color: isSelected ? "#FFFFFF" : "#475569",
-                    border: isSelected ? "1px solid #0056D2" : "1px solid #E2E8F0",
+                    bgcolor: isSelected ? "#0056D2" : "background.paper",
+                    color: isSelected ? "#FFFFFF" : "text.secondary",
+                    border: isSelected ? "1px solid #0056D2" : "1px solid",
+                    borderColor: isSelected ? "#0056D2" : "divider",
                     boxShadow: isSelected ? "0 4px 12px rgba(0, 86, 210, 0.25)" : "none",
                     "&:hover": {
-                      bgcolor: isSelected ? "#0047B3" : "#F1F5F9",
+                      bgcolor: isSelected ? "#0047B3" : "action.hover",
                     },
                     "& .MuiChip-icon": {
-                      color: isSelected ? "#FFFFFF" : "#64748B",
+                      color: isSelected ? "#FFFFFF" : "text.secondary",
                     },
                   }}
                 />
@@ -244,7 +245,7 @@ export function HelpPage() {
         {/* Lista de Preguntas Frecuentes (Acordeones) */}
         <Box sx={{ mb: 5 }}>
           <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: "#001639" }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary" }}>
               Preguntas Frecuentes ({filteredFaqs.length})
             </Typography>
             {searchTerm && (
@@ -267,15 +268,15 @@ export function HelpPage() {
                 p: 4,
                 textAlign: "center",
                 borderRadius: "16px",
-                border: "1px dashed #CBD5E1",
-                bgcolor: "#FFFFFF",
+                border: "1px dashed", borderColor: "divider",
+                bgcolor: "background.paper",
               }}
             >
               <InfoOutlinedIcon sx={{ fontSize: 48, color: "#94A3B8", mb: 1.5 }} />
-              <Typography variant="h6" sx={{ color: "#334155", fontWeight: 700, mb: 0.5 }}>
+              <Typography variant="h6" sx={{ color: "text.secondary", fontWeight: 700, mb: 0.5 }}>
                 No encontramos resultados para tu búsqueda
               </Typography>
-              <Typography variant="body2" sx={{ color: "#64748B", mb: 2 }}>
+              <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
                 Probá con otras palabras o contactate directamente con nuestro equipo de Soporte.
               </Typography>
               <Button
@@ -296,7 +297,7 @@ export function HelpPage() {
                 sx={{
                   mb: 1.5,
                   borderRadius: "14px !important",
-                  border: "1px solid #E2E8F0",
+                  border: "1px solid", borderColor: "divider",
                   boxShadow: "0 2px 6px rgba(0,0,0,0.02)",
                   "&:before": { display: "none" },
                   overflow: "hidden",
@@ -315,13 +316,13 @@ export function HelpPage() {
                     "& .MuiAccordionSummary-content": { my: 1 },
                   }}
                 >
-                  <Typography sx={{ fontWeight: 600, color: "#001639", fontSize: "1.05rem" }}>
+                  <Typography sx={{ fontWeight: 600, color: "text.primary", fontSize: "1.05rem" }}>
                     {faq.question}
                   </Typography>
                 </AccordionSummary>
-                <Divider sx={{ borderColor: "#F1F5F9" }} />
-                <AccordionDetails sx={{ px: 3, py: 2.5, bgcolor: "#FAFCFF" }}>
-                  <Typography variant="body1" sx={{ color: "#475569", lineHeight: 1.7, fontSize: "0.95rem" }}>
+                <Divider sx={{ borderColor: "divider" }} />
+                <AccordionDetails sx={{ px: 3, py: 2.5, bgcolor: "action.hover" }}>
+                  <Typography variant="body1" sx={{ color: "text.secondary", lineHeight: 1.7, fontSize: "0.95rem" }}>
                     {faq.answer}
                   </Typography>
                 </AccordionDetails>
@@ -334,8 +335,8 @@ export function HelpPage() {
         <Card
           sx={{
             borderRadius: "20px",
-            border: "1px solid #D0E1FD",
-            bgcolor: "#F0F6FF",
+            border: "1px solid", borderColor: "divider",
+            bgcolor: "action.hover",
             p: { xs: 2.5, sm: 3.5 },
           }}
         >
@@ -358,10 +359,10 @@ export function HelpPage() {
                   <HeadsetMicOutlinedIcon sx={{ fontSize: 30 }} />
                 </Box>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#001639", mb: 0.5 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary", mb: 0.5 }}>
                     ¿Tenés un problema específico o necesitás asistencia personalizada?
                   </Typography>
-                  <Typography variant="body2" sx={{ color: "#475569" }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
                     Abrí un ticket de reclamo o comunicate por nuestros canales oficiales de atención al cliente.
                   </Typography>
                 </Box>

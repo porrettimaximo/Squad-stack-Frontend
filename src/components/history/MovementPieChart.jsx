@@ -276,7 +276,7 @@ export const MovementPieChart = ({
               sx={{
                 fontSize: "0.72rem",
                 fontWeight: 700,
-                color: "#64748B",
+                color: "text.secondary",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 lineHeight: 1.2,
@@ -289,7 +289,7 @@ export const MovementPieChart = ({
                 sx={{
                   fontWeight: 900,
                   fontSize: { xs: "1.25rem", sm: "1.45rem" },
-                  color: "#0f172a",
+                  color: "text.primary",
                   lineHeight: 1.15,
                   letterSpacing: "-0.02em",
                 }}
@@ -335,8 +335,8 @@ export const MovementPieChart = ({
                     width: 34,
                     height: 34,
                     borderRadius: "9px",
-                    bgcolor: "#F1F5F9",
-                    border: "1px solid #E2E8F0",
+                    bgcolor: "action.hover",
+                    border: "1px solid", borderColor: "divider",
                     color: "#0056D2",
                     "&:hover": { bgcolor: "#EEF4FF", borderColor: "#CBD5E1" },
                   }}
@@ -362,8 +362,8 @@ export const MovementPieChart = ({
               display: "flex",
               p: 0.35,
               borderRadius: "10px",
-              bgcolor: "#F1F5F9",
-              border: "1px solid #E2E8F0",
+              bgcolor: "action.hover",
+              border: "1px solid", borderColor: "divider",
               gap: 0.35,
               width: { xs: "100%", sm: "auto" },
             }}
@@ -381,10 +381,10 @@ export const MovementPieChart = ({
                 py: 0.4,
                 minHeight: 28,
                 bgcolor: filterMode === "last30" ? "#0056D2" : "transparent",
-                color: filterMode === "last30" ? "#ffffff" : "#475569",
+                color: filterMode === "last30" ? "#ffffff" : "text.secondary",
                 boxShadow: filterMode === "last30" ? "0 2px 6px rgba(0, 86, 210, 0.25)" : "none",
                 "&:hover": {
-                  bgcolor: filterMode === "last30" ? "#0047B3" : "rgba(0,0,0,0.04)",
+                  bgcolor: filterMode === "last30" ? "#0047B3" : "action.hover",
                 },
                 transition: "all 0.15s ease",
                 whiteSpace: "nowrap",
@@ -405,10 +405,10 @@ export const MovementPieChart = ({
                 py: 0.4,
                 minHeight: 28,
                 bgcolor: filterMode === "custom" ? "#0056D2" : "transparent",
-                color: filterMode === "custom" ? "#ffffff" : "#475569",
+                color: filterMode === "custom" ? "#ffffff" : "text.secondary",
                 boxShadow: filterMode === "custom" ? "0 2px 6px rgba(0, 86, 210, 0.25)" : "none",
                 "&:hover": {
-                  bgcolor: filterMode === "custom" ? "#0047B3" : "rgba(0,0,0,0.04)",
+                  bgcolor: filterMode === "custom" ? "#0047B3" : "action.hover",
                 },
                 transition: "all 0.15s ease",
                 whiteSpace: "nowrap",
@@ -465,7 +465,7 @@ export const MovementPieChart = ({
               sx={{
                 px: { xs: 2, sm: 2.5 },
                 py: 1.2,
-                bgcolor: "#F8FAFC",
+                bgcolor: "action.hover",
                 borderBottom: "1px solid #E2E8F0",
                 display: "flex",
                 alignItems: { xs: "flex-start", sm: "center" },
@@ -476,7 +476,7 @@ export const MovementPieChart = ({
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
                 <CalendarMonthIcon sx={{ color: "#0056D2", fontSize: 18 }} />
-                <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#1E293B" }}>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "text.primary" }}>
                   Filtrar por rango específico
                 </Typography>
               </Box>
@@ -498,7 +498,7 @@ export const MovementPieChart = ({
                     sx={{
                       fontSize: "0.8rem",
                       fontWeight: 700,
-                      color: "#334155",
+                      color: "text.secondary",
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -511,7 +511,7 @@ export const MovementPieChart = ({
                     value={customDateFrom}
                     onChange={(e) => setCustomDateFrom(e.target.value)}
                     sx={{
-                      bgcolor: "#FFFFFF",
+                      bgcolor: "background.paper",
                       borderRadius: "8px",
                       width: { xs: "100%", sm: 145 },
                       "& .MuiOutlinedInput-root": {
@@ -531,7 +531,7 @@ export const MovementPieChart = ({
                     sx={{
                       fontSize: "0.8rem",
                       fontWeight: 700,
-                      color: "#334155",
+                      color: "text.secondary",
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -544,7 +544,7 @@ export const MovementPieChart = ({
                     value={customDateTo}
                     onChange={(e) => setCustomDateTo(e.target.value)}
                     sx={{
-                      bgcolor: "#FFFFFF",
+                      bgcolor: "background.paper",
                       borderRadius: "8px",
                       width: { xs: "100%", sm: 145 },
                       "& .MuiOutlinedInput-root": {
@@ -566,7 +566,7 @@ export const MovementPieChart = ({
         {conceptTransactions.length === 0 ? (
           <Box sx={{ py: 6, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 1.2 }}>
             <CalendarMonthIcon sx={{ fontSize: 40, color: "#94A3B8" }} />
-            <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 600 }}>
+            <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600 }}>
               No se encontraron movimientos con concepto registrado en este período.
             </Typography>
             <Button
@@ -712,7 +712,7 @@ export const MovementPieChart = ({
                           sx={{
                             fontSize: { xs: "1.05rem", sm: "1.18rem" },
                             fontWeight: 900,
-                            color: "#0f172a",
+                            color: "text.primary",
                             lineHeight: 1.15,
                             my: 0.2,
                           }}
@@ -750,7 +750,7 @@ export const MovementPieChart = ({
                           sx={{
                             fontSize: "0.66rem",
                             fontWeight: 700,
-                            color: "#64748b",
+                            color: "text.secondary",
                             textTransform: "uppercase",
                             letterSpacing: "0.04em",
                           }}
@@ -761,7 +761,7 @@ export const MovementPieChart = ({
                           sx={{
                             fontSize: { xs: "1.05rem", sm: "1.2rem" },
                             fontWeight: 900,
-                            color: "#0f172a",
+                            color: "text.primary",
                             lineHeight: 1.15,
                             my: 0.2,
                             letterSpacing: "-0.01em",
@@ -792,10 +792,10 @@ export const MovementPieChart = ({
                     gap: 1,
                   }}
                 >
-                  <Typography sx={{ fontSize: "0.92rem", fontWeight: 800, color: "#1e293b", letterSpacing: "-0.01em" }}>
+                  <Typography sx={{ fontSize: "0.92rem", fontWeight: 800, color: "text.primary", letterSpacing: "-0.01em" }}>
                     Detalles de movimiento
                   </Typography>
-                  <Typography sx={{ fontSize: "0.74rem", color: "#64748b", fontWeight: 600 }}>
+                  <Typography sx={{ fontSize: "0.74rem", color: "text.secondary", fontWeight: 600 }}>
                     Hacé clic en un motivo para filtrar la tabla
                   </Typography>
                 </Box>
@@ -830,9 +830,9 @@ export const MovementPieChart = ({
                             justifyContent: "space-between",
                             p: { xs: 1.3, sm: 1.4, md: 1.3, lg: 1.4 },
                             borderRadius: "14px",
-                            bgcolor: "#ffffff",
+                            bgcolor: "background.paper",
                             border: "1.5px solid",
-                            borderColor: isHovered ? item.color : "rgba(226, 232, 240, 0.9)",
+                            borderColor: isHovered ? item.color : "divider",
                             boxShadow: isHovered
                               ? `0 8px 18px -4px ${item.color}30, 0 2px 6px rgba(0,0,0,0.03)`
                               : "0 2px 5px -1px rgba(15, 23, 42, 0.03)",
@@ -876,7 +876,7 @@ export const MovementPieChart = ({
                                   sx={{
                                     fontSize: { xs: "0.82rem", sm: "0.84rem", md: "0.78rem", lg: "0.82rem" },
                                     fontWeight: 700,
-                                    color: isHovered ? item.color : "#1e293b",
+                                    color: isHovered ? item.color : "text.primary",
                                     lineHeight: 1.2,
                                     whiteSpace: "nowrap",
                                     overflow: "hidden",
@@ -910,7 +910,7 @@ export const MovementPieChart = ({
                               sx={{
                                 fontSize: { xs: "0.92rem", sm: "0.98rem", md: "0.88rem", lg: "0.95rem" },
                                 fontWeight: 800,
-                                color: "#0f172a",
+                                color: "text.primary",
                                 letterSpacing: "-0.01em",
                               }}
                             >

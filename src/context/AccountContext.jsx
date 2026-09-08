@@ -246,14 +246,14 @@ export function AccountProvider({ children }) {
   /**
    * Realiza una transferencia (autónoma y reactiva).
    */
-  const transferFunds = useCallback(async ({ destination, destinationAccountId, amount, concept }) => {
+  const transferFunds = useCallback(async ({ destination, destinationAccountId, amount, concept, reserveId }) => {
     const num = Number(amount);
     if (!num || num <= 0) throw new Error("El monto debe ser mayor a 0.");
-    if (num > account.money) throw new Error("El monto supera tu saldo disponible.");
+    if (!reserveId && num > account.money) throw new Error("El monto supera tu saldo disponible en cuenta.");
 
-    let newBalance = account.money - num;
+    let newBalance = reserveId ? account.money : account.money - num;
     try {
-      const res = await transactionService.transfer({ destination, destinationAccountId, amount: num, concept });
+      const res = await transactionService.transfer({ destination, destinationAccountId, amount: num, concept, reserveId });
       if (res?.newBalance !== undefined) {
         newBalance = res.newBalance;
       }

@@ -434,7 +434,7 @@ export function ProfilePage() {
                 sx={{
                   width: { xs: 70, sm: 84 },
                   height: { xs: 70, sm: 84 },
-                  bgcolor: "#FFFFFF",
+                  bgcolor: "background.paper",
                   color: "#0056D2",
                   fontSize: { xs: "1.6rem", sm: "1.9rem" },
                   fontWeight: 900,
@@ -500,8 +500,8 @@ export function ProfilePage() {
             elevation={0}
             sx={{
               borderRadius: "20px",
-              border: "1px solid #E2E8F0",
-              bgcolor: "#FFFFFF",
+              border: "1px solid", borderColor: "divider",
+              bgcolor: "background.paper",
               boxShadow: "0 4px 20px -2px rgba(15, 23, 42, 0.05)",
               overflow: "hidden",
             }}
@@ -527,10 +527,10 @@ export function ProfilePage() {
                     <PersonOutlineOutlinedIcon sx={{ fontSize: 22 }} />
                   </Box>
                   <Box>
-                    <Typography sx={{ fontWeight: 800, fontSize: "1.15rem", color: "#0F172A" }}>
+                    <Typography sx={{ fontWeight: 800, fontSize: "1.15rem", color: "text.primary" }}>
                       Datos Personales
                     </Typography>
-                    <Typography sx={{ fontSize: "0.82rem", color: "#64748B" }}>
+                    <Typography sx={{ fontSize: "0.82rem", color: "text.secondary" }}>
                       {isEditing ? "Modificá tu nombre y apellido" : "Información básica registrada en tu cuenta"}
                     </Typography>
                   </Box>
@@ -570,14 +570,14 @@ export function ProfilePage() {
                           sx={{
                             p: 2,
                             borderRadius: "14px",
-                            bgcolor: "#F8FAFC",
-                            border: "1px solid #E2E8F0",
+                            bgcolor: "action.hover",
+                            border: "1px solid", borderColor: "divider",
                           }}
                         >
-                          <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                          <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                             Nombre
                           </Typography>
-                          <Typography sx={{ fontSize: "1rem", fontWeight: 800, color: "#0F172A", mt: 0.4 }}>
+                          <Typography sx={{ fontSize: "1rem", fontWeight: 800, color: "text.primary", mt: 0.4 }}>
                             {profileData.firstName || "—"}
                           </Typography>
                         </Box>
@@ -589,14 +589,14 @@ export function ProfilePage() {
                           sx={{
                             p: 2,
                             borderRadius: "14px",
-                            bgcolor: "#F8FAFC",
-                            border: "1px solid #E2E8F0",
+                            bgcolor: "action.hover",
+                            border: "1px solid", borderColor: "divider",
                           }}
                         >
-                          <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                          <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                             Apellido
                           </Typography>
-                          <Typography sx={{ fontSize: "1rem", fontWeight: 800, color: "#0F172A", mt: 0.4 }}>
+                          <Typography sx={{ fontSize: "1rem", fontWeight: 800, color: "text.primary", mt: 0.4 }}>
                             {profileData.lastName || "—"}
                           </Typography>
                         </Box>
@@ -608,15 +608,15 @@ export function ProfilePage() {
                           sx={{
                             p: 2,
                             borderRadius: "14px",
-                            bgcolor: "#F8FAFC",
-                            border: "1px solid #E2E8F0",
+                            bgcolor: "action.hover",
+                            border: "1px solid", borderColor: "divider",
                           }}
                         >
-                          <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                          <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                             Correo Electrónico
                           </Typography>
                           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 0.4 }}>
-                            <Typography sx={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A" }}>
+                            <Typography sx={{ fontSize: "0.95rem", fontWeight: 800, color: "text.primary" }}>
                               {profileData.email || "—"}
                             </Typography>
                             <Tooltip title="Identificador único de la cuenta">
@@ -637,18 +637,18 @@ export function ProfilePage() {
                           sx={{
                             p: 2,
                             borderRadius: "14px",
-                            bgcolor: "#F8FAFC",
-                            border: "1px solid #E2E8F0",
+                            bgcolor: "action.hover",
+                            border: "1px solid", borderColor: "divider",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
                           }}
                         >
                           <Box>
-                            <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                            <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                               Estado de la Cuenta
                             </Typography>
-                            <Typography sx={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A", mt: 0.4 }}>
+                            <Typography sx={{ fontSize: "0.95rem", fontWeight: 800, color: "text.primary", mt: 0.4 }}>
                               Usuario Activo y Habilitado
                             </Typography>
                           </Box>
@@ -705,7 +705,7 @@ export function ProfilePage() {
                       <Grid container spacing={2}>
                         {/* Nombre */}
                         <Grid size={{ xs: 12, sm: 6 }}>
-                          <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
+                          <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "text.secondary", mb: 0.6 }}>
                             Nombre *
                           </Typography>
                           <TextField
@@ -724,7 +724,7 @@ export function ProfilePage() {
                                     <PersonOutlineOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
                                   </InputAdornment>
                                 ),
-                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                                sx: { borderRadius: "10px", bgcolor: "background.paper", fontSize: "0.9rem" },
                               },
                             }}
                           />
@@ -732,7 +732,7 @@ export function ProfilePage() {
 
                         {/* Apellido */}
                         <Grid size={{ xs: 12, sm: 6 }}>
-                          <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
+                          <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "text.secondary", mb: 0.6 }}>
                             Apellido *
                           </Typography>
                           <TextField
@@ -750,7 +750,7 @@ export function ProfilePage() {
                                     <PersonOutlineOutlinedIcon sx={{ color: "#0056D2", fontSize: 20 }} />
                                   </InputAdornment>
                                 ),
-                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                                sx: { borderRadius: "10px", bgcolor: "background.paper", fontSize: "0.9rem" },
                               },
                             }}
                           />
@@ -759,7 +759,7 @@ export function ProfilePage() {
                         {/* Email (Solo lectura) */}
                         <Grid size={{ xs: 12 }}>
                           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.6 }}>
-                            <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155" }}>
+                            <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "text.secondary" }}>
                               Correo Electrónico
                             </Typography>
                             <Tooltip title="El correo electrónico no puede modificarse por seguridad.">
@@ -767,7 +767,7 @@ export function ProfilePage() {
                                 icon={<LockOutlinedIcon sx={{ fontSize: "13px !important" }} />}
                                 label="No editable"
                                 size="small"
-                                sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#F1F5F9", color: "#64748B", borderRadius: "5px" }}
+                                sx={{ height: 20, fontSize: "0.68rem", bgcolor: "action.hover", color: "text.secondary", borderRadius: "5px" }}
                               />
                             </Tooltip>
                           </Box>
@@ -785,9 +785,9 @@ export function ProfilePage() {
                                 ),
                                 sx: {
                                   borderRadius: "10px",
-                                  bgcolor: "#F1F5F9",
+                                  bgcolor: "action.hover",
                                   fontSize: "0.9rem",
-                                  "& input": { color: "#475569", cursor: "not-allowed" },
+                                  "& input": { color: "text.secondary", cursor: "not-allowed" },
                                 },
                               },
                             }}
@@ -828,14 +828,14 @@ export function ProfilePage() {
                             height: 42,
                             borderRadius: "12px",
                             borderColor: "#CBD5E1",
-                            color: "#475569",
+                            color: "text.secondary",
                             textTransform: "none",
                             fontWeight: 700,
                             fontSize: "0.88rem",
                             px: 2.5,
                             "&:hover": {
                               borderColor: "#94A3B8",
-                              bgcolor: "#F8FAFC",
+                              bgcolor: "action.hover",
                             },
                           }}
                         >
@@ -869,10 +869,10 @@ export function ProfilePage() {
                     <SecurityIcon sx={{ fontSize: 22 }} />
                   </Box>
                   <Box>
-                    <Typography sx={{ fontWeight: 800, fontSize: "1.15rem", color: "#0F172A" }}>
+                    <Typography sx={{ fontWeight: 800, fontSize: "1.15rem", color: "text.primary" }}>
                       Seguridad y Contraseña
                     </Typography>
-                    <Typography sx={{ fontSize: "0.82rem", color: "#64748B" }}>
+                    <Typography sx={{ fontSize: "0.82rem", color: "text.secondary" }}>
                       {isEditingPassword ? "Validá tu contraseña actual para establecer una nueva" : "Protección de acceso y credenciales de cuenta"}
                     </Typography>
                   </Box>
@@ -912,14 +912,14 @@ export function ProfilePage() {
                           sx={{
                             p: 2,
                             borderRadius: "14px",
-                            bgcolor: "#F8FAFC",
-                            border: "1px solid #E2E8F0",
+                            bgcolor: "action.hover",
+                            border: "1px solid", borderColor: "divider",
                           }}
                         >
-                          <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                          <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                             Contraseña
                           </Typography>
-                          <Typography sx={{ fontSize: "1.15rem", fontWeight: 800, color: "#0F172A", letterSpacing: "0.2em", mt: 0.4 }}>
+                          <Typography sx={{ fontSize: "1.15rem", fontWeight: 800, color: "text.primary", letterSpacing: "0.2em", mt: 0.4 }}>
                             ••••••••••••
                           </Typography>
                         </Box>
@@ -964,7 +964,7 @@ export function ProfilePage() {
                       <Grid container spacing={2}>
                         {/* Contraseña Actual */}
                         <Grid size={{ xs: 12, md: 4 }}>
-                          <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
+                          <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "text.secondary", mb: 0.6 }}>
                             Contraseña Actual *
                           </Typography>
                           <TextField
@@ -995,7 +995,7 @@ export function ProfilePage() {
                                     </IconButton>
                                   </InputAdornment>
                                 ),
-                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                                sx: { borderRadius: "10px", bgcolor: "background.paper", fontSize: "0.9rem" },
                               },
                             }}
                           />
@@ -1003,7 +1003,7 @@ export function ProfilePage() {
 
                         {/* Nueva Contraseña */}
                         <Grid size={{ xs: 12, md: 4 }}>
-                          <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
+                          <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "text.secondary", mb: 0.6 }}>
                             Nueva Contraseña *
                           </Typography>
                           <TextField
@@ -1033,7 +1033,7 @@ export function ProfilePage() {
                                     </IconButton>
                                   </InputAdornment>
                                 ),
-                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                                sx: { borderRadius: "10px", bgcolor: "background.paper", fontSize: "0.9rem" },
                               },
                             }}
                           />
@@ -1041,7 +1041,7 @@ export function ProfilePage() {
 
                         {/* Confirmar Nueva Contraseña */}
                         <Grid size={{ xs: 12, md: 4 }}>
-                          <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", mb: 0.6 }}>
+                          <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "text.secondary", mb: 0.6 }}>
                             Confirmar Nueva Contraseña *
                           </Typography>
                           <TextField
@@ -1083,7 +1083,7 @@ export function ProfilePage() {
                                     </IconButton>
                                   </InputAdornment>
                                 ),
-                                sx: { borderRadius: "10px", bgcolor: "#FFFFFF", fontSize: "0.9rem" },
+                                sx: { borderRadius: "10px", bgcolor: "background.paper", fontSize: "0.9rem" },
                               },
                             }}
                           />
@@ -1123,14 +1123,14 @@ export function ProfilePage() {
                             height: 42,
                             borderRadius: "12px",
                             borderColor: "#CBD5E1",
-                            color: "#475569",
+                            color: "text.secondary",
                             textTransform: "none",
                             fontWeight: 700,
                             fontSize: "0.88rem",
                             px: 2.5,
                             "&:hover": {
                               borderColor: "#94A3B8",
-                              bgcolor: "#F8FAFC",
+                              bgcolor: "action.hover",
                             },
                           }}
                         >

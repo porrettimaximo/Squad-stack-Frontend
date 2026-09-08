@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import {
   Box,
   Card,
@@ -94,7 +94,7 @@ export function RecentActivity({ transactions = [], loading = false, onViewAll }
               variant="body1"
               sx={{
                 fontWeight: 700,
-                color: "#0F172A",
+                color: "text.primary",
                 fontSize: { xs: "0.95rem", md: "1rem" },
                 lineHeight: 1.25,
               }}
@@ -104,7 +104,7 @@ export function RecentActivity({ transactions = [], loading = false, onViewAll }
             <Typography
               variant="caption"
               sx={{
-                color: "#64748B",
+                color: "text.secondary",
                 fontWeight: 500,
                 fontSize: "0.78rem",
                 display: "block",
@@ -122,7 +122,7 @@ export function RecentActivity({ transactions = [], loading = false, onViewAll }
           sx={{
             fontWeight: 800,
             fontSize: { xs: "0.95rem", md: "1.05rem" },
-            color: isIncome ? "#10B981" : "#0F172A",
+            color: isIncome ? "#10B981" : "text.primary",
             letterSpacing: "-0.01em",
             textAlign: "right",
             whiteSpace: "nowrap",
@@ -139,7 +139,7 @@ export function RecentActivity({ transactions = [], loading = false, onViewAll }
     <Box>
       {/* Cabecera de Sección con botón animado */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 800, color: "#0F172A", fontSize: "1.2rem" }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, color: "text.primary", fontSize: "1.2rem" }}>
           Actividad Reciente
         </Typography>
 
@@ -166,7 +166,7 @@ export function RecentActivity({ transactions = [], loading = false, onViewAll }
       {loading ? (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
           {[1, 2, 3].map((n) => (
-            <Card key={n} elevation={0} sx={{ p: 2, borderRadius: "16px", border: "1px solid #E2E8F0" }}>
+            <Card key={n} elevation={0} sx={{ p: 2, borderRadius: "16px", border: "1px solid", borderColor: "divider" }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <Skeleton variant="circular" width={44} height={44} />
                 <Box sx={{ flex: 1 }}>
@@ -179,7 +179,7 @@ export function RecentActivity({ transactions = [], loading = false, onViewAll }
           ))}
         </Box>
       ) : transactions.length === 0 ? (
-        <Card elevation={0} sx={{ p: 4, textAlign: "center", borderRadius: "16px", border: "1px solid #E2E8F0" }}>
+        <Card elevation={0} sx={{ p: 4, textAlign: "center", borderRadius: "16px", border: "1px solid", borderColor: "divider" }}>
           <Typography variant="body2" color="text.secondary">
             No hay movimientos registrados recientemente.
           </Typography>
@@ -190,8 +190,8 @@ export function RecentActivity({ transactions = [], loading = false, onViewAll }
           elevation={0}
           sx={{
             borderRadius: "18px",
-            border: "1px solid #E2E8F0",
-            bgcolor: "#FFFFFF",
+            border: "1px solid", borderColor: "divider",
+            bgcolor: "background.paper",
             overflow: "hidden",
             boxShadow: "0 2px 10px -2px rgba(15, 23, 42, 0.04)",
           }}
@@ -226,8 +226,8 @@ export function RecentActivity({ transactions = [], loading = false, onViewAll }
                 elevation={0}
                 sx={{
                   borderRadius: "16px",
-                  border: "1px solid #E2E8F0",
-                  bgcolor: "#FFFFFF",
+                  border: "1px solid", borderColor: "divider",
+                  bgcolor: "background.paper",
                   overflow: "hidden",
                   boxShadow: "0 2px 6px -2px rgba(15, 23, 42, 0.04)",
                 }}
