@@ -127,8 +127,6 @@ export function AppLayout({
           anchor="left"
           open={mobileDrawerOpen}
           onClose={() => setMobileDrawerOpen(false)}
-          disableRestoreFocus
-          ModalProps={{ keepMounted: true, disableRestoreFocus: true }}
           slotProps={{
             paper: {
               sx: {
