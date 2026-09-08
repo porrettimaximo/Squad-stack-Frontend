@@ -33,7 +33,7 @@ import { useAuth } from "../../context/AuthContext";
 import AppLayout from "../../components/layout/AppLayout";
 import SuccessStep from "../../components/common/SuccessStep";
 import TransferReceiptModal from "../../components/common/TransferReceiptModal";
-import { formatCurrency } from "../../utils/formatters";
+import { formatCurrency, parseAmount, sanitizeNumericInput } from "../../utils/formatters";
 import { downloadTransferReceiptPdf } from "../../utils/pdfGenerator";
 import { TRANSFER_MOTIVES, DEFAULT_MOTIVE } from "../../constants/motives";
 import { SEED_CONTACTS, findContact } from "../../constants/contacts";
@@ -176,7 +176,7 @@ export function TransferPage() {
         hour: "2-digit",
         minute: "2-digit",
       }),
-      amount: Number(amount) || 0,
+      amount: parseAmount(amount) || 0,
       motive: motive,
       origin: myProfile,
       destination: recipientProfile,
@@ -185,12 +185,11 @@ export function TransferPage() {
   }, [completedTxId, amount, motive, myProfile, recipientProfile]);
 
   const handleAmountChange = (e) => {
-    const val = e.target.value.replace(/[^0-9]/g, "");
-    setAmount(val);
+    setAmount(sanitizeNumericInput(e.target.value));
   };
 
   const handleTransfer = async () => {
-    const num = Number(amount);
+    const num = parseAmount(amount);
     if (!num || num <= 0) return;
 
     setLoading(true);
@@ -460,12 +459,19 @@ export function TransferPage() {
                   fullWidth
                   size="small"
                   variant="outlined"
-                  value={amount ? `$ ${Number(amount).toLocaleString("es-AR")}` : ""}
+                  value={amount}
                   onChange={handleAmountChange}
-                  placeholder="$ 0,00"
+                  placeholder="0,00"
                   slotProps={{
-                    htmlInput: { inputMode: "numeric" },
+                    htmlInput: { inputMode: "decimal" },
                     input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#0056D2", mr: 0.5 }}>
+                            $
+                          </Typography>
+                        </InputAdornment>
+                      ),
                       sx: { borderRadius: "12px", fontSize: "1.4rem", fontWeight: 800, color: "#0F172A", py: 0.2 },
                     },
                   }}
@@ -506,7 +512,7 @@ export function TransferPage() {
                   variant="contained"
                   fullWidth
                   onClick={() => setStep(3)}
-                  disabled={!amount || Number(amount) <= 0 || Number(amount) > currentBalance}
+                  disabled={!amount || parseAmount(amount) <= 0 || parseAmount(amount) > currentBalance}
                   sx={{
                     bgcolor: "#0056D2",
                     color: "#FFF",
@@ -682,7 +688,7 @@ export function TransferPage() {
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>Monto a transferir</Typography>
                     <Typography sx={{ fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
-                      {formatCurrency(Number(amount))}
+                      {formatCurrency(parseAmount(amount))}
                     </Typography>
                   </Box>
 
@@ -712,7 +718,7 @@ export function TransferPage() {
                       Total a debitar
                     </Typography>
                     <Typography sx={{ fontWeight: 800, color: "#0056D2", fontSize: "1.25rem" }}>
-                      {formatCurrency(Number(amount))}
+                      {formatCurrency(parseAmount(amount))}
                     </Typography>
                   </Box>
                 </Paper>
@@ -744,7 +750,7 @@ export function TransferPage() {
                 <SuccessStep
                   title="¡Transferencia exitosa!"
                   subtitle={`Enviamos el dinero a ${recipientProfile.name}.`}
-                  amount={Number(amount)}
+                  amount={parseAmount(amount)}
                   maxWidth={440}
                   autoRedirectSeconds={0}
                   details={[

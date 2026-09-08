@@ -377,6 +377,7 @@ export function HistoryPage() {
                 value={dateFrom}
                 onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
                 slotProps={{
+                  htmlInput: { max: dateTo || undefined },
                   input: {
                     sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem", height: 40 },
                   },
@@ -395,6 +396,7 @@ export function HistoryPage() {
                 value={dateTo}
                 onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
                 slotProps={{
+                  htmlInput: { min: dateFrom || undefined },
                   input: {
                     sx: { borderRadius: "10px", bgcolor: "#F8FAFC", fontSize: "0.85rem", height: 40 },
                   },
