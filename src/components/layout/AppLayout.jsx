@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MenuIcon from "@mui/icons-material/Menu";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import Sidebar from "./Sidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import MobileBottomNav from "./MobileBottomNav";
@@ -135,6 +136,9 @@ export function AppLayout({
                 backgroundImage: "none",
                 border: "none",
                 width: 280,
+                maxHeight: "100dvh",
+                height: "100%",
+                overflow: "hidden",
                 boxShadow: "4px 0 24px rgba(0,0,0,0.4)",
               },
             },
@@ -173,7 +177,7 @@ export function AppLayout({
           />
         )}
 
-        {/* Barra Superior Mobile con Menú Hamburguesa */}
+        {/* Barra Superior Mobile con Menú Hamburguesa y Cierre de Sesión */}
         {!isDesktop && (
           <Box
             sx={{
@@ -220,19 +224,46 @@ export function AppLayout({
             </Box>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography
-                variant="caption"
+              <Box
+                onClick={() => navigate("/profile")}
                 sx={{
-                  color: "#94A3B8",
-                  fontWeight: 600,
-                  maxWidth: 120,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  bgcolor: "rgba(255, 255, 255, 0.06)",
+                  px: 1.2,
+                  py: 0.5,
+                  borderRadius: "20px",
                 }}
               >
-                {userName}
-              </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "#D0D9E5",
+                    fontWeight: 600,
+                    maxWidth: 100,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {userName}
+                </Typography>
+              </Box>
+
+              <IconButton
+                onClick={handleLogout}
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+                sx={{
+                  color: "#EF4444",
+                  p: 0.8,
+                  bgcolor: "rgba(239, 68, 68, 0.1)",
+                  "&:hover": { bgcolor: "rgba(239, 68, 68, 0.2)" },
+                }}
+              >
+                <LogoutOutlinedIcon fontSize="small" />
+              </IconButton>
             </Box>
           </Box>
         )}

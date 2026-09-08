@@ -28,10 +28,13 @@ import SaveIcon from "@mui/icons-material/Save";
 import KeyIcon from "@mui/icons-material/Key";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import CloseIcon from "@mui/icons-material/Close";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 import AppLayout from "../../components/layout/AppLayout";
 import { useAccount } from "../../hooks/useAccount";
+import { useAuth } from "../../context/AuthContext";
 import userService from "../../services/userService";
 
 /**
@@ -41,6 +44,13 @@ import userService from "../../services/userService";
  */
 export function ProfilePage() {
   const { user, updateUserProfile } = useAccount();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   // Estados de carga
   const [initialLoading, setInitialLoading] = useState(true);
@@ -1141,6 +1151,68 @@ export function ProfilePage() {
                   </motion.div>
                 )}
               </AnimatePresence>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* 4. Tarjeta de Sesión / Cerrar Sesión */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.2 }}
+        >
+          <Card
+            elevation={0}
+            sx={{
+              borderRadius: "20px",
+              border: "1px solid #E2E8F0",
+              bgcolor: "#FFFFFF",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+              mb: 4,
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  alignItems: { xs: "flex-start", sm: "center" },
+                  justifyContent: "space-between",
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A", mb: 0.3 }}>
+                    Cerrar Sesión Activa
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "#64748B", fontSize: "0.85rem" }}>
+                    Finalizá tu sesión de forma segura en este dispositivo cuando termines de operar.
+                  </Typography>
+                </Box>
+
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={handleLogout}
+                  startIcon={<LogoutOutlinedIcon />}
+                  sx={{
+                    borderRadius: "12px",
+                    textTransform: "none",
+                    fontWeight: 700,
+                    px: 3,
+                    py: 1,
+                    borderColor: "#FECACA",
+                    bgcolor: "#FEF2F2",
+                    color: "#DC2626",
+                    "&:hover": {
+                      borderColor: "#F87171",
+                      bgcolor: "#FEE2E2",
+                    },
+                  }}
+                >
+                  Cerrar sesión
+                </Button>
+              </Box>
             </CardContent>
           </Card>
         </motion.div>
