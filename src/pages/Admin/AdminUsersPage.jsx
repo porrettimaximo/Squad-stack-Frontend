@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -26,8 +26,6 @@ import {
   Snackbar,
   Alert,
   Tooltip,
-  useTheme,
-  useMediaQuery,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import PersonAddAlt1OutlinedIcon from "@mui/icons-material/PersonAddAlt1Outlined";
@@ -40,15 +38,14 @@ import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import { motion, AnimatePresence } from "framer-motion";
 
-import Sidebar from "../../components/layout/Sidebar";
-import DashboardNavbar from "../../components/layout/DashboardNavbar";
+import AppLayout from "../../components/layout/AppLayout";
+import { TableRowsSkeleton } from "../../components/common/LoadingSkeleton";
+import EmptyState from "../../components/common/EmptyState";
+import { formatCurrency } from "../../utils/formatters";
 import userService from "../../services/userService";
 import authService from "../../services/authService";
 
 export function AdminUsersPage() {
-  const muiTheme = useTheme();
-  const isDesktop = useMediaQuery(muiTheme.breakpoints.up("md"));
-
   // Estados de la tabla y filtros
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -135,7 +132,14 @@ export function AdminUsersPage() {
           u.roleName ||
           (u.roleId === 1 ? "Admin" : "User") ||
           "User",
-        balance: u.balance ?? u.initialBalance ?? 0,
+        balance:
+          u.balance !== undefined && u.balance !== null
+            ? u.balance
+            : u.account?.money !== undefined && u.account?.money !== null
+              ? u.account.money
+              : u.money !== undefined && u.money !== null
+                ? u.money
+                : u.initialBalance ?? 0,
         isActive:
           u.isActive !== undefined
             ? u.isActive
@@ -172,6 +176,13 @@ export function AdminUsersPage() {
 
   const handleChangeRowsPerPage = (event) => {
     setPageSize(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setRoleFilter("");
+    setStatusFilter("");
     setPage(0);
   };
 
@@ -287,7 +298,7 @@ export function AdminUsersPage() {
   };
 
   // Formateador de moneda
-  const formatMoney = (val) => {
+  const formatCurrency = (val) => {
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
       currency: "ARS",
@@ -296,433 +307,416 @@ export function AdminUsersPage() {
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        height: "100vh",
-        bgcolor: "#F4F7FC",
-        overflow: "hidden",
-      }}
-    >
-      {/* Sidebar Desktop */}
-      {isDesktop && <Sidebar activeItem="admin-users" />}
-
-      {/* Contenedor Principal */}
-      <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          height: "100vh",
-          overflowY: "auto",
-        }}
-      >
-        <DashboardNavbar currentTab={0} onTabChange={() => { }} />
-
+    <AppLayout activeSidebarItem="admin-users" showNavbarTabs={false} maxWidth={1400}>
+      <Box sx={{ width: "100%", pb: 4 }}>
+        {/* Header de la Página */}
         <Box
           sx={{
-            p: { xs: 2, md: 4 },
-            maxWidth: 1400,
-            width: "100%",
-            mx: "auto",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            mb: 3,
+            flexWrap: "wrap",
+            gap: 2,
           }}
         >
-          {/* Header de la Página */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              mb: 3,
-              flexWrap: "wrap",
-              gap: 2,
-            }}
-          >
-            <Box>
-              <Box
+          <Box>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                mb: 0.5,
+              }}
+            >
+              <AdminPanelSettingsOutlinedIcon
+                sx={{ color: "#0056D2", fontSize: "2rem" }}
+              />
+              <Typography
+                variant="h4"
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  mb: 0.5,
+                  fontWeight: 800,
+                  color: "#0A192F",
+                  fontSize: { xs: "1.5rem", md: "1.85rem" },
                 }}
               >
-                <AdminPanelSettingsOutlinedIcon
-                  sx={{ color: "#0056D2", fontSize: "2rem" }}
-                />
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontWeight: 800,
-                    color: "#0A192F",
-                    fontSize: { xs: "1.5rem", md: "1.85rem" },
-                  }}
-                >
-                  Gestión de Usuarios
-                </Typography>
-              </Box>
-              <Typography
-                variant="body2"
-                sx={{ color: "#64748B", fontWeight: 500 }}
-              >
-                Administra los usuarios de la plataforma, roles, estado y
-                cuentas bancarias.
+                Gestión de Usuarios
               </Typography>
             </Box>
-
-            <Box sx={{ display: "flex", gap: 1.5 }}>
-              <Tooltip title="Recargar lista">
-                <IconButton
-                  onClick={loadUsers}
-                  sx={{
-                    bgcolor: "#FFFFFF",
-                    border: "1px solid #E2E8F0",
-                    borderRadius: "10px",
-                  }}
-                >
-                  <RefreshOutlinedIcon sx={{ color: "#475569" }} />
-                </IconButton>
-              </Tooltip>
-
-              <motion.div
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <Button
-                  variant="contained"
-                  startIcon={<PersonAddAlt1OutlinedIcon />}
-                  onClick={handleOpenCreate}
-                  sx={{
-                    bgcolor: "#0056D2",
-                    "&:hover": { bgcolor: "#0047B3" },
-                    borderRadius: "10px",
-                    px: 2.5,
-                    py: 1,
-                    fontWeight: 700,
-                    textTransform: "none",
-                    boxShadow: "0 4px 12px rgba(0, 86, 210, 0.25)",
-                  }}
-                >
-                  Nuevo Usuario
-                </Button>
-              </motion.div>
-            </Box>
+            <Typography
+              variant="body2"
+              sx={{ color: "#64748B", fontWeight: 500 }}
+            >
+              Administra los usuarios de la plataforma, roles, estado y
+              cuentas bancarias.
+            </Typography>
           </Box>
 
-          {/* Barra de Filtros y Búsqueda */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2,
-              mb: 3,
-              borderRadius: "14px",
-              border: "1px solid #E2E8F0",
-              bgcolor: "#FFFFFF",
-              display: "flex",
-              gap: 2,
-              flexWrap: "wrap",
-              alignItems: "center",
-            }}
-          >
-            <TextField
-              placeholder="Buscar por nombre o email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              size="small"
-              sx={{ flex: 1, minWidth: 260 }}
-              InputProps={{
+          <Box sx={{ display: "flex", gap: 1.5 }}>
+            <Tooltip title="Recargar lista">
+              <IconButton
+                onClick={loadUsers}
+                sx={{
+                  bgcolor: "#FFFFFF",
+                  border: "1px solid #E2E8F0",
+                  borderRadius: "10px",
+                }}
+              >
+                <RefreshOutlinedIcon sx={{ color: "#475569" }} />
+              </IconButton>
+            </Tooltip>
+
+            <motion.div
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              <Button
+                variant="contained"
+                startIcon={<PersonAddAlt1OutlinedIcon />}
+                onClick={handleOpenCreate}
+                sx={{
+                  bgcolor: "#0056D2",
+                  "&:hover": { bgcolor: "#0047B3" },
+                  borderRadius: "10px",
+                  px: 2.5,
+                  py: 1,
+                  fontWeight: 700,
+                  textTransform: "none",
+                  boxShadow: "0 4px 12px rgba(0, 86, 210, 0.25)",
+                }}
+              >
+                Nuevo Usuario
+              </Button>
+            </motion.div>
+          </Box>
+        </Box>
+
+        {/* Barra de Filtros y Búsqueda */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            mb: 3,
+            borderRadius: "14px",
+            border: "1px solid #E2E8F0",
+            bgcolor: "#FFFFFF",
+            display: "flex",
+            gap: 2,
+            flexWrap: "wrap",
+            alignItems: "center",
+          }}
+        >
+          <TextField
+            placeholder="Buscar por nombre o email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            size="small"
+            sx={{ flex: 1, minWidth: 260 }}
+            slotProps={{
+              input: {
                 startAdornment: (
                   <InputAdornment position="start">
                     <SearchIcon sx={{ color: "#94A3B8" }} />
                   </InputAdornment>
                 ),
                 sx: { borderRadius: "8px" },
-              }}
-            />
+              },
+            }}
+          />
 
-            <TextField
-              select
-              size="small"
-              label="Rol"
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              sx={{ width: 140 }}
-              InputProps={{ sx: { borderRadius: "8px" } }}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              <MenuItem value="Admin">Admin</MenuItem>
-              <MenuItem value="User">User</MenuItem>
-            </TextField>
+          <TextField
+            select
+            size="small"
+            label="Rol"
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            sx={{ width: 140 }}
+            slotProps={{ input: { sx: { borderRadius: "8px" } } }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="Admin">Admin</MenuItem>
+            <MenuItem value="User">User</MenuItem>
+          </TextField>
 
-            <TextField
-              select
-              size="small"
-              label="Estado"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              sx={{ width: 140 }}
-              InputProps={{ sx: { borderRadius: "8px" } }}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              <MenuItem value="true">Activos</MenuItem>
-              <MenuItem value="false">Inactivos</MenuItem>
-            </TextField>
-          </Paper>
+          <TextField
+            select
+            size="small"
+            label="Estado"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            sx={{ width: 140 }}
+            slotProps={{ input: { sx: { borderRadius: "8px" } } }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="true">Activos</MenuItem>
+            <MenuItem value="false">Inactivos</MenuItem>
+          </TextField>
 
-          {/* Tabla de Usuarios */}
-          <TableContainer
-            component={Paper}
-            elevation={0}
+          <Button
+            variant="outlined"
+            onClick={handleClearFilters}
             sx={{
-              borderRadius: "16px",
-              border: "1px solid #E2E8F0",
-              bgcolor: "#FFFFFF",
-              overflow: "hidden",
+              borderRadius: "8px",
+              borderColor: "#E2E8F0",
+              color: "#64748B",
+              textTransform: "none",
+              "&:hover": { bgcolor: "#F8FAFC", borderColor: "#CBD5E1" },
             }}
           >
-            {loading && (
-              <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-                <CircularProgress size={36} sx={{ color: "#0056D2" }} />
-              </Box>
-            )}
+            Limpiar
+          </Button>
+        </Paper>
 
-            {!loading && (
-              <Table>
-                <TableHead sx={{ bgcolor: "#F8FAFC" }}>
+        {/* Tabla de Usuarios */}
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: "16px",
+            border: "1px solid #E2E8F0",
+            bgcolor: "#FFFFFF",
+            overflow: "hidden",
+            boxShadow: "0 4px 20px rgba(0, 22, 57, 0.04)",
+          }}
+        >
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ bgcolor: "#F8FAFC" }}>
+                  <TableCell
+                    sx={{
+                      fontWeight: 700,
+                      color: "#475569",
+                      fontSize: "0.8rem",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Usuario
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 700,
+                      color: "#475569",
+                      fontSize: "0.8rem",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Rol
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 700,
+                      color: "#475569",
+                      fontSize: "0.8rem",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Saldo Cuenta
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 700,
+                      color: "#475569",
+                      fontSize: "0.8rem",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Estado
+                  </TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{
+                      fontWeight: 700,
+                      color: "#475569",
+                      fontSize: "0.8rem",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Acciones
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {loading ? (
+                  <TableRowsSkeleton columns={5} rows={pageSize} />
+                ) : users.length === 0 ? (
                   <TableRow>
-                    <TableCell
-                      sx={{
-                        fontWeight: 700,
-                        color: "#475569",
-                        fontSize: "0.8rem",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      Usuario
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: 700,
-                        color: "#475569",
-                        fontSize: "0.8rem",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      Rol
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: 700,
-                        color: "#475569",
-                        fontSize: "0.8rem",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      Saldo Cuenta
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: 700,
-                        color: "#475569",
-                        fontSize: "0.8rem",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      Estado
-                    </TableCell>
-                    <TableCell
-                      align="right"
-                      sx={{
-                        fontWeight: 700,
-                        color: "#475569",
-                        fontSize: "0.8rem",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      Acciones
+                    <TableCell colSpan={5} sx={{ p: 0 }}>
+                      <EmptyState
+                        title="No se encontraron usuarios"
+                        description="No hay usuarios que coincidan con los filtros de búsqueda aplicados."
+                        actionLabel="Nuevo Usuario"
+                        onAction={handleOpenCreate}
+                      />
                     </TableCell>
                   </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  <AnimatePresence>
-                    {users.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={5}
-                          align="center"
-                          sx={{ py: 6, color: "#64748B" }}
-                        >
-                          No se encontraron usuarios coincidentes.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      users.map((user) => (
-                        <TableRow
-                          key={user.id}
-                          component={motion.tr}
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
+                ) : (
+                  users.map((user) => (
+                    <TableRow
+                      key={user.id}
+                      hover
+                      sx={{
+                        "&:hover": { bgcolor: "#F8FAFC" },
+                        transition: "background-color 0.15s ease",
+                      }}
+                    >
+                      {/* Columna Usuario */}
+                      <TableCell>
+                        <Box
                           sx={{
-                            "&:hover": { bgcolor: "#F8FAFC" },
-                            transition: "background-color 0.15s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
                           }}
                         >
-                          {/* Columna Usuario */}
-                          <TableCell>
-                            <Box
+                          <Avatar
+                            sx={{
+                              bgcolor:
+                                user.role === "Admin"
+                                  ? "#0A192F"
+                                  : "#0056D2",
+                              color: "#FFFFFF",
+                              fontWeight: 700,
+                              fontSize: "0.875rem",
+                              width: 38,
+                              height: 38,
+                            }}
+                          >
+                            {user.firstName
+                              ? user.firstName.charAt(0).toUpperCase()
+                              : "U"}
+                          </Avatar>
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              sx={{ fontWeight: 700, color: "#0A192F" }}
+                            >
+                              {user.firstName} {user.lastName}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{ color: "#64748B" }}
+                            >
+                              {user.email}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+
+                      {/* Columna Rol */}
+                      <TableCell>
+                        <Chip
+                          label={user.role || "User"}
+                          size="small"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: "0.75rem",
+                            bgcolor:
+                              user.role === "Admin"
+                                ? "rgba(10, 25, 47, 0.08)"
+                                : "rgba(0, 86, 210, 0.08)",
+                            color:
+                              user.role === "Admin" ? "#0A192F" : "#0056D2",
+                            border: `1px solid ${user.role === "Admin" ? "rgba(10, 25, 47, 0.2)" : "rgba(0, 86, 210, 0.2)"}`,
+                            borderRadius: "6px",
+                          }}
+                        />
+                      </TableCell>
+
+                      {/* Columna Saldo */}
+                      <TableCell sx={{ fontWeight: 700, color: "#0A192F" }}>
+                        {formatCurrency(user.balance)}
+                      </TableCell>
+
+                      {/* Columna Estado */}
+                      <TableCell>
+                        <Chip
+                          icon={
+                            user.isActive ? (
+                              <CheckCircleOutlinedIcon
+                                sx={{ fontSize: "1rem !important" }}
+                              />
+                            ) : (
+                              <CancelOutlinedIcon
+                                sx={{ fontSize: "1rem !important" }}
+                              />
+                            )
+                          }
+                          label={user.isActive ? "Activo" : "Inactivo"}
+                          size="small"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: "0.75rem",
+                            bgcolor: user.isActive
+                              ? "rgba(16, 185, 129, 0.08)"
+                              : "rgba(239, 68, 68, 0.08)",
+                            color: user.isActive ? "#10B981" : "#EF4444",
+                            border: `1px solid ${user.isActive ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)"}`,
+                            borderRadius: "6px",
+                          }}
+                        />
+                      </TableCell>
+
+                      {/* Columna Acciones */}
+                      <TableCell align="right">
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            gap: 0.5,
+                          }}
+                        >
+                          <Tooltip title="Editar datos">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleOpenEdit(user)}
                               sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1.5,
+                                color: "#0056D2",
+                                "&:hover": { bgcolor: "rgba(0, 86, 210, 0.08)" },
                               }}
                             >
-                              <Avatar
-                                sx={{
-                                  bgcolor:
-                                    user.role === "Admin"
-                                      ? "#0A192F"
-                                      : "#0056D2",
-                                  color: "#FFFFFF",
-                                  fontWeight: 700,
-                                  fontSize: "0.875rem",
-                                  width: 38,
-                                  height: 38,
-                                }}
-                              >
-                                {user.firstName
-                                  ? user.firstName.charAt(0).toUpperCase()
-                                  : "U"}
-                              </Avatar>
-                              <Box>
-                                <Typography
-                                  variant="subtitle2"
-                                  sx={{ fontWeight: 700, color: "#0A192F" }}
-                                >
-                                  {user.firstName} {user.lastName}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  sx={{ color: "#64748B" }}
-                                >
-                                  {user.email}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </TableCell>
+                              <EditOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
 
-                          {/* Columna Rol */}
-                          <TableCell>
-                            <Chip
-                              label={user.role || "User"}
+                          <Tooltip title="Dar de baja">
+                            <IconButton
                               size="small"
+                              onClick={() => handleOpenDelete(user)}
+                              disabled={!user.isActive}
                               sx={{
-                                fontWeight: 700,
-                                fontSize: "0.75rem",
-                                bgcolor:
-                                  user.role === "Admin"
-                                    ? "rgba(10, 25, 47, 0.08)"
-                                    : "rgba(0, 86, 210, 0.08)",
-                                color:
-                                  user.role === "Admin" ? "#0A192F" : "#0056D2",
-                                border: `1px solid ${user.role === "Admin" ? "rgba(10, 25, 47, 0.2)" : "rgba(0, 86, 210, 0.2)"}`,
-                                borderRadius: "6px",
+                                color: "#EF4444",
+                                "&:hover": { bgcolor: "rgba(239, 68, 68, 0.08)" },
+                                "&.Mui-disabled": { color: "#CBD5E1" },
                               }}
-                            />
-                          </TableCell>
-
-                          {/* Columna Saldo */}
-                          <TableCell sx={{ fontWeight: 700, color: "#0A192F" }}>
-                            {formatMoney(user.balance)}
-                          </TableCell>
-
-                          {/* Columna Estado */}
-                          <TableCell>
-                            <Chip
-                              icon={
-                                user.isActive ? (
-                                  <CheckCircleOutlinedIcon
-                                    sx={{ fontSize: "1rem !important" }}
-                                  />
-                                ) : (
-                                  <CancelOutlinedIcon
-                                    sx={{ fontSize: "1rem !important" }}
-                                  />
-                                )
-                              }
-                              label={user.isActive ? "Activo" : "Inactivo"}
-                              size="small"
-                              sx={{
-                                fontWeight: 700,
-                                fontSize: "0.75rem",
-                                bgcolor: user.isActive
-                                  ? "rgba(22, 163, 74, 0.1)"
-                                  : "rgba(239, 68, 68, 0.1)",
-                                color: user.isActive ? "#16A34A" : "#EF4444",
-                                borderRadius: "6px",
-                              }}
-                            />
-                          </TableCell>
-
-                          {/* Columna Acciones */}
-                          <TableCell align="right">
-                            <Tooltip title="Editar usuario">
-                              <IconButton
-                                size="small"
-                                onClick={() => handleOpenEdit(user)}
-                                sx={{
-                                  color: "#0056D2",
-                                  mr: 0.5,
-                                  "&:hover": {
-                                    bgcolor: "rgba(0, 86, 210, 0.08)",
-                                  },
-                                }}
-                              >
-                                <EditOutlinedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-
-                            <Tooltip title="Dar de baja">
-                              <IconButton
-                                size="small"
-                                onClick={() => handleOpenDelete(user)}
-                                sx={{
-                                  color: "#EF4444",
-                                  "&:hover": {
-                                    bgcolor: "rgba(239, 68, 68, 0.08)",
-                                  },
-                                }}
-                              >
-                                <DeleteOutlineOutlinedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </AnimatePresence>
-                </TableBody>
-              </Table>
-            )}
-
-            {/* Paginación */}
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={totalItems}
-              rowsPerPage={pageSize}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              labelRowsPerPage="Filas por página:"
-              labelDisplayedRows={({ from, to, count }) =>
-                `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
-              }
-              sx={{ borderTop: "1px solid #E2E8F0" }}
-            />
+                            >
+                              <DeleteOutlineOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </TableContainer>
-        </Box>
+
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25, 50]}
+            component="div"
+            count={totalItems}
+            rowsPerPage={pageSize}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            labelRowsPerPage="Filas por página:"
+            labelDisplayedRows={({ from, to, count }) =>
+              `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
+            }
+            sx={{ borderTop: "1px solid #E2E8F0" }}
+          />
+        </Paper>
       </Box>
 
       {/* --- DIALOG DE CREAR USUARIO --- */}
@@ -731,7 +725,8 @@ export function AdminUsersPage() {
         onClose={() => !submitting && setCreateOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { borderRadius: "16px", p: 1 } }}
+        disableRestoreFocus
+        slotProps={{ paper: { sx: { borderRadius: "16px", p: 1 } } }}
       >
         <DialogTitle
           component="div"
@@ -867,7 +862,8 @@ export function AdminUsersPage() {
         onClose={() => !submitting && setEditOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { borderRadius: "16px", p: 1 } }}
+        disableRestoreFocus
+        slotProps={{ paper: { sx: { borderRadius: "16px", p: 1 } } }}
       >
         <DialogTitle
           component="div"
@@ -973,7 +969,8 @@ export function AdminUsersPage() {
         onClose={() => !submitting && setDeleteOpen(false)}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: "16px", p: 1 } }}
+        disableRestoreFocus
+        slotProps={{ paper: { sx: { borderRadius: "16px", p: 1 } } }}
       >
         <DialogTitle sx={{ color: "#EF4444", fontWeight: 800 }}>
           ¿Dar de baja usuario?
@@ -1024,7 +1021,7 @@ export function AdminUsersPage() {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </AppLayout>
   );
 }
 

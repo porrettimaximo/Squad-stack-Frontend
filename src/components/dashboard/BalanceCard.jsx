@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { Box, Card, Typography, Skeleton } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { motion } from "framer-motion";
@@ -10,7 +10,13 @@ import { motion } from "framer-motion";
  * - Levitation al hover: whileHover con desplazamiento en eje Y (-4px) y aumento sutil de sombra.
  * - Microinteracción en badge de tendencia: whileHover con escalado suave (scale 1.08).
  */
-export function BalanceCard({ balance = 45230.50, cardNumber = "4892", trend = 2.4, loading = false }) {
+export function BalanceCard({
+  balance = 45230.50,
+  cardNumber = "4892",
+  cvu,
+  trend = 2.4,
+  loading = false,
+}) {
   if (loading) {
     return (
       <Skeleton
@@ -30,6 +36,8 @@ export function BalanceCard({ balance = 45230.50, cardNumber = "4892", trend = 2
   const integerPart = formattedParts[0] || "0";
   const decimalPart = formattedParts[1] || "00";
 
+  const displayCvu = cvu || (cardNumber && cardNumber.length > 10 ? cardNumber : `000000310001000000000${cardNumber || "04"}`);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 18 }}
@@ -41,32 +49,19 @@ export function BalanceCard({ balance = 45230.50, cardNumber = "4892", trend = 2
         elevation={0}
         sx={{
           borderRadius: "20px",
-          p: { xs: 3, sm: 3.5 },
-          background: "linear-gradient(135deg, #0056D2 0%, #0066FF 60%, #0077FF 100%)",
+          p: { xs: 3.5, sm: 4 },
+          minHeight: { md: 220 },
+          background: "#0058BC",
           color: "#FFFFFF",
           position: "relative",
           overflow: "hidden",
-          boxShadow: "0 14px 28px -6px rgba(0, 102, 255, 0.35)",
+          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.18)",
           transition: "box-shadow 0.25s ease",
           "&:hover": {
-            boxShadow: "0 20px 38px -8px rgba(0, 102, 255, 0.48)",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.22)",
           },
         }}
       >
-        {/* Resplandor radial decorativo de fondo (Patrón Glow de React Bits) */}
-        <Box
-          sx={{
-            position: "absolute",
-            top: -60,
-            right: -60,
-            width: 220,
-            height: 220,
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 70%)",
-            pointerEvents: "none",
-          }}
-        />
-
         {/* Cabecera de la Tarjeta */}
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
           <Typography
@@ -140,7 +135,7 @@ export function BalanceCard({ balance = 45230.50, cardNumber = "4892", trend = 2
           }}
         />
 
-        {/* Pie de Tarjeta: DigitalArs Card y Círculos */}
+        {/* Pie de Tarjeta: DigitalArs (CVU) y Círculos */}
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
           <Box>
             <Typography
@@ -149,21 +144,22 @@ export function BalanceCard({ balance = 45230.50, cardNumber = "4892", trend = 2
                 display: "block",
                 color: "rgba(255, 255, 255, 0.75)",
                 fontSize: "0.75rem",
-                fontWeight: 500,
+                fontWeight: 600,
                 mb: 0.25,
               }}
             >
-              DigitalArs Card
+              DigitalArs (CVU)
             </Typography>
             <Typography
-              variant="body1"
+              variant="body2"
               sx={{
                 fontWeight: 700,
-                letterSpacing: "0.15em",
-                fontSize: "1rem",
+                letterSpacing: "0.04em",
+                fontSize: { xs: "0.82rem", sm: "0.92rem" },
+                fontFamily: "monospace",
               }}
             >
-              •••• {cardNumber}
+              {displayCvu}
             </Typography>
           </Box>
 
