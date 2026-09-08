@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
+import DotGrid from "../components/common/DotGrid";
 import iconoPrincipal from "../assets/iconoPrincipal.png";
 
 export const Login = () => {
@@ -70,22 +71,49 @@ export const Login = () => {
   return (
     <Box
       sx={{
+        position: "relative",
+        width: "100vw",
+        height: "100vh",
+        overflow: "hidden",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        minHeight: "100vh",
         backgroundColor: "#001639",
-        p: 2,
       }}>
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          zIndex: 0,
+        }}>
+        <DotGrid
+          dotSize={5}
+          gap={15}
+          baseColor="#0f182c"
+          activeColor="#60A5FA"
+          proximity={120}
+          shockRadius={250}
+          shockStrength={5}
+          resistance={750}
+          returnDuration={1.5}
+        />
+      </Box>
       <Card
         elevation={0}
         sx={{
+          position: "relative",
+          zIndex: 1,
           maxWidth: 420,
           width: "100%",
           borderRadius: "20px",
           border: "1px solid rgba(255, 255, 255, 0.1)",
-          backgroundColor: "#02122c",
+          backgroundColor: "rgba(2, 18, 44, 0.85)",
+          backdropFilter: "blur(8px)",
           boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.5)",
+          m: 2,
         }}>
         <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
           <Box sx={{ mb: 3, textAlign: "center" }}>
