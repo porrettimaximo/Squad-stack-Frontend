@@ -384,7 +384,7 @@ export function ServicesPage() {
                                           width: 38,
                                           height: 38,
                                           borderRadius: "10px",
-                                          bgcolor: section.bgColor,
+                                          bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.08)" : section.bgColor,
                                           display: "flex",
                                           alignItems: "center",
                                           justifyContent: "center",
@@ -440,7 +440,7 @@ export function ServicesPage() {
                                       <TableCell sx={{ py: 1.6, px: { xs: 2.5, sm: 4 }, borderBottom: "1px solid", borderColor: "divider" }}>
                                         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                                           <Box sx={{ display: "flex", alignItems: "center", gap: 1.8 }}>
-                                            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#0056D2", flexShrink: 0 }} />
+                                            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "primary.main", flexShrink: 0 }} />
                                             <Box>
                                               <Typography sx={{ fontWeight: 700, color: "text.primary", fontSize: { xs: "0.92rem", sm: "0.98rem" } }}>
                                                 {provider.name}
@@ -462,13 +462,13 @@ export function ServicesPage() {
                                               fontSize: "0.8rem",
                                               py: 0.4,
                                               px: { xs: 1.4, sm: 2 },
-                                              color: "#0056D2",
-                                              borderColor: "#BFDBFE",
-                                              bgcolor: "#EFF6FF",
+                                              color: "primary.main",
+                                              borderColor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.3)" : "#BFDBFE",
+                                              bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.15)" : "#EFF6FF",
                                               "&:hover": {
-                                                bgcolor: "#0056D2",
+                                                bgcolor: "primary.main",
                                                 color: "#FFFFFF",
-                                                borderColor: "#0056D2",
+                                                borderColor: "primary.main",
                                               },
                                             }}
                                           >
@@ -505,7 +505,7 @@ export function ServicesPage() {
                 <Card sx={{ maxWidth: 650, mx: "auto", borderRadius: "20px", p: { xs: 2.5, sm: 3.5 }, border: "1px solid", borderColor: "divider", boxShadow: "0 4px 20px rgba(0,0,0,0.04)" }}>
                   <CardContent sx={{ p: 0 }}>
                     {/* Cabecera de Empresa (solo nombre y categoría, limpio) */}
-                    <Box sx={{ pb: 2, mb: 3, borderBottom: "1px solid #F1F5F9" }}>
+                    <Box sx={{ pb: 2, mb: 3, borderBottom: "1px solid", borderColor: "divider" }}>
                       <Typography variant="h5" sx={{ fontWeight: 900, color: "text.primary", letterSpacing: "-0.02em" }}>
                         {selectedProvider.name}
                       </Typography>
@@ -517,10 +517,11 @@ export function ServicesPage() {
                           height: 22,
                           fontSize: "0.72rem",
                           fontWeight: 700,
-                          bgcolor: "#EFF6FF",
-                          color: "#0056D2",
+                          bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.18)" : "#EFF6FF",
+                          color: "primary.main",
                           borderRadius: "8px",
-                          border: "1px solid #DBEAFE",
+                          border: "1px solid",
+                          borderColor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.3)" : "#DBEAFE",
                         }}
                       />
                     </Box>
@@ -709,8 +710,8 @@ export function ServicesPage() {
                             width: 44,
                             height: 44,
                             borderRadius: "12px",
-                            bgcolor: "#EFF6FF",
-                            color: "#0056D2",
+                            bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.18)" : "#EFF6FF",
+                            color: "primary.main",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
