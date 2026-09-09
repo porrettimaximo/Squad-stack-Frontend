@@ -41,6 +41,20 @@ export function AppThemeProvider({ children }) {
     } catch {}
   }, [darkMode]);
 
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if (e.key === "Enter") {
+        const active = document.activeElement;
+        if (active && active.tagName === "INPUT" && active.type === "checkbox") {
+          e.preventDefault();
+          active.click();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, []);
+
   const theme = useMemo(() => getAppTheme(darkMode ? "dark" : "light"), [darkMode]);
 
   return (
