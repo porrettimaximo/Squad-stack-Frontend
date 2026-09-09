@@ -15,6 +15,9 @@ export function MobileBottomNav({ activeNav = 0, onChange }) {
 
   return (
     <Paper
+      component="nav"
+      role="navigation"
+      aria-label="Navegación móvil inferior"
       elevation={4}
       sx={{
         position: "fixed",
@@ -29,13 +32,27 @@ export function MobileBottomNav({ activeNav = 0, onChange }) {
         height: 68,
       }}
     >
-      <Box sx={{ display: "flex", height: "100%", alignItems: "center", justifyContent: "space-around", px: 1 }}>
+      <Box
+        role="tablist"
+        aria-label="Pestañas principales"
+        sx={{ display: "flex", height: "100%", alignItems: "center", justifyContent: "space-around", px: 1 }}
+      >
         {items.map((item, idx) => {
           const isActive = activeNav === idx;
           return (
             <Box
               key={item.label}
+              role="tab"
+              aria-selected={isActive}
+              aria-label={item.label}
+              tabIndex={0}
               onClick={() => onChange && onChange(null, idx)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onChange && onChange(null, idx);
+                }
+              }}
               sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -44,6 +61,11 @@ export function MobileBottomNav({ activeNav = 0, onChange }) {
                 cursor: "pointer",
                 flex: 1,
                 py: 0.5,
+                borderRadius: "8px",
+                "&:focus-visible": {
+                  outline: "2px solid #38BDF8 !important",
+                  outlineOffset: "1px",
+                },
               }}
             >
               <Box

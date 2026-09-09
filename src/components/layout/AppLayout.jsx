@@ -139,6 +139,11 @@ export function AppLayout({
 
   return (
     <Box sx={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", bgcolor: "background.default" }}>
+      {/* Enlace para lectores de pantalla para saltar directamente al contenido */}
+      <a href="#main-content" className="skip-link">
+        Saltar al contenido principal
+      </a>
+
       {/* 1. Vista Desktop: Barra Lateral Fija */}
       {isDesktop && (
         <Sidebar
@@ -182,6 +187,10 @@ export function AppLayout({
       {/* 3. Contenedor Principal Scrollable */}
       <Box
         component="main"
+        id="main-content"
+        tabIndex="-1"
+        role="main"
+        aria-label="Contenido principal"
         sx={{
           flex: 1,
           height: "100vh",
@@ -190,6 +199,7 @@ export function AppLayout({
           overflowY: "auto",
           bgcolor: "background.default",
           pb: { xs: 10, md: 4 },
+          outline: "none",
         }}
       >
         {/* Navbar Superior (Desktop) */}
@@ -333,6 +343,7 @@ export function AppLayout({
               <Button
                 startIcon={<ArrowBackIcon />}
                 onClick={onBack}
+                aria-label={`Volver: ${backLabel}`}
                 sx={{
                   color: (theme) => (theme.palette.mode === "dark" ? "#60A5FA" : "#0056D2"),
                   textTransform: "none",
