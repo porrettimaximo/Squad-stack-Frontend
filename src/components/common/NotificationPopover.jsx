@@ -199,7 +199,8 @@ export function NotificationPopover({ anchorEl, open, onClose, onNotificationsCh
                 alignItems: "center",
                 justifyContent: "space-between",
                 bgcolor: "action.hover",
-                borderBottom: "1px solid #E2E8F0",
+                borderBottom: "1px solid",
+                borderColor: "divider",
               }}
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
@@ -208,8 +209,8 @@ export function NotificationPopover({ anchorEl, open, onClose, onNotificationsCh
                     width: 34,
                     height: 34,
                     borderRadius: "10px",
-                    bgcolor: "rgba(0, 86, 210, 0.1)",
-                    color: "#0056D2",
+                    bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.2)" : "rgba(0, 86, 210, 0.1)",
+                    color: "primary.main",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -222,7 +223,7 @@ export function NotificationPopover({ anchorEl, open, onClose, onNotificationsCh
                     Notificaciones
                   </Typography>
                   {unreadCount > 0 && (
-                    <Typography variant="caption" sx={{ color: "#0056D2", fontWeight: 700, fontSize: "0.76rem" }}>
+                    <Typography variant="caption" sx={{ color: "primary.main", fontWeight: 700, fontSize: "0.76rem" }}>
                       {unreadCount} sin leer
                     </Typography>
                   )}
@@ -239,7 +240,7 @@ export function NotificationPopover({ anchorEl, open, onClose, onNotificationsCh
                       fontSize: "0.75rem",
                       fontWeight: 700,
                       textTransform: "none",
-                      color: "#0056D2",
+                      color: "primary.main",
                       py: 0.4,
                       px: 1,
                     }}
@@ -253,7 +254,7 @@ export function NotificationPopover({ anchorEl, open, onClose, onNotificationsCh
                   aria-label="Cerrar notificaciones"
                   sx={{
                     color: "text.secondary",
-                    "&:hover": { bgcolor: "rgba(0,0,0,0.05)", color: "text.primary" },
+                    "&:hover": { bgcolor: "action.hover", color: "text.primary" },
                   }}
                 >
                   <CloseIcon sx={{ fontSize: "1.15rem" }} />
@@ -264,7 +265,7 @@ export function NotificationPopover({ anchorEl, open, onClose, onNotificationsCh
             {/* Contenido: Cargando, Lista o Estado Vacío */}
             {loading ? (
               <Box sx={{ py: 6, display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <CircularProgress size={28} sx={{ color: "#0056D2" }} />
+                <CircularProgress size={28} sx={{ color: "primary.main" }} />
               </Box>
             ) : notifications.length > 0 ? (
               <List sx={{ p: 0, maxHeight: 380, overflowY: "auto" }}>
@@ -276,16 +277,18 @@ export function NotificationPopover({ anchorEl, open, onClose, onNotificationsCh
                   const createdAt = item.createdAt || item.CreatedAt;
 
                   return (
-                    <ListItem key={item.id || item.Id} disablePadding divider>
+                    <ListItem key={item.id || item.Id} disablePadding divider sx={{ borderColor: "divider" }}>
                       <ListItemButton
                         onClick={() => handleMarkAsRead(item)}
                         sx={{
                           py: 1.6,
                           px: 2.2,
-                          bgcolor: isRead ? "#FFFFFF" : "rgba(0, 86, 210, 0.04)",
+                          bgcolor: isRead
+                            ? "transparent"
+                            : (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.12)" : "rgba(0, 86, 210, 0.04)"),
                           transition: "background-color 0.15s ease",
                           "&:hover": {
-                            bgcolor: isRead ? "#F8FAFC" : "rgba(0, 86, 210, 0.08)",
+                            bgcolor: "action.hover",
                           },
                         }}
                       >
@@ -295,7 +298,7 @@ export function NotificationPopover({ anchorEl, open, onClose, onNotificationsCh
                               width: 36,
                               height: 36,
                               borderRadius: "50%",
-                              bgcolor: isRead ? "#F1F5F9" : "rgba(0, 86, 210, 0.1)",
+                              bgcolor: isRead ? "action.hover" : (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.2)" : "rgba(0, 86, 210, 0.1)",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
@@ -460,7 +463,7 @@ export function NotificationPopover({ anchorEl, open, onClose, onNotificationsCh
             )}
 
             {/* Pie del Panel */}
-            <Divider sx={{ borderColor: "#F1F5F9" }} />
+            <Divider sx={{ borderColor: "divider" }} />
             <Box
               sx={{
                 p: 1.2,
@@ -501,12 +504,12 @@ export function NotificationPopover({ anchorEl, open, onClose, onNotificationsCh
                       textTransform: "none",
                       fontWeight: 700,
                       fontSize: "0.8rem",
-                      color: "#0056D2",
+                      color: "primary.main",
                       borderRadius: "8px",
-                      "&:hover": { bgcolor: "rgba(0, 86, 210, 0.08)" },
+                      "&:hover": { bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.15)" : "rgba(0, 86, 210, 0.08)" },
                     }}
                   >
-                    {markingAll ? <CircularProgress size={14} sx={{ color: "#0056D2" }} /> : "Leídas"}
+                    {markingAll ? <CircularProgress size={14} sx={{ color: "primary.main" }} /> : "Leídas"}
                   </Button>
                 )}
 
@@ -519,7 +522,7 @@ export function NotificationPopover({ anchorEl, open, onClose, onNotificationsCh
                     fontSize: "0.8rem",
                     color: "text.secondary",
                     borderRadius: "8px",
-                    "&:hover": { bgcolor: "rgba(0, 0, 0, 0.05)" },
+                    "&:hover": { bgcolor: "action.hover" },
                   }}
                 >
                   Cerrar

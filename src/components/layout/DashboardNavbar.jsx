@@ -136,48 +136,67 @@ export function DashboardNavbar({ currentTab = 0, onTabChange, userName = "Usuar
               }}
             />
 
-            {/* Perfil del Usuario con animación Motion */}
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Box
-                onClick={() => navigate("/profile")}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.2,
-                  cursor: "pointer",
-                  p: 0.6,
+            {/* Perfil del Usuario con animación Motion y accesibilidad por teclado */}
+            <Box
+              component={motion.button}
+              type="button"
+              onClick={() => navigate("/profile")}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigate("/profile");
+                }
+              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              aria-label={`Ver mi perfil (${userName})`}
+              sx={{
+                background: "transparent",
+                border: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: 1.2,
+                cursor: "pointer",
+                p: 0.6,
+                borderRadius: "12px",
+                fontFamily: "inherit",
+                textAlign: "left",
+                color: "inherit",
+                transition: "background-color 0.15s ease",
+                "&:hover": { bgcolor: "action.hover" },
+                "&:focus-visible": {
+                  outline: "2px solid #38BDF8 !important",
+                  outlineOffset: "2px",
                   borderRadius: "12px",
-                  transition: "background-color 0.15s ease",
-                  "&:hover": { bgcolor: "action.hover" },
+                },
+              }}
+            >
+              <Avatar
+                sx={{
+                  bgcolor: isAdmin ? "rgba(124, 58, 237, 0.15)" : "rgba(0, 86, 210, 0.15)",
+                  color: isAdmin ? "#A78BFA" : "primary.main",
+                  width: 38,
+                  height: 38,
                 }}
               >
-                <Avatar
-                  sx={{
-                    bgcolor: isAdmin ? "rgba(124, 58, 237, 0.15)" : "rgba(0, 86, 210, 0.15)",
-                    color: isAdmin ? "#A78BFA" : "primary.main",
-                    width: 38,
-                    height: 38,
-                  }}
-                >
-                  <PersonOutlineOutlinedIcon fontSize="small" />
-                </Avatar>
+                <PersonOutlineOutlinedIcon fontSize="small" />
+              </Avatar>
 
-                <Box sx={{ display: { xs: "none", sm: "block" }, textAlign: "left" }}>
-                  <Typography
-                    variant="body2"
-                    sx={{ fontWeight: 700, color: "text.primary", lineHeight: 1.2 }}
-                  >
-                    {userName}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "text.secondary", fontWeight: 500, fontSize: "0.75rem" }}
-                  >
-                    {isAdmin ? "Administrador" : "Mi Perfil"}
-                  </Typography>
-                </Box>
+              <Box sx={{ display: { xs: "none", sm: "block" }, textAlign: "left" }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 700, color: "text.primary", lineHeight: 1.2 }}
+                >
+                  {userName}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "text.secondary", fontWeight: 500, fontSize: "0.75rem" }}
+                >
+                  {isAdmin ? "Administrador" : "Mi Perfil"}
+                </Typography>
               </Box>
-            </motion.div>
+            </Box>
           </Box>
         </Box>
       </Container>
