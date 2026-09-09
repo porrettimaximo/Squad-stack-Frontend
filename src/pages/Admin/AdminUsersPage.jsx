@@ -366,28 +366,38 @@ export function AdminUsersPage() {
               </IconButton>
             </Tooltip>
 
-            <motion.div
+            <Button
+              component={motion.button}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-            >
-              <Button
-                variant="contained"
-                startIcon={<PersonAddAlt1OutlinedIcon />}
-                onClick={handleOpenCreate}
-                sx={{
-                  bgcolor: "#0056D2",
-                  "&:hover": { bgcolor: "#0047B3" },
+              variant="contained"
+              startIcon={<PersonAddAlt1OutlinedIcon />}
+              onClick={handleOpenCreate}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleOpenCreate();
+                }
+              }}
+              aria-label="Crear nuevo usuario"
+              sx={{
+                bgcolor: "#0056D2",
+                "&:hover": { bgcolor: "#0047B3" },
+                borderRadius: "10px",
+                px: 2.5,
+                py: 1,
+                fontWeight: 700,
+                textTransform: "none",
+                boxShadow: "0 4px 12px rgba(0, 86, 210, 0.25)",
+                "&:focus-visible": {
+                  outline: "2px solid #38BDF8 !important",
+                  outlineOffset: "2px",
                   borderRadius: "10px",
-                  px: 2.5,
-                  py: 1,
-                  fontWeight: 700,
-                  textTransform: "none",
-                  boxShadow: "0 4px 12px rgba(0, 86, 210, 0.25)",
-                }}
-              >
-                Nuevo Usuario
-              </Button>
-            </motion.div>
+                },
+              }}
+            >
+              Nuevo Usuario
+            </Button>
           </Box>
         </Box>
 
