@@ -41,7 +41,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAccount } from "../../hooks/useAccount";
 import AppLayout from "../../components/layout/AppLayout";
 import fixedTermDepositService from "../../services/fixedTermDepositService";
-import { formatCurrency, formatDate } from "../../utils/formatters";
+import { formatCurrency, formatDate, parseAmount, sanitizeNumericInput } from "../../utils/formatters";
 
 const DURATION_OPTIONS = [
   { days: 30, label: "30 días", rate: 19.0, popular: true },
@@ -88,7 +88,7 @@ export function InvestmentsPage() {
   };
 
   const currentBalance = account?.money ?? 0;
-  const numAmount = Number(amount) || 0;
+  const numAmount = parseAmount(amount);
   const currentTnaRate = getTnaRate(durationDays);
 
   // Cálculo en tiempo real de rendimiento escalonado
@@ -115,8 +115,7 @@ export function InvestmentsPage() {
   }, [loadDeposits]);
 
   const handleAmountChange = (e) => {
-    const val = e.target.value.replace(/[^0-9]/g, "");
-    setAmount(val);
+    setAmount(sanitizeNumericInput(e.target.value));
   };
 
   const handleSetMaxAmount = () => {
@@ -181,18 +180,19 @@ export function InvestmentsPage() {
         {/* Cabecera Principal */}
         <Box sx={{ mb: 4, display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
           <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
-              <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary", letterSpacing: "-0.03em" }}>
+            <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "flex-start", sm: "center" }, gap: 1.5, mb: 0.5 }}>
+              <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary", letterSpacing: "-0.03em", fontSize: { xs: "1.5rem", sm: "2rem" } }}>
                 Inversiones a Plazo Fijo
               </Typography>
               <Chip
                 label={`Tasa actual: ${currentTnaRate}% TNA (hasta 35%)`}
                 sx={{
-                  bgcolor: "#ECFDF5",
-                  color: "#059669",
+                  bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(16, 185, 129, 0.15)" : "#ECFDF5",
+                  color: (theme) => theme.palette.mode === "dark" ? "#34D399" : "#059669",
                   fontWeight: 800,
                   fontSize: "0.85rem",
-                  border: "1px solid #A7F3D0",
+                  border: "1px solid",
+                  borderColor: (theme) => theme.palette.mode === "dark" ? "rgba(52, 211, 153, 0.3)" : "#A7F3D0",
                 }}
               />
             </Box>
@@ -215,7 +215,7 @@ export function InvestmentsPage() {
               gap: 2,
             }}
           >
-            <Box sx={{ width: 44, height: 44, borderRadius: "12px", bgcolor: "#EFF6FF", color: "#0056D2", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Box sx={{ width: 44, height: 44, borderRadius: "12px", bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.18)" : "#EFF6FF", color: "primary.main", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <AccountBalanceWalletIcon />
             </Box>
             <Box>
@@ -271,10 +271,11 @@ export function InvestmentsPage() {
                     : `Tasa seleccionada: ${currentTnaRate}% TNA · Rendimiento garantizado`
                 }
                 slotProps={{
+                  htmlInput: { inputMode: "decimal" },
                   input: {
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Typography sx={{ fontWeight: 800, color: "#0056D2", fontSize: "1.2rem" }}>$</Typography>
+                        <Typography sx={{ fontWeight: 800, color: "primary.main", fontSize: "1.2rem" }}>$</Typography>
                       </InputAdornment>
                     ),
                     endAdornment: (
@@ -282,7 +283,17 @@ export function InvestmentsPage() {
                         <Button
                           size="small"
                           onClick={handleSetMaxAmount}
-                          sx={{ textTransform: "none", fontWeight: 700, color: "#0056D2", bgcolor: "#EFF6FF", "&:hover": { bgcolor: "#DBEAFE" }, borderRadius: "8px", px: 1.5 }}
+                          sx={{
+                            textTransform: "none",
+                            fontWeight: 700,
+                            color: "primary.main",
+                            bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.18)" : "#EFF6FF",
+                            "&:hover": {
+                              bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.3)" : "#DBEAFE",
+                            },
+                            borderRadius: "8px",
+                            px: 1.5,
+                          }}
                         >
                           Máximo
                         </Button>
@@ -312,9 +323,9 @@ export function InvestmentsPage() {
                     onClick={() => setAmount(q.toString())}
                     sx={{
                       fontWeight: 600,
-                      bgcolor: numAmount === q ? "#0056D2" : "action.hover",
+                      bgcolor: numAmount === q ? "primary.main" : "action.hover",
                       color: numAmount === q ? "#FFFFFF" : "text.secondary",
-                      "&:hover": { bgcolor: numAmount === q ? "#0047B3" : "action.selected" },
+                      "&:hover": { bgcolor: numAmount === q ? "primary.dark" : "action.selected" },
                     }}
                   />
                 ))}
@@ -348,13 +359,13 @@ export function InvestmentsPage() {
                       justifyContent: "center",
                       gap: 0.3,
                       textTransform: "none",
-                      borderColor: durationDays === opt.days ? "#0056D2" : "divider",
-                      bgcolor: durationDays === opt.days ? "#0056D2" : "action.hover",
+                      borderColor: durationDays === opt.days ? "primary.main" : "divider",
+                      bgcolor: durationDays === opt.days ? "primary.main" : "action.hover",
                       color: durationDays === opt.days ? "#FFFFFF" : "text.primary",
                       boxShadow: durationDays === opt.days ? "0 4px 12px rgba(0, 86, 210, 0.2)" : "none",
                       "&:hover": {
-                        bgcolor: durationDays === opt.days ? "#0047B3" : "action.selected",
-                        borderColor: "#0056D2",
+                        bgcolor: durationDays === opt.days ? "primary.dark" : "action.selected",
+                        borderColor: "primary.main",
                       },
                     }}
                   >
@@ -365,7 +376,7 @@ export function InvestmentsPage() {
                       sx={{
                         fontWeight: 700,
                         fontSize: "0.74rem",
-                        color: durationDays === opt.days ? "#A7F3D0" : "#059669",
+                        color: durationDays === opt.days ? "#A7F3D0" : (theme) => theme.palette.mode === "dark" ? "#34D399" : "#059669",
                         lineHeight: 1,
                       }}
                     >
@@ -384,7 +395,7 @@ export function InvestmentsPage() {
                 size="large"
                 onClick={handleOpenConfirm}
                 sx={{
-                  bgcolor: "#0056D2",
+                  bgcolor: "primary.main",
                   color: "#FFFFFF",
                   py: 1.6,
                   borderRadius: "14px",
@@ -393,7 +404,7 @@ export function InvestmentsPage() {
                   textTransform: "none",
                   boxShadow: "none",
                   "&:hover": {
-                    bgcolor: "#0047B3",
+                    bgcolor: "primary.dark",
                     boxShadow: "0 4px 14px rgba(0, 86, 210, 0.25)",
                   },
                 }}
@@ -409,8 +420,10 @@ export function InvestmentsPage() {
             elevation={0}
             sx={{
               borderRadius: "20px",
-              bgcolor: "text.primary",
+              bgcolor: (theme) => theme.palette.mode === "dark" ? "#1A2436" : "#0F172A",
               color: "#FFFFFF",
+              border: "1px solid",
+              borderColor: (theme) => theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "transparent",
               p: { xs: 2.5, md: 3 },
               display: "flex",
               flexDirection: "column",

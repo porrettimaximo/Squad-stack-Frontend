@@ -2,7 +2,7 @@ import api from "./api";
 
 export const accountService = {
   /**
-   * Obtiene la información y saldo de la cuenta del usuario autenticado (HU-14).
+   * Obtiene la información, saldo, CVU y Alias de la cuenta del usuario autenticado (HU-14).
    * GET /api/accounts/me
    */
   async getMyAccount() {
@@ -13,6 +13,8 @@ export const accountService = {
         id: data.id,
         money: Number(data.balance ?? data.money ?? 0),
         isBlocked: data.isBlocked ?? false,
+        cvu: data.cvu || (data.id ? `000000310001000000000${data.id}` : ""),
+        alias: data.alias || "",
         cardNumber: "4892",
         trend: 0,
         createdAt: data.createdAt,
@@ -20,20 +22,22 @@ export const accountService = {
     } catch (error) {
       const token = localStorage.getItem("token");
       if (token) {
-        // Con sesión pero con error (ej. sin cuenta aún)
         return {
           id: null,
           money: 0,
           isBlocked: false,
+          cvu: "",
+          alias: "",
           cardNumber: "----",
           trend: 0,
         };
       }
-      // Retorna el perfil y saldo base de Figma únicamente en modo autónomo offline (sin sesión)
       return {
         id: 4,
         money: 45230.50,
         isBlocked: false,
+        cvu: "0000003100010000000004",
+        alias: "alejandro.silva.ars",
         cardNumber: "4892",
         trend: 2.4,
       };
@@ -53,6 +57,35 @@ export const accountService = {
       payload.concept = concept;
     }
     const response = await api.post("/accounts/deposit", payload);
+    return response.data;
+  },
+
+  /**
+   * Consulta y verifica en tiempo real un destinatario por CVU, Alias o ID antes de transferir.
+   * GET /api/accounts/lookup?query=...
+   */
+  async lookupAccount(query) {
+    if (!query || !query.trim()) {
+      throw new Error("Debe ingresar un CVU o Alias para buscar.");
+    }
+    const response = await api.get("/accounts/lookup", {
+      params: { query: query.trim() },
+    });
+    return response.data;
+  },
+
+  /**
+   * Modifica el alias bancario de la cuenta del usuario autenticado.
+   * PUT /api/accounts/me/alias
+   * Body: { alias }
+   */
+  async updateAlias(newAlias) {
+    if (!newAlias || !newAlias.trim()) {
+      throw new Error("El alias no puede estar vacío.");
+    }
+    const response = await api.put("/accounts/me/alias", {
+      alias: newAlias.trim().toLowerCase(),
+    });
     return response.data;
   },
 };

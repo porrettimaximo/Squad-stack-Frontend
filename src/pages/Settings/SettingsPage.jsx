@@ -81,7 +81,20 @@ export function SettingsPage() {
         </Box>
 
         {/* 1. Apariencia: Modo Claro / Oscuro */}
-        <Card sx={{ mb: 3 }}>
+        <Card
+          sx={{
+            mb: 3,
+            cursor: "pointer",
+            transition: "all 0.18s ease",
+            border: "1px solid",
+            borderColor: "divider",
+            "&:hover": { borderColor: "primary.main" },
+            "&:focus-within": {
+              borderColor: "primary.main",
+            },
+          }}
+          onClick={toggleTheme}
+        >
           <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -109,9 +122,31 @@ export function SettingsPage() {
 
               <Switch
                 checked={darkMode}
-                onChange={toggleTheme}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  toggleTheme();
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleTheme();
+                  }
+                }}
                 color="primary"
-                slotProps={{ input: { "aria-label": "Alternar modo oscuro" } }}
+                slotProps={{
+                  input: {
+                    "aria-label": "Alternar modo oscuro",
+                    onKeyDown: (e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleTheme();
+                      }
+                    },
+                  },
+                }}
               />
             </Box>
           </CardContent>
@@ -128,57 +163,77 @@ export function SettingsPage() {
                 Accede directamente a los módulos de configuración y consulta de tu cuenta:
               </Typography>
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.2 }}>
-              {shortcutLinks.map((item, idx) => (
-                <Paper
-                  key={idx}
-                  onClick={() => navigate(item.path)}
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    borderRadius: "14px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    cursor: "pointer",
-                    transition: "all 0.18s ease",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                      borderColor: "primary.main",
-                      transform: "translateX(4px)",
-                    },
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    <Box
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: "10px",
-                        bgcolor: "action.selected",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {item.icon}
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.2 }}>
+                {shortcutLinks.map((item, idx) => (
+                  <Paper
+                    key={idx}
+                    component="button"
+                    type="button"
+                    onClick={() => navigate(item.path)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        navigate(item.path);
+                      }
+                    }}
+                    variant="outlined"
+                    sx={{
+                      width: "100%",
+                      fontFamily: "inherit",
+                      textAlign: "left",
+                      color: "text.primary",
+                      bgcolor: "background.paper",
+                      p: 2,
+                      borderRadius: "14px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      cursor: "pointer",
+                      transition: "all 0.18s ease",
+                      border: "1px solid",
+                      borderColor: "divider",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                        borderColor: "primary.main",
+                        transform: "translateX(4px)",
+                      },
+                      "&:focus-visible": {
+                        outline: "2px solid #38BDF8 !important",
+                        outlineOffset: "2px",
+                        borderRadius: "14px",
+                      },
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: "10px",
+                          bgcolor: "action.selected",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {item.icon}
+                      </Box>
+                      <Box>
+                        <Typography variant="body1" sx={{ fontWeight: 700, fontSize: "0.95rem" }}>
+                          {item.title}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.8rem" }}>
+                          {item.subtitle}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Box>
-                      <Typography variant="body1" sx={{ fontWeight: 700, fontSize: "0.95rem" }}>
-                        {item.title}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.8rem" }}>
-                        {item.subtitle}
-                      </Typography>
-                    </Box>
-                  </Box>
 
-                  <ArrowForwardIosIcon sx={{ fontSize: "0.9rem", color: "text.secondary" }} />
-                </Paper>
-              ))}
-            </Box>
-          </CardContent>
-        </Card>
+                    <ArrowForwardIosIcon sx={{ fontSize: "0.9rem", color: "text.secondary" }} />
+                  </Paper>
+                ))}
+              </Box>
+            </CardContent>
+          </Card>
         )}
 
         {/* 3. Información del Sistema */}

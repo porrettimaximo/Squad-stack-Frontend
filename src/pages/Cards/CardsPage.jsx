@@ -940,12 +940,14 @@ export function CardsPage() {
         <Dialog
           open={deleteModalOpen}
           onClose={() => !deactivating && setDeleteModalOpen(false)}
-          PaperProps={{
-            sx: {
-              borderRadius: "18px",
-              p: 1.5,
-              maxWidth: 440,
-              width: "100%",
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: "18px",
+                p: 1.5,
+                maxWidth: 440,
+                width: "100%",
+              },
             },
           }}
         >
@@ -1003,12 +1005,10 @@ export function CardsPage() {
           <Alert
             onClose={handleCloseToast}
             severity={toast.severity}
-            variant="filled"
             sx={{
               width: "100%",
-              borderRadius: "12px",
+              borderRadius: "14px",
               fontWeight: 600,
-              boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
             }}
           >
             {toast.message}

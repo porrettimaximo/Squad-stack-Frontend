@@ -577,7 +577,8 @@ export function ReservesPage() {
           onClose={() => !actionLoading && setCreateDialogOpen(false)}
           maxWidth="xs"
           fullWidth
-          PaperProps={{ sx: { borderRadius: "18px", p: 1 } }}
+          disableRestoreFocus
+          slotProps={{ paper: { sx: { borderRadius: "18px", p: 1 } } }}
         >
           <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 1 }}>
             <Typography sx={{ fontWeight: 800, fontSize: "1.15rem", color: "text.primary" }}>
@@ -677,7 +678,8 @@ export function ReservesPage() {
           onClose={() => !actionLoading && setDepositDialogOpen(false)}
           maxWidth="xs"
           fullWidth
-          PaperProps={{ sx: { borderRadius: "18px", p: 1 } }}
+          disableRestoreFocus
+          slotProps={{ paper: { sx: { borderRadius: "18px", p: 1 } } }}
         >
           <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 1 }}>
             <Typography sx={{ fontWeight: 800, fontSize: "1.15rem", color: "text.primary" }}>
@@ -772,7 +774,8 @@ export function ReservesPage() {
           onClose={() => !actionLoading && setWithdrawDialogOpen(false)}
           maxWidth="xs"
           fullWidth
-          PaperProps={{ sx: { borderRadius: "18px", p: 1 } }}
+          disableRestoreFocus
+          slotProps={{ paper: { sx: { borderRadius: "18px", p: 1 } } }}
         >
           <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 1 }}>
             <Typography sx={{ fontWeight: 800, fontSize: "1.15rem", color: "text.primary" }}>
@@ -860,7 +863,8 @@ export function ReservesPage() {
           onClose={() => !actionLoading && setDeleteDialogOpen(false)}
           maxWidth="xs"
           fullWidth
-          PaperProps={{ sx: { borderRadius: "18px", p: 1 } }}
+          disableRestoreFocus
+          slotProps={{ paper: { sx: { borderRadius: "18px", p: 1 } } }}
         >
           <DialogTitle sx={{ fontWeight: 800, fontSize: "1.15rem", color: "text.primary", pb: 1 }}>
             ¿Eliminar reserva "{selectedReserve?.name}"?

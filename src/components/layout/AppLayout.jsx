@@ -13,6 +13,7 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MenuIcon from "@mui/icons-material/Menu";
 import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import Sidebar from "./Sidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import MobileBottomNav from "./MobileBottomNav";
@@ -138,6 +139,11 @@ export function AppLayout({
 
   return (
     <Box sx={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", bgcolor: "background.default" }}>
+      {/* Enlace para lectores de pantalla para saltar directamente al contenido */}
+      <a href="#main-content" className="skip-link">
+        Saltar al contenido principal
+      </a>
+
       {/* 1. Vista Desktop: Barra Lateral Fija */}
       {isDesktop && (
         <Sidebar
@@ -153,8 +159,6 @@ export function AppLayout({
           anchor="left"
           open={mobileDrawerOpen}
           onClose={() => setMobileDrawerOpen(false)}
-          disableRestoreFocus
-          ModalProps={{ keepMounted: true, disableRestoreFocus: true }}
           slotProps={{
             paper: {
               sx: {
@@ -162,6 +166,9 @@ export function AppLayout({
                 backgroundImage: "none",
                 border: "none",
                 width: 280,
+                maxHeight: "100dvh",
+                height: "100%",
+                overflow: "hidden",
                 boxShadow: "4px 0 24px rgba(0,0,0,0.4)",
               },
             },
@@ -180,6 +187,10 @@ export function AppLayout({
       {/* 3. Contenedor Principal Scrollable */}
       <Box
         component="main"
+        id="main-content"
+        tabIndex="-1"
+        role="main"
+        aria-label="Contenido principal"
         sx={{
           flex: 1,
           height: "100vh",
@@ -188,6 +199,7 @@ export function AppLayout({
           overflowY: "auto",
           bgcolor: "background.default",
           pb: { xs: 10, md: 4 },
+          outline: "none",
         }}
       >
         {/* Navbar Superior (Desktop) */}
@@ -200,7 +212,7 @@ export function AppLayout({
           />
         )}
 
-        {/* Barra Superior Mobile con Menú Hamburguesa */}
+        {/* Barra Superior Mobile con Menú Hamburguesa y Cierre de Sesión */}
         {!isDesktop && (
           <Box
             sx={{
@@ -277,20 +289,6 @@ export function AppLayout({
                 </Badge>
               </IconButton>
 
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "#94A3B8",
-                  fontWeight: 600,
-                  maxWidth: 120,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {userName}
-              </Typography>
-
               <NotificationPopover
                 anchorEl={mobileNotificationsAnchor}
                 open={Boolean(mobileNotificationsAnchor)}
@@ -300,6 +298,39 @@ export function AppLayout({
                 }}
                 onNotificationsChange={fetchUnread}
               />
+
+              <Box
+                onClick={() => navigate("/profile")}
+                sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "#D0D9E5",
+                    fontWeight: 600,
+                    maxWidth: 90,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {userName}
+                </Typography>
+              </Box>
+
+              <IconButton
+                onClick={handleLogout}
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+                sx={{
+                  color: "#EF4444",
+                  p: 0.8,
+                  bgcolor: "rgba(239, 68, 68, 0.1)",
+                  "&:hover": { bgcolor: "rgba(239, 68, 68, 0.2)" },
+                }}
+              >
+                <LogoutOutlinedIcon fontSize="small" />
+              </IconButton>
             </Box>
           </Box>
         )}
@@ -312,15 +343,18 @@ export function AppLayout({
               <Button
                 startIcon={<ArrowBackIcon />}
                 onClick={onBack}
+                aria-label={`Volver: ${backLabel}`}
                 sx={{
-                  color: "#0056D2",
+                  color: (theme) => (theme.palette.mode === "dark" ? "#60A5FA" : "#0056D2"),
                   textTransform: "none",
-                  fontWeight: 600,
+                  fontWeight: 700,
                   fontSize: "0.95rem",
                   borderRadius: "10px",
                   px: 2,
                   py: 0.8,
-                  "&:hover": { bgcolor: "#EFF6FF" },
+                  "&:hover": {
+                    bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(96, 165, 250, 0.15)" : "#EFF6FF"),
+                  },
                 }}
               >
                 {backLabel}
@@ -331,9 +365,16 @@ export function AppLayout({
           {children}
         </Box>
       </Box>
+
+      {/* Barra de Navegación Inferior en Mobile */}
+      {!isDesktop && (
+        <MobileBottomNav
+          currentIndex={currentMobileIndex}
+          onChange={handleMobileNavChange}
+        />
+      )}
     </Box>
   );
 }
 
 export default AppLayout;
-

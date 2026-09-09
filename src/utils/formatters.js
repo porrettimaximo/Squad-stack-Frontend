@@ -126,3 +126,39 @@ export function formatCvu(cvu) {
   return clean.replace(/(\d{4})/g, "$1 ").trim();
 }
 
+/**
+ * Parsea un string ingresado por el usuario (ej: "1500", "1500,50", "1500.50") a número float limpio.
+ * @param {string|number} str
+ * @returns {number}
+ */
+export function parseAmount(str) {
+  if (typeof str === "number") return str;
+  if (!str) return 0;
+  const normalized = String(str).replace(/\s/g, "").replace(",", ".");
+  const num = parseFloat(normalized);
+  return isNaN(num) ? 0 : num;
+}
+
+/**
+ * Sanitiza la entrada de texto para campos monetarios naturales:
+ * Permite solo dígitos y como máximo 1 separador decimal (, o .), con hasta 2 decimales.
+ * @param {string} val
+ * @returns {string}
+ */
+export function sanitizeNumericInput(val) {
+  if (!val) return "";
+  let clean = String(val).replace(/[^0-9.,]/g, "");
+  const parts = clean.split(/[.,]/);
+  if (parts.length > 2) {
+    clean = parts[0] + "," + parts.slice(1).join("");
+  }
+  const decimalMatch = clean.match(/^[0-9]+[.,]([0-9]*)$/);
+  if (decimalMatch && decimalMatch[1].length > 2) {
+    const sep = clean.includes(",") ? "," : ".";
+    const [intPart, decPart] = clean.split(sep);
+    clean = intPart + sep + decPart.slice(0, 2);
+  }
+  return clean;
+}
+
+

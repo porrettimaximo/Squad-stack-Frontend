@@ -122,15 +122,32 @@ export function AccountProvider({ children }) {
       if (data && data.money !== undefined) {
         setAccount((prev) => ({
           ...prev,
+          id: data.id ?? prev.id,
           money: data.money,
           cardNumber: data.cardNumber || prev.cardNumber,
           trend: data.trend ?? prev.trend,
           isBlocked: data.isBlocked ?? prev.isBlocked,
+          cvu: data.cvu || prev.cvu || (data.id ? `000000310001000000000${data.id}` : ""),
+          alias: data.alias ?? prev.alias ?? "",
         }));
       }
     } catch {
       // Modo autónomo / offline: preserva el estado en memoria
     }
+  }, []);
+
+  /**
+   * Actualiza el alias bancario de la cuenta del usuario.
+   */
+  const updateAlias = useCallback(async (newAlias) => {
+    const res = await accountService.updateAlias(newAlias);
+    if (res) {
+      setAccount((prev) => ({
+        ...prev,
+        alias: res.alias || newAlias.trim().toLowerCase(),
+      }));
+    }
+    return res;
   }, []);
 
   const refreshTransactions = useCallback(async () => {
@@ -312,6 +329,7 @@ export function AccountProvider({ children }) {
         refreshAccount,
         refreshTransactions,
         updateBalance,
+        updateAlias,
         depositFunds,
         transferFunds,
       }}

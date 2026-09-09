@@ -10,6 +10,7 @@ import {
   TextField,
   Tooltip,
   IconButton,
+  useTheme,
 } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 import PieChartIcon from "@mui/icons-material/PieChart";
@@ -42,6 +43,7 @@ export const MovementPieChart = ({
   onRefresh,
   loading = false,
 }) => {
+  const theme = useTheme();
   const [hoveredSlice, setHoveredSlice] = useState(null);
 
   // Únicamente dos opciones de filtro: 'last30' (predefinido) o 'custom'
@@ -219,8 +221,10 @@ export const MovementPieChart = ({
       elevation={0}
       sx={{
         borderRadius: "20px",
-        background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-        border: "1px solid rgba(226, 232, 240, 0.9)",
+        background: theme.palette.mode === "dark" ? "none" : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+        bgcolor: "background.paper",
+        border: "1px solid",
+        borderColor: "divider",
         boxShadow: "0 14px 30px -10px rgba(0, 86, 210, 0.06), 0 4px 10px -2px rgba(15, 23, 42, 0.03)",
         overflow: "hidden",
         position: "relative",
@@ -245,7 +249,8 @@ export const MovementPieChart = ({
         sx={{
           px: { xs: 2, sm: 2.5 },
           py: 1.8,
-          borderBottom: "1px solid #f1f5f9",
+          borderBottom: "1px solid",
+          borderColor: "divider",
           display: "flex",
           alignItems: { xs: "stretch", sm: "center" },
           justifyContent: "space-between",
@@ -303,8 +308,8 @@ export const MovementPieChart = ({
                   height: 20,
                   fontSize: "0.7rem",
                   fontWeight: 700,
-                  bgcolor: "#EFF6FF",
-                  color: "#0056D2",
+                  bgcolor: theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.18)" : "#EFF6FF",
+                  color: "primary.main",
                   borderRadius: "6px",
                   px: 0.3,
                 }}
@@ -510,6 +515,9 @@ export const MovementPieChart = ({
                     type="date"
                     value={customDateFrom}
                     onChange={(e) => setCustomDateFrom(e.target.value)}
+                    slotProps={{
+                      htmlInput: { max: customDateTo || undefined },
+                    }}
                     sx={{
                       bgcolor: "background.paper",
                       borderRadius: "8px",
@@ -543,6 +551,9 @@ export const MovementPieChart = ({
                     type="date"
                     value={customDateTo}
                     onChange={(e) => setCustomDateTo(e.target.value)}
+                    slotProps={{
+                      htmlInput: { min: customDateFrom || undefined },
+                    }}
                     sx={{
                       bgcolor: "background.paper",
                       borderRadius: "8px",
@@ -619,7 +630,7 @@ export const MovementPieChart = ({
                       cy="110"
                       r="80"
                       fill="none"
-                      stroke="#f1f5f9"
+                      stroke={theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.08)" : "#f1f5f9"}
                       strokeWidth="32"
                     />
 

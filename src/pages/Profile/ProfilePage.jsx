@@ -28,10 +28,23 @@ import SaveIcon from "@mui/icons-material/Save";
 import KeyIcon from "@mui/icons-material/Key";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import CloseIcon from "@mui/icons-material/Close";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import AccountBalanceOutlinedIcon from "@mui/icons-material/AccountBalanceOutlined";
+import CheckIcon from "@mui/icons-material/Check";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
 
 import AppLayout from "../../components/layout/AppLayout";
 import { useAccount } from "../../hooks/useAccount";
+import { useAuth } from "../../context/AuthContext";
 import userService from "../../services/userService";
 
 /**
@@ -40,7 +53,14 @@ import userService from "../../services/userService";
  * al hacer clic en "Editar datos personales". Sin campo de rol.
  */
 export function ProfilePage() {
-  const { user, updateUserProfile } = useAccount();
+  const { user, updateUserProfile, account, updateAlias } = useAccount();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   // Estados de carga
   const [initialLoading, setInitialLoading] = useState(true);
@@ -52,6 +72,65 @@ export function ProfilePage() {
 
   // Modo edición para seguridad y contraseña
   const [isEditingPassword, setIsEditingPassword] = useState(false);
+
+  // Modal y edición de Alias
+  const [aliasModalOpen, setAliasModalOpen] = useState(false);
+  const [newAliasInput, setNewAliasInput] = useState("");
+  const [savingAlias, setSavingAlias] = useState(false);
+  const [aliasError, setAliasError] = useState("");
+  const [copiedField, setCopiedField] = useState(null);
+
+  const handleCopy = (text, fieldName) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldName);
+    setSnackbar({
+      open: true,
+      message: `¡${fieldName} copiado al portapapeles!`,
+      severity: "success",
+    });
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleOpenAliasModal = () => {
+    setNewAliasInput(account?.alias || "");
+    setAliasError("");
+    setAliasModalOpen(true);
+  };
+
+  const handleSaveAlias = async (e) => {
+    e?.preventDefault();
+    const clean = newAliasInput.trim().toLowerCase();
+    if (!clean) {
+      setAliasError("El alias no puede estar vacío.");
+      return;
+    }
+    if (clean.length < 4 || clean.length > 50) {
+      setAliasError("El alias debe tener entre 4 y 50 caracteres.");
+      return;
+    }
+    if (!/^[a-zA-Z0-9.\-_]+$/.test(clean)) {
+      setAliasError("El alias solo puede contener letras, números, puntos y guiones.");
+      return;
+    }
+
+    setSavingAlias(true);
+    setAliasError("");
+    try {
+      await updateAlias(clean);
+      setAliasModalOpen(false);
+      setSnackbar({
+        open: true,
+        message: "¡Alias actualizado exitosamente!",
+        severity: "success",
+      });
+    } catch (err) {
+      const msg = err.response?.data?.message || err.response?.data?.error || err.message;
+      setAliasError(msg || "Error al actualizar el alias.");
+    } finally {
+      setSavingAlias(false);
+    }
+  };
 
   // Datos del perfil (modo visualización)
   const [profileData, setProfileData] = useState({
@@ -487,6 +566,220 @@ export function ProfilePage() {
                 </Typography>
               </Box>
             </Box>
+          </Card>
+        </motion.div>
+
+        {/* Tarjeta de Datos Bancarios (CVU y Alias Oficial) */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.03 }}
+        >
+          <Card
+            elevation={0}
+            sx={{
+              borderRadius: "20px",
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+              boxShadow: "0 4px 20px -2px rgba(15, 23, 42, 0.05)",
+              mb: 3.5,
+              overflow: "hidden",
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+                  <Box
+                    sx={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: "10px",
+                      bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.18)" : "#EFF6FF",
+                      color: "primary.main",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <AccountBalanceOutlinedIcon sx={{ fontSize: 22 }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontWeight: 800, fontSize: "1.15rem", color: "text.primary" }}>
+                      Datos Bancarios y de Cuenta
+                    </Typography>
+                    <Typography sx={{ fontSize: "0.82rem", color: "text.secondary" }}>
+                      Utilizá tu CVU o Alias para recibir transferencias de inmediato
+                    </Typography>
+                  </Box>
+                </Box>
+                <Chip
+                  label="DigitalArs"
+                  size="small"
+                  sx={{
+                    bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.18)" : "#EEF4FF",
+                    color: "primary.main",
+                    fontWeight: 700,
+                    fontSize: "0.75rem",
+                    borderRadius: "6px",
+                  }}
+                />
+              </Box>
+
+              <Grid container spacing={2}>
+                {/* CVU */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderRadius: "14px",
+                      bgcolor: "action.hover",
+                      border: "1px solid",
+                      borderColor: "divider",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+                      <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                        CVU (Clave Virtual Uniforme)
+                      </Typography>
+                      <Tooltip title="El CVU es único e inmodificable">
+                        <Chip
+                          icon={<LockOutlinedIcon sx={{ fontSize: "13px !important" }} />}
+                          label="Único"
+                          size="small"
+                          sx={{ height: 20, fontSize: "0.68rem", bgcolor: "action.selected", color: "text.secondary", borderRadius: "5px" }}
+                        />
+                      </Tooltip>
+                    </Box>
+
+                    <Typography
+                      sx={{
+                        fontSize: { xs: "0.95rem", sm: "1.05rem" },
+                        fontWeight: 800,
+                        color: "text.primary",
+                        letterSpacing: "0.04em",
+                        my: 0.8,
+                        wordBreak: "break-all",
+                        fontFamily: "monospace",
+                      }}
+                    >
+                      {account?.cvu || (account?.id ? `000000310001000000000${account.id}` : "0000003100010000000004")}
+                    </Typography>
+
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={copiedField === "CVU" ? <CheckIcon sx={{ fontSize: 16 }} /> : <ContentCopyIcon sx={{ fontSize: 16 }} />}
+                      onClick={() => handleCopy(account?.cvu || (account?.id ? `000000310001000000000${account.id}` : "0000003100010000000004"), "CVU")}
+                      sx={{
+                        alignSelf: "flex-start",
+                        borderRadius: "10px",
+                        textTransform: "none",
+                        fontWeight: 700,
+                        fontSize: "0.78rem",
+                        borderColor: copiedField === "CVU" ? "success.main" : "divider",
+                        bgcolor: copiedField === "CVU" ? (theme) => theme.palette.mode === "dark" ? "rgba(16, 185, 129, 0.2)" : "#F0FDF4" : "background.paper",
+                        color: copiedField === "CVU" ? "success.main" : "text.primary",
+                        "&:hover": { bgcolor: "action.hover", borderColor: "primary.main" },
+                      }}
+                    >
+                      {copiedField === "CVU" ? "¡Copiado!" : "Copiar CVU"}
+                    </Button>
+                  </Box>
+                </Grid>
+
+                {/* Alias */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderRadius: "14px",
+                      bgcolor: "action.hover",
+                      border: "1px solid",
+                      borderColor: "divider",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+                      <Typography sx={{ fontSize: "0.74rem", fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                        Alias Bancario
+                      </Typography>
+                      <Chip
+                        label="Modificable"
+                        size="small"
+                        sx={{
+                          height: 20,
+                          fontSize: "0.68rem",
+                          bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.18)" : "#EFF6FF",
+                          color: "primary.main",
+                          borderRadius: "5px",
+                          fontWeight: 700,
+                        }}
+                      />
+                    </Box>
+
+                    <Typography
+                      sx={{
+                        fontSize: { xs: "1.05rem", sm: "1.15rem" },
+                        fontWeight: 800,
+                        color: "primary.main",
+                        my: 0.8,
+                        wordBreak: "break-all",
+                      }}
+                    >
+                      {account?.alias || `${(user?.email || "mi.cuenta").split("@")[0]}.ars`}
+                    </Typography>
+
+                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={copiedField === "Alias" ? <CheckIcon sx={{ fontSize: 16 }} /> : <ContentCopyIcon sx={{ fontSize: 16 }} />}
+                        onClick={() => handleCopy(account?.alias || `${(user?.email || "mi.cuenta").split("@")[0]}.ars`, "Alias")}
+                        sx={{
+                          borderRadius: "10px",
+                          textTransform: "none",
+                          fontWeight: 700,
+                          fontSize: "0.78rem",
+                          borderColor: copiedField === "Alias" ? "success.main" : "divider",
+                          bgcolor: copiedField === "Alias" ? (theme) => theme.palette.mode === "dark" ? "rgba(16, 185, 129, 0.2)" : "#F0FDF4" : "background.paper",
+                          color: copiedField === "Alias" ? "success.main" : "text.primary",
+                          "&:hover": { bgcolor: "action.hover", borderColor: "primary.main" },
+                        }}
+                      >
+                        {copiedField === "Alias" ? "¡Copiado!" : "Copiar Alias"}
+                      </Button>
+
+                      <Button
+                        size="small"
+                        variant="contained"
+                        startIcon={<EditOutlinedIcon sx={{ fontSize: 16 }} />}
+                        onClick={handleOpenAliasModal}
+                        sx={{
+                          borderRadius: "10px",
+                          textTransform: "none",
+                          fontWeight: 700,
+                          fontSize: "0.78rem",
+                          bgcolor: "primary.main",
+                          color: "#FFF",
+                          boxShadow: "none",
+                          "&:hover": { bgcolor: "primary.dark" },
+                        }}
+                      >
+                        Editar Alias
+                      </Button>
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+            </CardContent>
           </Card>
         </motion.div>
 
@@ -1144,6 +1437,140 @@ export function ProfilePage() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* 4. Tarjeta de Sesión / Cerrar Sesión */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.2 }}
+        >
+          <Card
+            elevation={0}
+            sx={{
+              borderRadius: "20px",
+              border: "1px solid #E2E8F0",
+              bgcolor: "#FFFFFF",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+              mb: 4,
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  alignItems: { xs: "flex-start", sm: "center" },
+                  justifyContent: "space-between",
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A", mb: 0.3 }}>
+                    Cerrar Sesión Activa
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "#64748B", fontSize: "0.85rem" }}>
+                    Finalizá tu sesión de forma segura en este dispositivo cuando termines de operar.
+                  </Typography>
+                </Box>
+
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={handleLogout}
+                  startIcon={<LogoutOutlinedIcon />}
+                  sx={{
+                    borderRadius: "12px",
+                    textTransform: "none",
+                    fontWeight: 700,
+                    px: 3,
+                    py: 1,
+                    borderColor: "#FECACA",
+                    bgcolor: "#FEF2F2",
+                    color: "#DC2626",
+                    "&:hover": {
+                      borderColor: "#F87171",
+                      bgcolor: "#FEE2E2",
+                    },
+                  }}
+                >
+                  Cerrar sesión
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Modal para Modificar Alias */}
+        <Dialog
+          open={aliasModalOpen}
+          onClose={!savingAlias ? () => setAliasModalOpen(false) : undefined}
+          maxWidth="xs"
+          fullWidth
+          slotProps={{
+            paper: {
+              sx: { borderRadius: "20px", p: 1 },
+            },
+          }}
+        >
+          <DialogTitle sx={{ fontWeight: 800, color: "#0F172A", pb: 0.5 }}>
+            Modificar Alias
+          </DialogTitle>
+          <DialogContent>
+            <Typography sx={{ fontSize: "0.85rem", color: "#64748B", mb: 2 }}>
+              Elegí un alias único y fácil de recordar para recibir dinero.
+            </Typography>
+
+            {aliasError && (
+              <Alert severity="error" sx={{ mb: 2, borderRadius: "10px", fontSize: "0.85rem" }}>
+                {aliasError}
+              </Alert>
+            )}
+
+            <TextField
+              fullWidth
+              size="small"
+              label="Nuevo Alias"
+              value={newAliasInput}
+              onChange={(e) => {
+                setNewAliasInput(e.target.value.toLowerCase().replace(/[^a-z0-9.\-_]/g, ""));
+                setAliasError("");
+              }}
+              placeholder="ejemplo.mi.alias.ars"
+              disabled={savingAlias}
+              autoFocus
+              helperText="De 4 a 50 caracteres (letras, números, puntos y guiones)"
+              slotProps={{
+                input: {
+                  sx: { borderRadius: "12px", fontSize: "0.95rem", fontWeight: 700 },
+                },
+              }}
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+            <Button
+              onClick={() => setAliasModalOpen(false)}
+              disabled={savingAlias}
+              sx={{ borderRadius: "10px", textTransform: "none", color: "#64748B", fontWeight: 700 }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSaveAlias}
+              disabled={savingAlias || !newAliasInput.trim()}
+              sx={{
+                borderRadius: "10px",
+                textTransform: "none",
+                fontWeight: 700,
+                bgcolor: "#0056D2",
+                px: 2.5,
+                "&:hover": { bgcolor: "#0047b3" },
+              }}
+            >
+              {savingAlias ? <CircularProgress size={20} color="inherit" /> : "Guardar Alias"}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* Feedback Snackbar */}
         <Snackbar
