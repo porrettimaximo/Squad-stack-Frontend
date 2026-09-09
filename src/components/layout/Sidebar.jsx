@@ -139,7 +139,8 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
       sx={{
         width: isMobileDrawer ? 280 : (collapsed ? 80 : 240),
         height: "100%",
-        maxHeight: "100vh",
+        minHeight: "100%",
+        maxHeight: isMobileDrawer ? "100dvh" : "100vh",
         bgcolor: "#02122c",
         color: "#FFFFFF",
         display: "flex",
@@ -149,6 +150,7 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
         transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         overflowY: "auto",
         overflowX: "hidden",
+        WebkitOverflowScrolling: "touch",
       }}
     >
       {/* Cabecera: Logo Principal PNG y Botón de Colapsar / Cerrar */}
@@ -291,10 +293,10 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
       <List
         sx={{
           px: collapsed ? 0.8 : 1.5,
-          py: 0.4,
-          flex: 1,
+          pb: isMobileDrawer ? 5 : 2,
+          pt: 1,
           minHeight: 0,
-          overflowY: "auto",
+          overflowY: isMobileDrawer ? "visible" : "auto",
           overflowX: "hidden",
           "&::-webkit-scrollbar": { width: 4 },
           "&::-webkit-scrollbar-thumb": { bgcolor: "rgba(255, 255, 255, 0.15)", borderRadius: 2 },
@@ -373,10 +375,10 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
       <Box
         sx={{
           px: collapsed ? 0.8 : 1.5,
-          pb: isMobileDrawer ? 2.5 : 1.8,
-          pt: 0.5,
+          py: 0.4,
+          flex: isMobileDrawer ? "none" : 1,
           flexShrink: 0,
-          mt: "auto",
+          mt: isMobileDrawer ? 2 : "auto",
         }}
       >
         <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)", mb: 1 }} />

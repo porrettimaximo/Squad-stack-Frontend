@@ -940,12 +940,14 @@ export function CardsPage() {
         <Dialog
           open={deleteModalOpen}
           onClose={() => !deactivating && setDeleteModalOpen(false)}
-          PaperProps={{
-            sx: {
-              borderRadius: "18px",
-              p: 1.5,
-              maxWidth: 440,
-              width: "100%",
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: "18px",
+                p: 1.5,
+                maxWidth: 440,
+                width: "100%",
+              },
             },
           }}
         >

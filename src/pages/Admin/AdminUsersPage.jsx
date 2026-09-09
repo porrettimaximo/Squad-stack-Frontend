@@ -132,7 +132,14 @@ export function AdminUsersPage() {
           u.roleName ||
           (u.roleId === 1 ? "Admin" : "User") ||
           "User",
-        balance: u.balance ?? u.initialBalance ?? 0,
+        balance:
+          u.balance !== undefined && u.balance !== null
+            ? u.balance
+            : u.account?.money !== undefined && u.account?.money !== null
+              ? u.account.money
+              : u.money !== undefined && u.money !== null
+                ? u.money
+                : u.initialBalance ?? 0,
         isActive:
           u.isActive !== undefined
             ? u.isActive

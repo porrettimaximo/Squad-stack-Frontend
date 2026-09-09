@@ -25,7 +25,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAccount } from "../../hooks/useAccount";
 import AppLayout from "../../components/layout/AppLayout";
 import SuccessStep from "../../components/common/SuccessStep";
-import { formatCurrency } from "../../utils/formatters";
+import { formatCurrency, parseAmount, sanitizeNumericInput } from "../../utils/formatters";
 import { DEPOSIT_MOTIVES, DEFAULT_DEPOSIT_MOTIVE } from "../../constants/motives";
 
 const QUICK_AMOUNTS = [5000, 10000, 20000];
@@ -51,14 +51,14 @@ export function DepositPage() {
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   const currentBalance = account?.money ?? 0;
+  const numAmount = parseAmount(amount);
 
   const handleAmountChange = (e) => {
-    const val = e.target.value.replace(/[^0-9]/g, "");
-    setAmount(val);
+    setAmount(sanitizeNumericInput(e.target.value));
   };
 
   const handleDeposit = async () => {
-    const num = Number(amount);
+    const num = parseAmount(amount);
     if (!num || num <= 0) return;
 
     setLoading(true);
@@ -180,12 +180,19 @@ export function DepositPage() {
                 <TextField
                   fullWidth
                   variant="outlined"
-                  value={amount ? `$ ${Number(amount).toLocaleString("es-AR")}` : ""}
+                  value={amount}
                   onChange={handleAmountChange}
-                  placeholder="$ 0,00"
+                  placeholder="0,00"
                   slotProps={{
-                    htmlInput: { inputMode: "numeric" },
+                    htmlInput: { inputMode: "decimal" },
                     input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Typography sx={{ fontSize: "1.6rem", fontWeight: 800, color: "primary.main", mr: 0.5 }}>
+                            $
+                          </Typography>
+                        </InputAdornment>
+                      ),
                       sx: { borderRadius: "16px", fontSize: "1.6rem", fontWeight: 800, color: "text.primary" },
                     },
                   }}
@@ -201,8 +208,8 @@ export function DepositPage() {
                       clickable
                       sx={{
                         fontWeight: 700,
-                        bgcolor: "#EFF6FF",
-                        color: "#0056D2",
+                        bgcolor: numAmount === val ? "#0056D2" : "#EFF6FF",
+                        color: numAmount === val ? "#FFFFFF" : "#0056D2",
                         border: "1px solid #BFDBFE",
                       }}
                     />
@@ -244,7 +251,7 @@ export function DepositPage() {
                   variant="contained"
                   fullWidth
                   onClick={() => setStep(3)}
-                  disabled={!amount || Number(amount) <= 0}
+                  disabled={!amount || numAmount <= 0}
                   sx={{
                     bgcolor: "#0056D2",
                     py: 1.8,
@@ -282,7 +289,8 @@ export function DepositPage() {
                   <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                     <Typography sx={{ color: "text.secondary" }}>Monto</Typography>
                     <Typography sx={{ fontWeight: 700, color: "text.primary" }}>
-                      {formatCurrency(Number(amount))}
+                      {formatCurrency(numAmount)}
+                    </Typography>
                     </Typography>
                   </Box>
                   <Divider />
@@ -294,7 +302,7 @@ export function DepositPage() {
                   <Box sx={{ display: "flex", justifyContent: "space-between", p: 2, bgcolor: "action.hover", borderRadius: "12px", mt: 1 }}>
                     <Typography sx={{ fontWeight: 700, color: "text.primary" }}>Nuevo saldo estimado</Typography>
                     <Typography sx={{ fontWeight: 800, color: "#0056D2", fontSize: "1.15rem" }}>
-                      {formatCurrency(currentBalance + Number(amount))}
+                      {formatCurrency(currentBalance + numAmount)}
                     </Typography>
                   </Box>
                 </Box>
@@ -324,7 +332,7 @@ export function DepositPage() {
               <SuccessStep
                 title="¡Depósito exitoso!"
                 subtitle="Los fondos fueron acreditados en tu cuenta DigitalArs."
-                amount={Number(amount)}
+                amount={numAmount}
                 details={[
                   { label: "Motivo", value: motive },
                   { label: "Nuevo saldo disponible", value: formatCurrency(account.money) },

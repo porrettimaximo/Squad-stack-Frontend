@@ -41,7 +41,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAccount } from "../../hooks/useAccount";
 import AppLayout from "../../components/layout/AppLayout";
 import fixedTermDepositService from "../../services/fixedTermDepositService";
-import { formatCurrency, formatDate } from "../../utils/formatters";
+import { formatCurrency, formatDate, parseAmount, sanitizeNumericInput } from "../../utils/formatters";
 
 const DURATION_OPTIONS = [
   { days: 30, label: "30 días", rate: 19.0, popular: true },
@@ -88,7 +88,7 @@ export function InvestmentsPage() {
   };
 
   const currentBalance = account?.money ?? 0;
-  const numAmount = Number(amount) || 0;
+  const numAmount = parseAmount(amount);
   const currentTnaRate = getTnaRate(durationDays);
 
   // Cálculo en tiempo real de rendimiento escalonado
@@ -115,8 +115,7 @@ export function InvestmentsPage() {
   }, [loadDeposits]);
 
   const handleAmountChange = (e) => {
-    const val = e.target.value.replace(/[^0-9]/g, "");
-    setAmount(val);
+    setAmount(sanitizeNumericInput(e.target.value));
   };
 
   const handleSetMaxAmount = () => {
@@ -271,6 +270,7 @@ export function InvestmentsPage() {
                     : `Tasa seleccionada: ${currentTnaRate}% TNA · Rendimiento garantizado`
                 }
                 slotProps={{
+                  htmlInput: { inputMode: "decimal" },
                   input: {
                     startAdornment: (
                       <InputAdornment position="start">

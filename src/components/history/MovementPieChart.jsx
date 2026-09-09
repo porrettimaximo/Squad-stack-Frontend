@@ -510,6 +510,9 @@ export const MovementPieChart = ({
                     type="date"
                     value={customDateFrom}
                     onChange={(e) => setCustomDateFrom(e.target.value)}
+                    slotProps={{
+                      htmlInput: { max: customDateTo || undefined },
+                    }}
                     sx={{
                       bgcolor: "background.paper",
                       borderRadius: "8px",
@@ -543,6 +546,9 @@ export const MovementPieChart = ({
                     type="date"
                     value={customDateTo}
                     onChange={(e) => setCustomDateTo(e.target.value)}
+                    slotProps={{
+                      htmlInput: { min: customDateFrom || undefined },
+                    }}
                     sx={{
                       bgcolor: "background.paper",
                       borderRadius: "8px",
