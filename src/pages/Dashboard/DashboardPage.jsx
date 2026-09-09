@@ -17,7 +17,6 @@ import { useAccount } from "../../hooks/useAccount";
 import { useAuth } from "../../context/AuthContext";
 import Sidebar from "../../components/layout/Sidebar";
 import DashboardNavbar from "../../components/layout/DashboardNavbar";
-import MobileBottomNav from "../../components/layout/MobileBottomNav";
 import BalanceCard from "../../components/dashboard/BalanceCard";
 import QuickActions from "../../components/dashboard/QuickActions";
 import ImageCarousel from "../../components/dashboard/ImageCarousel";
@@ -38,7 +37,6 @@ export function DashboardPage() {
   const { user, account, loading, refreshAccount, refreshTransactions } = useAccount();
   const { logout } = useAuth();
   const [currentTab, setCurrentTab] = useState(0);
-  const [activeMobileNav, setActiveMobileNav] = useState(0);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [mobileNotificationsAnchor, setMobileNotificationsAnchor] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -329,7 +327,7 @@ export function DashboardPage() {
               borderRadius: "28px 28px 0 0",
               px: 2.5,
               pt: 3,
-              pb: 12,
+              pb: 4,
             }}
           >
             {/* Acciones Rápidas (2x2 Grid) */}

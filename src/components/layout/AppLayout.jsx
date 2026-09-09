@@ -16,7 +16,6 @@ import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNone
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import Sidebar from "./Sidebar";
 import DashboardNavbar from "./DashboardNavbar";
-import MobileBottomNav from "./MobileBottomNav";
 import NotificationPopover from "../common/NotificationPopover";
 import notificationService from "../../services/notificationService";
 import { useAccount } from "../../hooks/useAccount";
@@ -69,25 +68,21 @@ export function AppLayout({
   // Determinar ítem activo según la ruta actual
   const path = location.pathname.toLowerCase();
   let currentActiveItem = activeSidebarItem;
-  let currentMobileIndex = 0;
 
   if (path === "/" || path === "/dashboard") {
     currentActiveItem = "inicio";
-    currentMobileIndex = 0;
   } else if (path.startsWith("/services") || path.startsWith("/servicios")) {
     currentActiveItem = "servicios";
   } else if (path.startsWith("/reserves") || path.startsWith("/reservas")) {
     currentActiveItem = "reservas";
   } else if (path.startsWith("/history") || path.startsWith("/historial")) {
     currentActiveItem = "historial";
-    currentMobileIndex = 1;
   } else if (path.startsWith("/investments") || path.startsWith("/inversiones")) {
     currentActiveItem = "inversiones";
   } else if (path.startsWith("/cards") || path.startsWith("/tarjetas")) {
     currentActiveItem = "tarjetas";
   } else if (path.startsWith("/profile") || path.startsWith("/perfil")) {
     currentActiveItem = "perfil";
-    currentMobileIndex = 2;
   } else if (path.startsWith("/settings") || path.startsWith("/configuracion")) {
     currentActiveItem = "configuracion";
   } else if (path.startsWith("/admin")) {
@@ -120,13 +115,6 @@ export function AppLayout({
   const handleDefaultTabChange = (e, val) => {
     if (val === 0) navigate("/dashboard");
     else if (val === 1) navigate("/investments");
-  };
-
-  const handleMobileNavChange = (e, index) => {
-    if (index === 0) navigate("/");
-    else if (index === 1) navigate("/history");
-    else if (index === 2) navigate("/profile");
-    else if (index === 3) navigate("/profile");
   };
 
   const handleLogout = () => {
@@ -198,7 +186,7 @@ export function AppLayout({
           flexDirection: "column",
           overflowY: "auto",
           bgcolor: "background.default",
-          pb: { xs: 10, md: 4 },
+          pb: { xs: 3, md: 4 },
           outline: "none",
         }}
       >
@@ -299,24 +287,26 @@ export function AppLayout({
                 onNotificationsChange={fetchUnread}
               />
 
-              <Box
-                onClick={() => navigate("/profile")}
-                sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "#D0D9E5",
-                    fontWeight: 600,
-                    maxWidth: 90,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
+              {!isAdmin && (
+                <Box
+                  onClick={() => navigate("/profile")}
+                  sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
                 >
-                  {userName}
-                </Typography>
-              </Box>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "#D0D9E5",
+                      fontWeight: 600,
+                      maxWidth: 90,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {userName}
+                  </Typography>
+                </Box>
+              )}
 
               <IconButton
                 onClick={handleLogout}
@@ -365,14 +355,6 @@ export function AppLayout({
           {children}
         </Box>
       </Box>
-
-      {/* Barra de Navegación Inferior en Mobile */}
-      {!isDesktop && (
-        <MobileBottomNav
-          currentIndex={currentMobileIndex}
-          onChange={handleMobileNavChange}
-        />
-      )}
     </Box>
   );
 }
