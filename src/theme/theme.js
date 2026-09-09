@@ -204,81 +204,74 @@ export const getAppTheme = (mode = "light") => {
       },
       MuiAlert: {
         styleOverrides: {
-          root: {
+          root: ({ ownerState }) => ({
             borderRadius: 14,
             fontWeight: 600,
             fontSize: "0.88rem",
             alignItems: "center",
             boxShadow: isDark
-              ? "0 8px 24px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.3)"
+              ? "0 10px 30px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08)"
               : "0 4px 16px rgba(0, 22, 57, 0.08)",
             border: "1px solid",
             backdropFilter: "blur(8px)",
-          },
-          standardSuccess: {
-            backgroundColor: isDark ? "rgba(16, 185, 129, 0.16)" : "#F0FDF4",
-            color: isDark ? "#4ADE80" : "#166534",
-            borderColor: isDark ? "rgba(74, 222, 128, 0.35)" : "#BBF7D0",
-            "& .MuiAlert-icon": {
-              color: isDark ? "#4ADE80" : "#16A34A",
+            "& .MuiAlert-message": {
+              fontWeight: 600,
+              fontSize: "0.88rem",
             },
-          },
-          filledSuccess: {
-            backgroundColor: isDark ? "#064E3B" : "#10B981",
-            color: "#FFFFFF",
-            borderColor: isDark ? "rgba(74, 222, 128, 0.4)" : "#059669",
-            "& .MuiAlert-icon": {
-              color: isDark ? "#6EE7B7" : "#FFFFFF",
+            "& .MuiAlert-action": {
+              paddingTop: 0,
+              alignItems: "center",
+              "& .MuiIconButton-root": {
+                color: "inherit",
+                opacity: 0.8,
+                "&:hover": { opacity: 1 },
+              },
             },
-          },
-          standardError: {
-            backgroundColor: isDark ? "rgba(239, 68, 68, 0.16)" : "#FEF2F2",
-            color: isDark ? "#FCA5A5" : "#991B1B",
-            borderColor: isDark ? "rgba(252, 165, 165, 0.35)" : "#FECACA",
-            "& .MuiAlert-icon": {
-              color: isDark ? "#F87171" : "#DC2626",
-            },
-          },
-          filledError: {
-            backgroundColor: isDark ? "#7F1D1D" : "#EF4444",
-            color: "#FFFFFF",
-            borderColor: isDark ? "rgba(248, 113, 113, 0.4)" : "#DC2626",
-            "& .MuiAlert-icon": {
-              color: isDark ? "#FCA5A5" : "#FFFFFF",
-            },
-          },
-          standardWarning: {
-            backgroundColor: isDark ? "rgba(245, 158, 11, 0.16)" : "#FFFBEB",
-            color: isDark ? "#FCD34D" : "#92400E",
-            borderColor: isDark ? "rgba(252, 211, 77, 0.35)" : "#FDE68A",
-            "& .MuiAlert-icon": {
-              color: isDark ? "#FBBF24" : "#D97706",
-            },
-          },
-          filledWarning: {
-            backgroundColor: isDark ? "#78350F" : "#F59E0B",
-            color: isDark ? "#FEF3C7" : "#FFFFFF",
-            borderColor: isDark ? "rgba(251, 191, 36, 0.4)" : "#D97706",
-            "& .MuiAlert-icon": {
-              color: isDark ? "#FCD34D" : "#FFFFFF",
-            },
-          },
-          standardInfo: {
-            backgroundColor: isDark ? "rgba(2, 132, 199, 0.16)" : "#F0F9FF",
-            color: isDark ? "#7DD3FC" : "#075985",
-            borderColor: isDark ? "rgba(125, 211, 252, 0.35)" : "#BAE6FD",
-            "& .MuiAlert-icon": {
-              color: isDark ? "#38BDF8" : "#0284C7",
-            },
-          },
-          filledInfo: {
-            backgroundColor: isDark ? "#0C4A6E" : "#0284C7",
-            color: "#FFFFFF",
-            borderColor: isDark ? "rgba(56, 189, 248, 0.4)" : "#0369A1",
-            "& .MuiAlert-icon": {
-              color: isDark ? "#7DD3FC" : "#FFFFFF",
-            },
-          },
+            ...(ownerState?.severity === "success" && {
+              backgroundColor: isDark ? "#0D2818 !important" : "#F0FDF4 !important",
+              color: isDark ? "#4ADE80 !important" : "#166534 !important",
+              borderColor: isDark ? "rgba(74, 222, 128, 0.4) !important" : "#BBF7D0 !important",
+              "& .MuiAlert-icon": {
+                color: isDark ? "#4ADE80 !important" : "#16A34A !important",
+              },
+              "& .MuiAlert-message": {
+                color: isDark ? "#E6FBF0 !important" : "#166534 !important",
+              },
+            }),
+            ...(ownerState?.severity === "error" && {
+              backgroundColor: isDark ? "#321417 !important" : "#FEF2F2 !important",
+              color: isDark ? "#FCA5A5 !important" : "#991B1B !important",
+              borderColor: isDark ? "rgba(252, 165, 165, 0.4) !important" : "#FECACA !important",
+              "& .MuiAlert-icon": {
+                color: isDark ? "#F87171 !important" : "#DC2626 !important",
+              },
+              "& .MuiAlert-message": {
+                color: isDark ? "#FEE2E2 !important" : "#991B1B !important",
+              },
+            }),
+            ...(ownerState?.severity === "warning" && {
+              backgroundColor: isDark ? "#302208 !important" : "#FFFBEB !important",
+              color: isDark ? "#FCD34D !important" : "#92400E !important",
+              borderColor: isDark ? "rgba(252, 211, 77, 0.4) !important" : "#FDE68A !important",
+              "& .MuiAlert-icon": {
+                color: isDark ? "#FBBF24 !important" : "#D97706 !important",
+              },
+              "& .MuiAlert-message": {
+                color: isDark ? "#FEF3C7 !important" : "#92400E !important",
+              },
+            }),
+            ...(ownerState?.severity === "info" && {
+              backgroundColor: isDark ? "#0C2744 !important" : "#F0F9FF !important",
+              color: isDark ? "#7DD3FC !important" : "#075985 !important",
+              borderColor: isDark ? "rgba(125, 211, 252, 0.4) !important" : "#BAE6FD !important",
+              "& .MuiAlert-icon": {
+                color: isDark ? "#38BDF8 !important" : "#0284C7 !important",
+              },
+              "& .MuiAlert-message": {
+                color: isDark ? "#E0F2FE !important" : "#075985 !important",
+              },
+            }),
+          }),
         },
       },
       MuiSnackbar: {
