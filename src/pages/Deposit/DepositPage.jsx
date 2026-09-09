@@ -291,12 +291,6 @@ export function DepositPage() {
                     <Typography sx={{ fontWeight: 700, color: "text.primary" }}>
                       {formatCurrency(numAmount)}
                     </Typography>
-                    </Typography>
-                  </Box>
-                  <Divider />
-                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                    <Typography sx={{ color: "text.secondary" }}>Comisión</Typography>
-                    <Typography sx={{ fontWeight: 600, color: "#10B981" }}>Gratis ($ 0,00)</Typography>
                   </Box>
                   <Divider />
                   <Box sx={{ display: "flex", justifyContent: "space-between", p: 2, bgcolor: "action.hover", borderRadius: "12px", mt: 1 }}>

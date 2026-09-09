@@ -322,91 +322,6 @@ export function AppLayout({
                 <LogoutOutlinedIcon fontSize="small" />
               </IconButton>
             </Box>
-                sx={{
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  bgcolor: "rgba(255, 255, 255, 0.06)",
-                  px: 1.2,
-                  py: 0.5,
-                  borderRadius: "20px",
-                }}
-              >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
-              <IconButton
-                onClick={(e) => setMobileNotificationsAnchor(e.currentTarget)}
-                aria-label="Ver notificaciones"
-                sx={{
-                  color: "#FFFFFF",
-                  p: 0.8,
-                  bgcolor: Boolean(mobileNotificationsAnchor) ? "rgba(255, 255, 255, 0.15)" : "rgba(255, 255, 255, 0.08)",
-                  "&:hover": { bgcolor: "rgba(255, 255, 255, 0.15)" },
-                }}
-              >
-                <Badge
-                  badgeContent={unreadCount}
-                  color="error"
-                  max={9}
-                  sx={{
-                    "& .MuiBadge-badge": {
-                      bgcolor: "#EF4444",
-                      fontSize: "0.68rem",
-                      fontWeight: 800,
-                      height: 16,
-                      minWidth: 16,
-                      top: 1,
-                      right: 1,
-                    },
-                  }}
-                >
-                  <NotificationsNoneOutlinedIcon sx={{ fontSize: "1.25rem" }} />
-                </Badge>
-              </IconButton>
-
-              <NotificationPopover
-                anchorEl={mobileNotificationsAnchor}
-                open={Boolean(mobileNotificationsAnchor)}
-                onClose={() => {
-                  setMobileNotificationsAnchor(null);
-                  fetchUnread();
-                }}
-                onNotificationsChange={fetchUnread}
-              />
-
-              <Box
-                onClick={() => navigate("/profile")}
-                sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "#D0D9E5",
-                    fontWeight: 600,
-                    maxWidth: 90,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {userName}
-                </Typography>
-              </Box>
-
-              <IconButton
-                onClick={handleLogout}
-                aria-label="Cerrar sesión"
-                title="Cerrar sesión"
-                sx={{
-                  color: "#EF4444",
-                  p: 0.8,
-                  bgcolor: "rgba(239, 68, 68, 0.1)",
-                  "&:hover": { bgcolor: "rgba(239, 68, 68, 0.2)" },
-                }}
-              >
-                <LogoutOutlinedIcon fontSize="small" />
-              </IconButton>
-            </Box>
-            </Box>
           </Box>
         )}
 
@@ -442,4 +357,3 @@ export function AppLayout({
 }
 
 export default AppLayout;
-

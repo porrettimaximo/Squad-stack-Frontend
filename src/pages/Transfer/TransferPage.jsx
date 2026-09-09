@@ -1,69 +1,63 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
   Card,
-  Button,
   TextField,
-  Snackbar,
-  Alert,
-  InputAdornment,
+  Button,
   Avatar,
   Chip,
-  Divider,
-  CardActionArea,
+  InputAdornment,
+  Snackbar,
+  Alert,
   CircularProgress,
+  CardActionArea,
+  Paper,
+  FormControl,
   Select,
   MenuItem,
-  FormControl,
-  InputLabel,
-  Paper,
 } from "@mui/material";
-import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate, useLocation } from "react-router-dom";
+import SearchIcon from "@mui/icons-material/Search";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
-import CloseIcon from "@mui/icons-material/Close";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-<<<<<<< HEAD
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
-=======
-import SearchIcon from "@mui/icons-material/Search";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import AccountBalanceOutlinedIcon from "@mui/icons-material/AccountBalanceOutlined";
->>>>>>> fix/general-fixes
-import { motion, AnimatePresence } from "framer-motion";
 
-import { useAccount } from "../../hooks/useAccount";
-import { useAuth } from "../../context/AuthContext";
-import accountService from "../../services/accountService";
 import AppLayout from "../../components/layout/AppLayout";
 import SuccessStep from "../../components/common/SuccessStep";
 import TransferReceiptModal from "../../components/common/TransferReceiptModal";
-import { formatCurrency, parseAmount, sanitizeNumericInput } from "../../utils/formatters";
+import { useAccount } from "../../hooks/useAccount";
+import { useAuth } from "../../context/AuthContext";
+import { formatCurrency } from "../../utils/formatters";
 import { downloadTransferReceiptPdf } from "../../utils/pdfGenerator";
-import { TRANSFER_MOTIVES, DEFAULT_MOTIVE } from "../../constants/motives";
-import { SEED_CONTACTS, findContact } from "../../constants/contacts";
-import { getReserves } from "../../services/reservesService";
+import { accountService } from "../../services/accountService";
+
+// Contactos sugeridos para selección rápida
+const SUGGESTED_CONTACTS = [
+  { id: 1, accountId: 2, name: "Roberto Carlos", cvu: "0000003100010000000002", alias: "roberto.carlos.ars", email: "roberto.carlos@digitalars.com", accountNumber: "0002-4892-02", avatar: "RC" },
+  { id: 2, accountId: 3, name: "María Elena Walsh", cvu: "0000003100010000000003", alias: "maria.walsh.ars", email: "maria.walsh@digitalars.com", accountNumber: "0002-4892-03", avatar: "MW" },
+  { id: 3, accountId: 4, name: "Lionel Andrés Messi", cvu: "0000003100010000000004", alias: "lio.messi.ars", email: "lio.messi@digitalars.com", accountNumber: "0002-4892-04", avatar: "LM" },
+  { id: 4, accountId: 5, name: "Lucía Méndez", cvu: "0000003100010000000005", alias: "lucia.mendez.ars", email: "lucia.mendez@digitalars.com", accountNumber: "0002-4892-05", avatar: "LM" },
+];
+
+const QUICK_AMOUNTS = [1000, 5000, 10000, 25000];
+const MOTIVES = ["Varios", "Alquiler", "Servicios", "Expensas", "Factura", "Honorarios", "Préstamo"];
 
 const slideVariants = {
-  initial: { opacity: 0, x: 16 },
-  animate: { opacity: 1, x: 0, transition: { duration: 0.22 } },
-  exit: { opacity: 0, x: -16, transition: { duration: 0.18 } },
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.25 } },
+  exit: { opacity: 0, x: -20, transition: { duration: 0.2 } },
 };
 
-/**
- * HU-26: Pantalla de transferencia de fondos.
- * - Validación y búsqueda de destinatario real por CVU (22 dígitos) o Alias en tiempo real.
- * - Muestra datos 100% verificados del titular destino (Nombre, CVU, Alias, Banco).
- * - Paso 3: confirmación con todos los datos de origen, destino y operación.
- * - Paso 4: pantalla de éxito limpia con comprobante completo y descarga en PDF oficial.
- */
-export function TransferPage() {
+function TransferPage() {
   const navigate = useNavigate();
-  const { account, transferFunds } = useAccount();
+  const location = useLocation();
+  const { account, transferFunds, reserves } = useAccount();
   const { user } = useAuth();
 
   const [step, setStep] = useState(1);
@@ -74,96 +68,87 @@ export function TransferPage() {
   const [recipientError, setRecipientError] = useState("");
 
   const [amount, setAmount] = useState("");
-  const [motive, setMotive] = useState(DEFAULT_MOTIVE);
-  const [loading, setLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-
-  // Origen de los fondos (Cuenta vs Reserva)
-  const [reserves, setReserves] = useState([]);
-  const [sourceType, setSourceType] = useState("account");
+  const [motive, setMotive] = useState("Varios");
+  const [sourceType, setSourceType] = useState("account"); // 'account' o 'reserve'
   const [selectedReserveId, setSelectedReserveId] = useState(null);
 
-  // Control del modal de información completa y comprobante
+  const [loading, setLoading] = useState(false);
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
-  const [completedTxId, setCompletedTxId] = useState(null);
+  const [completedTxId, setCompletedTxId] = useState("");
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
 
   const currentBalance = account?.money ?? 0;
+  const currentAccountId = account?.id || user?.accountId;
 
+  // Filtrar para que el usuario no se transfiera a sí mismo en los sugeridos
+  const displayedContacts = useMemo(() => {
+    return SUGGESTED_CONTACTS.filter(
+      (c) => !currentAccountId || String(c.accountId) !== String(currentAccountId)
+    );
+  }, [currentAccountId]);
+
+  // Si venimos con parámetros por estado (ej: desde reservas)
   useEffect(() => {
-    getReserves()
-      .then((data) => setReserves(data || []))
-      .catch((err) => console.error("Error loading reserves:", err));
-  }, []);
+    if (location.state?.fromReserveId) {
+      setSourceType("reserve");
+      setSelectedReserveId(location.state.fromReserveId);
+    }
+  }, [location.state]);
 
   const selectedReserve = useMemo(() => {
-    if (sourceType === "reserve" && selectedReserveId) {
-      return reserves.find((r) => r.id === selectedReserveId);
+    if (sourceType !== "reserve" || !selectedReserveId) return null;
+    return reserves?.find((r) => r.id === selectedReserveId) || null;
+  }, [sourceType, selectedReserveId, reserves]);
+
+  const availableSourceBalance = useMemo(() => {
+    if (sourceType === "reserve") {
+      return selectedReserve?.currentAmount ?? 0;
     }
-    return null;
-  }, [reserves, sourceType, selectedReserveId]);
+    return currentBalance;
+  }, [sourceType, selectedReserve, currentBalance]);
 
-  const availableSourceBalance = sourceType === "reserve" ? (selectedReserve?.currentBalance ?? 0) : currentBalance;
-
-  // ─── USUARIOS DE LA PLATAFORMA (DESTINATARIOS SUGERIDOS) ───
-  const currentUserId = user?.id ? String(user.id) : null;
-  const currentAccountId = account?.id ? String(account.id) : null;
-  const currentUserEmail = user?.email?.toLowerCase();
-  const currentUserAlias = account?.alias?.toLowerCase();
-  const currentUserCvu = account?.cvu;
-
-  const suggestedUsers = useMemo(() => {
-    return SEED_CONTACTS.filter((c) => {
-      // Excluir administradores
-      const isEmailAdmin = c.email?.toLowerCase().includes("admin");
-      const isNameAdmin = c.name?.toLowerCase().includes("admin");
-      if (isEmailAdmin || isNameAdmin) return false;
-
-      // Excluir al usuario actualmente logueado
-      if (currentUserId && String(c.id) === currentUserId) return false;
-      if (currentAccountId && String(c.accountId) === currentAccountId) return false;
-      if (currentUserEmail && c.email?.toLowerCase() === currentUserEmail) return false;
-      if (currentUserAlias && c.alias?.toLowerCase() === currentUserAlias) return false;
-      if (currentUserCvu && c.cvu === currentUserCvu) return false;
-
-      return true;
-    });
-  }, [currentUserId, currentAccountId, currentUserEmail, currentUserAlias, currentUserCvu]);
-
-  // Filtro por nombre o alias al escribir en el campo de texto
-  const displayedContacts = useMemo(() => {
-    if (!destinationInput.trim()) return suggestedUsers;
-    const q = destinationInput.trim().toLowerCase();
-    return suggestedUsers.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.alias.toLowerCase().includes(q) ||
-        c.cvu.includes(q)
-    );
-  }, [suggestedUsers, destinationInput]);
-
-  // ─── PERFIL COMPLETO DE MI CUENTA (ORIGEN) ───
+  // Perfil del emisor para comprobante y resumen
   const myProfile = useMemo(() => {
-    const accId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "1");
-    const email = user?.email || "usuario@digitalars.com";
-    const name = user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())));
-    const username = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, ".");
-
+    const fullName = user?.firstName && user?.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user?.name || "Usuario DigitalArs";
     return {
-      name,
-      email,
-      accountId: accId,
-      accountNumber: account?.accountNumber || `0002-4892-0${accId}`,
-      cvu: account?.cvu || (account?.id ? `000000310001000000000${account.id}` : "0000003100010000000004"),
-      alias: account?.alias || `${username}.ars`,
+      name: fullName,
+      email: user?.email || "tu-email@digitalars.com",
+      accountId: account?.id || user?.accountId || 1,
+      accountNumber: `0002-4892-0${account?.id || user?.accountId || 1}`,
+      alias: account?.alias || user?.alias || "mi.alias.digitalars",
+      cvu: account?.cvu || user?.cvu || "0000003100010000000001",
       bank: "DigitalArs Billetera Virtual",
     };
   }, [user, account]);
 
-  // ─── RESOLUCIÓN Y VERIFICACIÓN EN TIEMPO REAL DEL DESTINATARIO ───
-  const handleLookupAndProceed = async (targetQuery = null) => {
-    const query = (targetQuery || destinationInput || selectedContact?.alias || selectedContact?.cvu || "").trim();
+  // Sanitización de importe
+  const parseAmount = (val) => {
+    if (!val) return 0;
+    const clean = String(val).replace(/[^0-9.,]/g, "").replace(",", ".");
+    const n = parseFloat(clean);
+    return isNaN(n) ? 0 : n;
+  };
+
+  const num = parseAmount(amount);
+
+  // Helper para buscar contacto local en mock
+  const findContact = (query) => {
+    const q = query.trim().toLowerCase();
+    return SUGGESTED_CONTACTS.find(
+      (c) =>
+        c.alias.toLowerCase() === q ||
+        c.cvu === q ||
+        c.name.toLowerCase().includes(q)
+    );
+  };
+
+  // Validación y búsqueda de destinatario (Online API + Fallback Local)
+  const handleLookupAndProceed = async (overrideQuery) => {
+    const query = (overrideQuery || destinationInput).trim();
     if (!query) {
-      setRecipientError("Ingresá un CVU o Alias para continuar.");
+      setRecipientError("Por favor ingresá un CVU (22 dígitos) o Alias válido.");
       return;
     }
 
@@ -171,7 +156,6 @@ export function TransferPage() {
     setRecipientError("");
 
     try {
-      // 1. Consulta en tiempo real al backend (GET /api/accounts/lookup?query=...)
       const res = await accountService.lookupAccount(query);
 
       const resolved = {
@@ -212,7 +196,6 @@ export function TransferPage() {
     }
   };
 
-  // Selección interactiva de contacto de la grilla
   const handleSelectContact = (contact) => {
     setSelectedContact(contact);
     setDestinationInput(contact.alias || contact.cvu);
@@ -227,50 +210,8 @@ export function TransferPage() {
     setRecipientError("");
   };
 
-  // ─── OBJETO DE COMPROBANTE PARA MODAL Y PDF ───
-  const transferReceiptData = useMemo(() => {
-    return {
-      operationId: completedTxId || `TX-${Date.now().toString().slice(-4)}`,
-      date: new Date().toLocaleString("es-AR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      amount: parseAmount(amount) || 0,
-      motive: motive,
-<<<<<<< HEAD
-      origin: {
-        ...myProfile,
-        sourceLabel: sourceType === "reserve" ? `Reserva "${selectedReserve?.name || "Apartado"}"` : "Cuenta Corriente",
-      },
-      destination: recipientProfile,
-      status: "Transferencia Exitosa",
-    };
-  }, [completedTxId, amount, motive, myProfile, recipientProfile, sourceType, selectedReserve]);
-=======
-      origin: myProfile,
-      destination: verifiedRecipient || {
-        name: destinationInput,
-        accountId: destinationInput,
-        cvu: "—",
-        alias: "—",
-        bank: "DigitalArs Billetera Virtual",
-      },
-      status: "Transferencia Exitosa",
-    };
-  }, [completedTxId, amount, motive, myProfile, verifiedRecipient, destinationInput]);
->>>>>>> fix/general-fixes
-
-  const handleAmountChange = (e) => {
-    setAmount(sanitizeNumericInput(e.target.value));
-  };
-
   const handleTransfer = async () => {
-    const num = parseAmount(amount);
-    if (!num || num <= 0) return;
-    if (!verifiedRecipient?.accountId) {
+    if (!verifiedRecipient) {
       setSnackbar({ open: true, message: "Destinatario no válido.", severity: "error" });
       return;
     }
@@ -307,10 +248,45 @@ export function TransferPage() {
     }
   };
 
+  // Datos estructurados completos para comprobante modal y PDF
+  const transferReceiptData = useMemo(() => {
+    const dest = verifiedRecipient || {};
+    return {
+      id: completedTxId || "TX-9941",
+      date: new Date().toLocaleDateString("es-AR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      amount: num,
+      concept: motive,
+      sender: {
+        name: myProfile.name,
+        email: myProfile.email,
+        accountId: myProfile.accountId,
+        accountNumber: myProfile.accountNumber,
+        alias: myProfile.alias,
+        cvu: myProfile.cvu,
+        bank: myProfile.bank,
+        sourceType: sourceType === "reserve" ? `Reserva: ${selectedReserve?.name || "Apartado"}` : "Saldo Principal",
+      },
+      recipient: {
+        name: dest.name || "Destinatario",
+        accountId: dest.accountId || 2,
+        accountNumber: dest.accountNumber || `0002-4892-0${dest.accountId || 2}`,
+        alias: dest.alias || "destinatario.ars",
+        cvu: dest.cvu || "0000003100010000000002",
+        bank: dest.bank || "DigitalArs Billetera Virtual",
+      },
+    };
+  }, [completedTxId, num, motive, myProfile, verifiedRecipient, sourceType, selectedReserve]);
+
   return (
     <AppLayout onBack={step < 4 ? handleBack : null} maxWidth={620}>
       <Box sx={{ maxWidth: 580, mx: "auto", width: "100%" }}>
-        {/* Cabecera compacta */}
+        {/* Cabecera */}
         {step < 4 && (
           <Box sx={{ mb: 2 }}>
             <Typography
@@ -319,13 +295,8 @@ export function TransferPage() {
             >
               Transferir dinero
             </Typography>
-<<<<<<< HEAD
             <Typography sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
-              Enviá fondos de forma inmediata y sin comisiones.
-=======
-            <Typography sx={{ color: "#64748B", fontSize: "0.85rem" }}>
               Enviá fondos de forma inmediata y sin comisiones por CVU o Alias.
->>>>>>> fix/general-fixes
             </Typography>
           </Box>
         )}
@@ -336,7 +307,8 @@ export function TransferPage() {
             borderRadius: "20px",
             p: { xs: 2.5, md: 3 },
             bgcolor: "background.paper",
-            border: "1px solid", borderColor: "divider",
+            border: "1px solid",
+            borderColor: "divider",
             boxShadow: "0 8px 25px -8px rgba(15, 23, 42, 0.08)",
             display: "flex",
             flexDirection: "column",
@@ -346,15 +318,13 @@ export function TransferPage() {
             {/* ─── PASO 1: SELECCIONAR O INGRESAR DESTINATARIO POR CVU O ALIAS ─── */}
             {step === 1 && (
               <motion.div key="step1" variants={slideVariants} initial="initial" animate="animate" exit="exit">
-                {/* Mensaje de error de validación */}
                 {recipientError && (
                   <Alert severity="error" sx={{ mb: 2, borderRadius: "12px", fontSize: "0.85rem", fontWeight: 600 }}>
                     {recipientError}
                   </Alert>
                 )}
 
-                {/* Campo de búsqueda por CVU o Alias */}
-                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0F172A", mb: 0.6 }}>
+                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mb: 0.6 }}>
                   Destinatario
                 </Typography>
                 <TextField
@@ -379,20 +349,20 @@ export function TransferPage() {
                           <SearchIcon sx={{ color: "#0056D2", fontSize: "1.25rem" }} />
                         </InputAdornment>
                       ),
-                      sx: { borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.95rem" },
+                      sx: { borderRadius: "12px", bgcolor: "background.paper", fontSize: "0.95rem" },
                     },
                   }}
                   placeholder="Ingresá el CVU (22 dígitos) o Alias"
                 />
-                <Typography sx={{ fontSize: "0.75rem", color: "#64748B", mt: 0.5, ml: 0.5 }}>
+                <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", mt: 0.5, ml: 0.5 }}>
                   Ejemplo: <code>roberto.carlos.ars</code> o <code>0000003100010000000002</code>
                 </Typography>
 
-                {/* Grilla de contactos registrados */}
+                {/* Grilla de contactos sugeridos */}
                 <Box sx={{ mt: 2.5, mb: 1 }}>
                   <Typography
                     sx={{
-                      color: "#64748B",
+                      color: "text.secondary",
                       fontSize: "0.78rem",
                       fontWeight: 700,
                       textTransform: "uppercase",
@@ -416,20 +386,30 @@ export function TransferPage() {
                         sx={{
                           p: 1.4,
                           borderRadius: "12px",
-                          bgcolor: "#F8FAFC",
-                          border: "1px solid #E2E8F0",
+                          bgcolor: "action.hover",
+                          border: "1px solid",
+                          borderColor: "divider",
                           transition: "all 0.15s ease",
-                          "&:hover": { bgcolor: "#EFF6FF", borderColor: "#93C5FD" },
+                          "&:hover": { bgcolor: "action.selected", borderColor: "primary.main" },
                         }}
                       >
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: "primary.main", mr: 0.5 }}>
-                            $
-                          </Typography>
-                        </InputAdornment>
-                      ),
-                      sx: { borderRadius: "12px", fontSize: "1.4rem", fontWeight: 800, color: "text.primary", py: 0.2 },
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+                          <Avatar sx={{ width: 36, height: 36, bgcolor: "#0056D2", color: "#FFF", fontSize: "0.85rem", fontWeight: 700 }}>
+                            {contact.avatar}
+                          </Avatar>
+                          <Box sx={{ minWidth: 0, flex: 1 }}>
+                            <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: "text.primary", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {contact.name}
+                            </Typography>
+                            <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {contact.alias || contact.cvu}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </CardActionArea>
+                    ))}
+                  </Box>
+                </Box>
 
                 <Button
                   variant="contained"
@@ -463,7 +443,7 @@ export function TransferPage() {
             {/* ─── PASO 2: MONTO Y MOTIVO (CON DESTINATARIO VERIFICADO) ─── */}
             {step === 2 && verifiedRecipient && (
               <motion.div key="step2" variants={slideVariants} initial="initial" animate="animate" exit="exit">
-                {/* Tarjeta Destinatario Verificado (Datos Reales de la API) */}
+                {/* Tarjeta Destinatario Verificado */}
                 <Paper
                   elevation={0}
                   sx={{
@@ -498,18 +478,16 @@ export function TransferPage() {
                       Cambiar
                     </Button>
                   </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
-                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary" }}>
-                    Monto a transferir
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.78rem", color: "text.secondary" }}>
-                    Disponible: <strong>{formatCurrency(availableSourceBalance || currentBalance)}</strong>
-                  </Typography>
-                </Box>
-                  </Typography>
-                </Box>
 
-                {/* Selector de Origen de los Fondos (Cuenta vs Reservas) */}
+                  <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", color: "#0F172A" }}>
+                    {verifiedRecipient.name}
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.82rem", color: "#166534", fontWeight: 600 }}>
+                    {verifiedRecipient.alias} • CVU {verifiedRecipient.cvu}
+                  </Typography>
+                </Paper>
+
+                {/* Selector de Origen de los Fondos */}
                 <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mb: 0.5 }}>
                   Origen de los fondos
                 </Typography>
@@ -527,49 +505,48 @@ export function TransferPage() {
                         setSelectedReserveId(rId);
                       }
                     }}
-                    sx={{ borderRadius: "12px", bgcolor: "action.hover", fontSize: "0.9rem" }}
+                    sx={{ borderRadius: "12px", bgcolor: "background.paper" }}
                   >
                     <MenuItem value="account">
-                      <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <AccountBalanceWalletOutlinedIcon sx={{ fontSize: "1.1rem", color: "#0056D2" }} />
-                          <span>Saldo en Cuenta Principal</span>
-                        </Box>
-                        <strong style={{ color: "#0056D2" }}>{formatCurrency(currentBalance)}</strong>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <AccountBalanceWalletOutlinedIcon sx={{ fontSize: 18, color: "primary.main" }} />
+                        <Typography sx={{ fontSize: "0.9rem", fontWeight: 600 }}>
+                          Cuenta Principal (Disponible: {formatCurrency(currentBalance)})
+                        </Typography>
                       </Box>
                     </MenuItem>
-                    {reserves.map((r) => (
+                    {reserves?.map((r) => (
                       <MenuItem key={r.id} value={`reserve-${r.id}`}>
-                        <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <SavingsOutlinedIcon sx={{ fontSize: "1.1rem", color: "#10B981" }} />
-                            <span>Reserva: {r.name}</span>
-                          </Box>
-                          <strong style={{ color: "#10B981" }}>{formatCurrency(r.currentBalance)}</strong>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <SavingsOutlinedIcon sx={{ fontSize: 18, color: "#16A34A" }} />
+                          <Typography sx={{ fontSize: "0.9rem", fontWeight: 600 }}>
+                            Reserva: {r.name} (Disponible: {formatCurrency(r.currentAmount)})
+                          </Typography>
                         </Box>
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
 
-                {/* Input de Monto */}
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+                {/* Campo de Importe */}
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.8 }}>
                   <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary" }}>
                     Monto a transferir
                   </Typography>
                   <Typography sx={{ fontSize: "0.78rem", color: "text.secondary" }}>
-                    Disponible: <strong>{formatCurrency(availableSourceBalance || currentBalance)}</strong>
+                    Disponible: <strong>{formatCurrency(availableSourceBalance)}</strong>
                   </Typography>
                 </Box>
+
                 <TextField
                   fullWidth
-                  size="small"
                   variant="outlined"
                   value={amount}
-                  onChange={handleAmountChange}
-                  placeholder="0,00"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9.,]/g, "");
+                    setAmount(val);
+                  }}
                   slotProps={{
-                    htmlInput: { inputMode: "decimal" },
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">
@@ -581,44 +558,59 @@ export function TransferPage() {
                       sx: { borderRadius: "12px", fontSize: "1.4rem", fontWeight: 800, color: "text.primary", py: 0.2 },
                     },
                   }}
-                  sx={{ mb: 2 }}
+                  placeholder="0,00"
+                  error={num > availableSourceBalance}
+                  helperText={num > availableSourceBalance ? "Saldo insuficiente en el origen seleccionado" : ""}
                 />
 
-                {/* Selector de Motivo (18 motivos oficiales) */}
-                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mb: 0.5 }}>
+                {/* Chips de montos rápidos */}
+                <Box sx={{ display: "flex", gap: 1, my: 1.5, flexWrap: "wrap" }}>
+                  {QUICK_AMOUNTS.map((q) => (
+                    <Chip
+                      key={q}
+                      label={`+$${q.toLocaleString("es-AR")}`}
+                      onClick={() => setAmount(String((num || 0) + q))}
+                      size="small"
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: "0.78rem",
+                        cursor: "pointer",
+                        bgcolor: "action.hover",
+                        color: "text.primary",
+                        "&:hover": { bgcolor: "primary.light", color: "primary.contrastText" },
+                      }}
+                    />
+                  ))}
+                </Box>
+
+                {/* Motivo de la Transferencia */}
+                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 1.5, mb: 0.5 }}>
                   Motivo de la transferencia
                 </Typography>
-                <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-                  <InputLabel id="motive-select-label">Motivo</InputLabel>
-                  <Select
-                    labelId="motive-select-label"
-                    value={motive}
-                    label="Motivo"
-                    onChange={(e) => setMotive(e.target.value)}
-                    sx={{ borderRadius: "12px", bgcolor: "action.hover", fontSize: "0.9rem" }}
-                    slotProps={{
-                      paper: {
-                        sx: {
-                          maxHeight: 240,
-                          borderRadius: "12px",
-                          boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-                        },
-                      },
-                    }}
-                  >
-                    {TRANSFER_MOTIVES.map((m) => (
-                      <MenuItem key={m.id} value={m.label} sx={{ fontSize: "0.88rem", py: 1 }}>
-                        {m.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <Box sx={{ display: "flex", gap: 0.8, flexWrap: "wrap", mb: 2 }}>
+                  {MOTIVES.map((m) => (
+                    <Chip
+                      key={m}
+                      label={m}
+                      onClick={() => setMotive(m)}
+                      size="small"
+                      sx={{
+                        fontWeight: 600,
+                        fontSize: "0.78rem",
+                        bgcolor: motive === m ? "#0056D2" : "action.hover",
+                        color: motive === m ? "#FFF" : "text.primary",
+                        cursor: "pointer",
+                        "&:hover": { bgcolor: motive === m ? "#0047b3" : "action.selected" },
+                      }}
+                    />
+                  ))}
+                </Box>
 
                 <Button
                   variant="contained"
                   fullWidth
+                  disabled={!num || num <= 0 || num > availableSourceBalance}
                   onClick={() => setStep(3)}
-                  disabled={!amount || parseAmount(amount) <= 0 || parseAmount(amount) > (availableSourceBalance || currentBalance)}
                   sx={{
                     bgcolor: "#0056D2",
                     color: "#FFF",
@@ -626,6 +618,7 @@ export function TransferPage() {
                     py: 1.4,
                     fontSize: "0.95rem",
                     fontWeight: 700,
+                    mt: 1,
                     textTransform: "none",
                     "&:hover": { bgcolor: "#0047b3" },
                   }}
@@ -635,62 +628,53 @@ export function TransferPage() {
               </motion.div>
             )}
 
-            {/* ─── PASO 3: RESUMEN COMPLETO CON DATOS REALES DE AMBAS CUENTAS ─── */}
+            {/* ─── PASO 3: CONFIRMACIÓN Y REVISIÓN DE DATOS ─── */}
             {step === 3 && verifiedRecipient && (
               <motion.div key="step3" variants={slideVariants} initial="initial" animate="animate" exit="exit">
-                <Typography sx={{ color: "text.primary", fontSize: "1.1rem", fontWeight: 800, mb: 0.5 }}>
-                  Confirmá los datos de la transferencia
-                </Typography>
-                <Typography sx={{ color: "text.secondary", fontSize: "0.85rem", mb: 2 }}>
-                  Revisá la cuenta de origen, la cuenta de destino y el detalle antes de confirmar.
+                <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", mb: 1.5, textAlign: "center" }}>
+                  Revisá con atención los datos de ambas partes antes de confirmar la operación.
                 </Typography>
 
-                {/* 1. Datos de MI CUENTA (Cuenta Origen) */}
+                {/* 1. Datos de TU CUENTA (Emisor) */}
                 <Paper
                   elevation={0}
                   sx={{
                     p: 2,
                     borderRadius: "14px",
                     bgcolor: "action.hover",
-                    border: "1px solid", borderColor: "divider",
+                    border: "1px solid",
+                    borderColor: "divider",
                     mb: 1.5,
                   }}
                 >
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
                     <Chip
-                      label="Cuenta Origen (Mi cuenta)"
+                      label="Tu Cuenta (Emisor)"
                       size="small"
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: "0.72rem",
-                        bgcolor: "#E0E7FF",
-                        color: "#3730A3",
-                        borderRadius: "8px",
-                      }}
+                      sx={{ fontWeight: 800, fontSize: "0.72rem", bgcolor: "primary.light", color: "#FFF", borderRadius: "8px" }}
                     />
                     <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 600 }}>
-                      {myProfile.bank}
+                      Débito inmediato
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
                     <Box>
                       <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>TITULAR</Typography>
-                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "text.primary" }}>
+                      <Typography sx={{ fontSize: "0.92rem", fontWeight: 800, color: "text.primary" }}>
                         {myProfile.name}
                       </Typography>
                     </Box>
                     <Box>
                       <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>Nº DE CUENTA</Typography>
                       <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "text.primary" }}>
-                        Cuenta #{myProfile.accountId}
+                        {myProfile.accountNumber}
                       </Typography>
                     </Box>
                     <Box>
                       <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>EMAIL</Typography>
                       <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.secondary", wordBreak: "break-all" }}>
                         {myProfile.email}
-                      </Typography>
                       </Typography>
                     </Box>
                     <Box>
@@ -699,15 +683,9 @@ export function TransferPage() {
                         {myProfile.alias}
                       </Typography>
                     </Box>
-<<<<<<< HEAD
                     <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" } }}>
                       <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>CVU</Typography>
                       <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.secondary", letterSpacing: "0.02em" }}>
-=======
-                    <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>CVU</Typography>
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", letterSpacing: "0.02em" }}>
->>>>>>> fix/general-fixes
                         {myProfile.cvu}
                       </Typography>
                     </Box>
@@ -728,14 +706,14 @@ export function TransferPage() {
                   </Box>
                 </Paper>
 
-                {/* Flecha indicadora de transferencia */}
+                {/* Flecha indicadora */}
                 <Box sx={{ display: "flex", justifyContent: "center", my: -0.5 }}>
                   <Avatar sx={{ width: 28, height: 28, bgcolor: "#0056D2", color: "#FFFFFF" }}>
                     <ArrowDownwardIcon sx={{ fontSize: 16 }} />
                   </Avatar>
                 </Box>
 
-                {/* 2. Datos de LA OTRA CUENTA (Cuenta Destino Real) */}
+                {/* 2. Datos de LA OTRA CUENTA (Destinatario) */}
                 <Paper
                   elevation={0}
                   sx={{
@@ -762,27 +740,25 @@ export function TransferPage() {
                     <Typography sx={{ fontSize: "0.75rem", color: "#166534", fontWeight: 700 }}>
                       ✓ Verificado
                     </Typography>
-                    </Typography>
                   </Box>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
                     <Box>
                       <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>DESTINATARIO</Typography>
                       <Typography sx={{ fontSize: "0.92rem", fontWeight: 800, color: "text.primary" }}>
-                        {verifiedRecipient?.name || recipientProfile?.name}
+                        {verifiedRecipient.name}
                       </Typography>
                     </Box>
                     <Box>
                       <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>Nº DE CUENTA</Typography>
                       <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "text.primary" }}>
-                        Cuenta #{verifiedRecipient?.accountId || recipientProfile?.accountId}
+                        {verifiedRecipient.accountNumber}
                       </Typography>
                     </Box>
                     <Box>
                       <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>EMAIL</Typography>
                       <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.secondary", wordBreak: "break-all" }}>
-                        {verifiedRecipient?.email || recipientProfile?.email}
-                      </Typography>
+                        {verifiedRecipient.email}
                       </Typography>
                     </Box>
                     <Box>
@@ -794,7 +770,7 @@ export function TransferPage() {
                     <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" } }}>
                       <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>CVU</Typography>
                       <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.secondary", letterSpacing: "0.02em" }}>
-                        {verifiedRecipient?.cvu || recipientProfile?.cvu}
+                        {verifiedRecipient.cvu}
                       </Typography>
                     </Box>
                   </Box>
@@ -807,7 +783,8 @@ export function TransferPage() {
                     p: 2,
                     borderRadius: "14px",
                     bgcolor: "action.hover",
-                    border: "1px solid", borderColor: "divider",
+                    border: "1px solid",
+                    borderColor: "divider",
                     mb: 2,
                     display: "flex",
                     flexDirection: "column",
@@ -815,14 +792,9 @@ export function TransferPage() {
                   }}
                 >
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
-                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary" }}>
-                    Monto a transferir
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.78rem", color: "text.secondary" }}>
-                    Disponible: <strong>{formatCurrency(availableSourceBalance || currentBalance)}</strong>
-                  </Typography>
-                </Box>
+                    <Typography sx={{ fontSize: "0.85rem", color: "text.secondary" }}>Monto a transferir</Typography>
+                    <Typography sx={{ fontSize: "1.05rem", fontWeight: 800, color: "text.primary" }}>
+                      {formatCurrency(num)}
                     </Typography>
                   </Box>
 
@@ -852,7 +824,7 @@ export function TransferPage() {
                       Total a debitar
                     </Typography>
                     <Typography sx={{ fontWeight: 800, color: "#0056D2", fontSize: "1.25rem" }}>
-                      {formatCurrency(parseAmount(amount))}
+                      {formatCurrency(num)}
                     </Typography>
                   </Box>
                 </Paper>
@@ -878,13 +850,13 @@ export function TransferPage() {
               </motion.div>
             )}
 
-            {/* ─── PASO 4: ÉXITO LIMPIO CON COMPROBANTE Y DESCARGA EN PDF ─── */}
+            {/* ─── PASO 4: ÉXITO CON INFORMACIÓN DE LA TRANSFERENCIA Y DESCARGA EN PDF ─── */}
             {step === 4 && (
               <>
                 <SuccessStep
                   title="¡Transferencia exitosa!"
-                  subtitle={`Enviamos el dinero a ${verifiedRecipient?.name || "el destinatario"}.`}
-                  amount={parseAmount(amount)}
+                  subtitle={`Enviamos el dinero a ${verifiedRecipient?.name || destinationInput}.`}
+                  amount={num}
                   maxWidth={440}
                   autoRedirectSeconds={0}
                   details={[
@@ -937,13 +909,13 @@ export function TransferPage() {
                       </Button>
                     </>
                   }
-                  onFinish={() => navigate("/")}
-                  onPrimaryClick={() => navigate("/")}
                   finishLabel="Volver al inicio"
                   primaryButtonText="Volver al inicio"
+                  onFinish={() => navigate("/")}
+                  onPrimaryClick={() => navigate("/")}
                 />
 
-                {/* Modal emergente con información de la transferencia */}
+                {/* Modal de Información Completa de la Transferencia */}
                 <TransferReceiptModal
                   open={receiptModalOpen}
                   onClose={() => setReceiptModalOpen(false)}
@@ -954,23 +926,17 @@ export function TransferPage() {
             )}
           </AnimatePresence>
         </Card>
-
-        {/* Snackbar de notificaciones de error o éxito */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={4000}
-          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        >
-          <Alert
-            onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-            severity={snackbar.severity}
-            sx={{ width: "100%", borderRadius: "10px", fontWeight: 600 }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
       </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3500}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+      >
+        <Alert severity={snackbar.severity} sx={{ width: "100%", borderRadius: "12px" }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </AppLayout>
   );
 }
