@@ -57,11 +57,14 @@ export function ServiceReceiptModal({ open, onClose, paymentData, user }) {
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: "20px",
-          p: 1,
-          boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+      disableRestoreFocus
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: "20px",
+            p: 1,
+            boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+          },
         },
       }}
     >
