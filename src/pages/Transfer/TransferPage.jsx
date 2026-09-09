@@ -449,15 +449,16 @@ function TransferPage() {
                   sx={{
                     p: 2,
                     borderRadius: "14px",
-                    bgcolor: "#F0FDF4",
-                    border: "1.5px solid #86EFAC",
+                    bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(16, 185, 129, 0.12)" : "#F0FDF4"),
+                    border: "1.5px solid",
+                    borderColor: (theme) => (theme.palette.mode === "dark" ? "rgba(52, 211, 153, 0.35)" : "#86EFAC"),
                     mb: 2.5,
                   }}
                 >
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <CheckCircleIcon sx={{ fontSize: 18, color: "#16A34A" }} />
-                      <Typography sx={{ fontSize: "0.75rem", fontWeight: 800, color: "#166534", textTransform: "uppercase" }}>
+                      <CheckCircleIcon sx={{ fontSize: 18, color: (theme) => (theme.palette.mode === "dark" ? "#34D399" : "#16A34A") }} />
+                      <Typography sx={{ fontSize: "0.75rem", fontWeight: 800, color: (theme) => (theme.palette.mode === "dark" ? "#34D399" : "#166534"), textTransform: "uppercase" }}>
                         Destinatario Verificado
                       </Typography>
                     </Box>
@@ -468,7 +469,7 @@ function TransferPage() {
                       sx={{
                         fontSize: "0.78rem",
                         fontWeight: 700,
-                        color: "#475569",
+                        color: (theme) => (theme.palette.mode === "dark" ? "#94A3B8" : "#475569"),
                         p: 0,
                         minWidth: "auto",
                         textTransform: "none",
@@ -479,10 +480,10 @@ function TransferPage() {
                     </Button>
                   </Box>
 
-                  <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", color: "#0F172A" }}>
+                  <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", color: "text.primary" }}>
                     {verifiedRecipient.name}
                   </Typography>
-                  <Typography sx={{ fontSize: "0.82rem", color: "#166534", fontWeight: 600 }}>
+                  <Typography sx={{ fontSize: "0.82rem", color: (theme) => (theme.palette.mode === "dark" ? "#A7F3D0" : "#166534"), fontWeight: 600 }}>
                     {verifiedRecipient.alias} • CVU {verifiedRecipient.cvu}
                   </Typography>
                 </Paper>
@@ -577,7 +578,9 @@ function TransferPage() {
                         cursor: "pointer",
                         bgcolor: "action.hover",
                         color: "text.primary",
-                        "&:hover": { bgcolor: "primary.light", color: "primary.contrastText" },
+                        border: "1px solid",
+                        borderColor: "divider",
+                        "&:hover": { bgcolor: "primary.light", color: "primary.main" },
                       }}
                     />
                   ))}
@@ -597,10 +600,12 @@ function TransferPage() {
                       sx={{
                         fontWeight: 600,
                         fontSize: "0.78rem",
-                        bgcolor: motive === m ? "#0056D2" : "action.hover",
+                        bgcolor: motive === m ? "primary.main" : "action.hover",
                         color: motive === m ? "#FFF" : "text.primary",
+                        border: "1px solid",
+                        borderColor: motive === m ? "primary.main" : "divider",
                         cursor: "pointer",
-                        "&:hover": { bgcolor: motive === m ? "#0047b3" : "action.selected" },
+                        "&:hover": { bgcolor: motive === m ? "primary.dark" : "action.selected" },
                       }}
                     />
                   ))}
@@ -612,7 +617,7 @@ function TransferPage() {
                   disabled={!num || num <= 0 || num > availableSourceBalance}
                   onClick={() => setStep(3)}
                   sx={{
-                    bgcolor: "#0056D2",
+                    bgcolor: "primary.main",
                     color: "#FFF",
                     borderRadius: "12px",
                     py: 1.4,
@@ -620,7 +625,7 @@ function TransferPage() {
                     fontWeight: 700,
                     mt: 1,
                     textTransform: "none",
-                    "&:hover": { bgcolor: "#0047b3" },
+                    "&:hover": { bgcolor: "primary.dark" },
                   }}
                 >
                   Continuar
@@ -651,7 +656,15 @@ function TransferPage() {
                     <Chip
                       label="Tu Cuenta (Emisor)"
                       size="small"
-                      sx={{ fontWeight: 800, fontSize: "0.72rem", bgcolor: "primary.light", color: "#FFF", borderRadius: "8px" }}
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: "0.72rem",
+                        bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.22)" : "#EFF6FF"),
+                        color: (theme) => (theme.palette.mode === "dark" ? "#93C5FD" : "#0056D2"),
+                        border: "1px solid",
+                        borderColor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.45)" : "#BFDBFE"),
+                        borderRadius: "8px",
+                      }}
                     />
                     <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 600 }}>
                       Débito inmediato
@@ -679,7 +692,7 @@ function TransferPage() {
                     </Box>
                     <Box>
                       <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>ALIAS</Typography>
-                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0056D2" }}>
+                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: (theme) => (theme.palette.mode === "dark" ? "#60A5FA" : "#0056D2") }}>
                         {myProfile.alias}
                       </Typography>
                     </Box>
@@ -689,7 +702,7 @@ function TransferPage() {
                         {myProfile.cvu}
                       </Typography>
                     </Box>
-                    <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" }, mt: 0.5, pt: 0.8, borderTop: "1px dashed #CBD5E1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" }, mt: 0.5, pt: 0.8, borderTop: "1px dashed", borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <Typography sx={{ fontSize: "0.74rem", color: "text.secondary", fontWeight: 600 }}>FONDOS DEBITADOS DE</Typography>
                       <Chip
                         label={sourceType === "reserve" ? `Reserva: ${selectedReserve?.name || "Apartado"}` : "Saldo Principal de Cuenta"}
@@ -697,8 +710,10 @@ function TransferPage() {
                         sx={{
                           fontWeight: 700,
                           fontSize: "0.74rem",
-                          bgcolor: sourceType === "reserve" ? "#DCFCE7" : "#EFF6FF",
-                          color: sourceType === "reserve" ? "#15803D" : "#0056D2",
+                          bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.2)" : "#EFF6FF"),
+                          color: (theme) => (theme.palette.mode === "dark" ? "#93C5FD" : "#0056D2"),
+                          border: "1px solid",
+                          borderColor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.4)" : "#BFDBFE"),
                           borderRadius: "8px",
                         }}
                       />
@@ -708,7 +723,7 @@ function TransferPage() {
 
                 {/* Flecha indicadora */}
                 <Box sx={{ display: "flex", justifyContent: "center", my: -0.5 }}>
-                  <Avatar sx={{ width: 28, height: 28, bgcolor: "#0056D2", color: "#FFFFFF" }}>
+                  <Avatar sx={{ width: 28, height: 28, bgcolor: "primary.main", color: "#FFFFFF" }}>
                     <ArrowDownwardIcon sx={{ fontSize: 16 }} />
                   </Avatar>
                 </Box>
@@ -719,8 +734,9 @@ function TransferPage() {
                   sx={{
                     p: 2,
                     borderRadius: "14px",
-                    bgcolor: "#F0FDF4",
-                    border: "1.5px solid #86EFAC",
+                    bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(16, 185, 129, 0.12)" : "#F0FDF4"),
+                    border: "1.5px solid",
+                    borderColor: (theme) => (theme.palette.mode === "dark" ? "rgba(52, 211, 153, 0.35)" : "#86EFAC"),
                     mb: 1.5,
                     mt: 1,
                   }}
@@ -732,12 +748,14 @@ function TransferPage() {
                       sx={{
                         fontWeight: 800,
                         fontSize: "0.72rem",
-                        bgcolor: "#DCFCE7",
-                        color: "#166534",
+                        bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(16, 185, 129, 0.25)" : "#DCFCE7"),
+                        color: (theme) => (theme.palette.mode === "dark" ? "#6EE7B7" : "#166534"),
+                        border: "1px solid",
+                        borderColor: (theme) => (theme.palette.mode === "dark" ? "rgba(16, 185, 129, 0.4)" : "#86EFAC"),
                         borderRadius: "8px",
                       }}
                     />
-                    <Typography sx={{ fontSize: "0.75rem", color: "#166534", fontWeight: 700 }}>
+                    <Typography sx={{ fontSize: "0.75rem", color: (theme) => (theme.palette.mode === "dark" ? "#34D399" : "#166534"), fontWeight: 700 }}>
                       ✓ Verificado
                     </Typography>
                   </Box>
@@ -763,7 +781,7 @@ function TransferPage() {
                     </Box>
                     <Box>
                       <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>ALIAS</Typography>
-                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0056D2" }}>
+                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: (theme) => (theme.palette.mode === "dark" ? "#60A5FA" : "#0056D2") }}>
                         {verifiedRecipient.alias}
                       </Typography>
                     </Box>
@@ -800,12 +818,22 @@ function TransferPage() {
 
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <Typography sx={{ fontSize: "0.85rem", color: "text.secondary" }}>Motivo</Typography>
-                    <Chip label={motive} size="small" sx={{ fontWeight: 700, bgcolor: "#EFF6FF", color: "#0056D2" }} />
+                    <Chip
+                      label={motive}
+                      size="small"
+                      sx={{
+                        fontWeight: 700,
+                        bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.2)" : "#EFF6FF"),
+                        color: (theme) => (theme.palette.mode === "dark" ? "#93C5FD" : "#0056D2"),
+                        border: "1px solid",
+                        borderColor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.35)" : "#BFDBFE"),
+                      }}
+                    />
                   </Box>
 
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <Typography sx={{ fontSize: "0.85rem", color: "text.secondary" }}>Comisión de transferencia</Typography>
-                    <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#10B981" }}>
+                    <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: (theme) => (theme.palette.mode === "dark" ? "#34D399" : "#10B981") }}>
                       Gratis ($ 0,00)
                     </Typography>
                   </Box>
@@ -817,13 +845,14 @@ function TransferPage() {
                       alignItems: "center",
                       mt: 0.5,
                       pt: 1.2,
-                      borderTop: "1px dashed #CBD5E1",
+                      borderTop: "1px dashed",
+                      borderColor: "divider",
                     }}
                   >
                     <Typography sx={{ fontWeight: 800, color: "text.primary", fontSize: "0.95rem" }}>
                       Total a debitar
                     </Typography>
-                    <Typography sx={{ fontWeight: 800, color: "#0056D2", fontSize: "1.25rem" }}>
+                    <Typography sx={{ fontWeight: 800, color: (theme) => (theme.palette.mode === "dark" ? "#60A5FA" : "#0056D2"), fontSize: "1.25rem" }}>
                       {formatCurrency(num)}
                     </Typography>
                   </Box>
@@ -835,14 +864,14 @@ function TransferPage() {
                   onClick={handleTransfer}
                   disabled={loading}
                   sx={{
-                    bgcolor: "#0056D2",
+                    bgcolor: "primary.main",
                     color: "#FFF",
                     borderRadius: "12px",
                     py: 1.4,
                     fontSize: "0.95rem",
                     fontWeight: 700,
                     textTransform: "none",
-                    "&:hover": { bgcolor: "#0047b3" },
+                    "&:hover": { bgcolor: "primary.dark" },
                   }}
                 >
                   {loading ? <CircularProgress size={22} color="inherit" /> : "Confirmar Transferencia"}

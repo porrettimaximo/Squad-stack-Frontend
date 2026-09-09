@@ -334,14 +334,16 @@ export function AppLayout({
                 startIcon={<ArrowBackIcon />}
                 onClick={onBack}
                 sx={{
-                  color: "#0056D2",
+                  color: (theme) => (theme.palette.mode === "dark" ? "#60A5FA" : "#0056D2"),
                   textTransform: "none",
-                  fontWeight: 600,
+                  fontWeight: 700,
                   fontSize: "0.95rem",
                   borderRadius: "10px",
                   px: 2,
                   py: 0.8,
-                  "&:hover": { bgcolor: "#EFF6FF" },
+                  "&:hover": {
+                    bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(96, 165, 250, 0.15)" : "#EFF6FF"),
+                  },
                 }}
               >
                 {backLabel}
@@ -352,6 +354,14 @@ export function AppLayout({
           {children}
         </Box>
       </Box>
+
+      {/* Barra de Navegación Inferior en Mobile */}
+      {!isDesktop && (
+        <MobileBottomNav
+          currentIndex={currentMobileIndex}
+          onChange={handleMobileNavChange}
+        />
+      )}
     </Box>
   );
 }

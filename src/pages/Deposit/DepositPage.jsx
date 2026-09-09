@@ -13,7 +13,6 @@ import {
   Divider,
   CircularProgress,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
 } from "@mui/material";
@@ -96,7 +95,8 @@ export function DepositPage() {
             borderRadius: "24px",
             p: { xs: 3, md: 4 },
             bgcolor: "background.paper",
-            border: "1px solid", borderColor: "divider",
+            border: "1px solid",
+            borderColor: "divider",
             boxShadow: "0 10px 30px -10px rgba(15, 23, 42, 0.08)",
             minHeight: 360,
             display: "flex",
@@ -122,10 +122,10 @@ export function DepositPage() {
                       textAlign: "left",
                       borderColor: "divider",
                       bgcolor: "action.hover",
-                      "&:hover": { borderColor: "#0056D2", bgcolor: "#EFF6FF" },
+                      "&:hover": { borderColor: "primary.main", bgcolor: "action.selected" },
                     }}
                   >
-                    <AccountBalanceIcon sx={{ fontSize: 36, color: "#0056D2", mr: 2 }} />
+                    <AccountBalanceIcon sx={{ fontSize: 36, color: "primary.main", mr: 2 }} />
                     <Box>
                       <Typography sx={{ fontWeight: 700, color: "text.primary", fontSize: "1rem" }}>
                         Transferencia Bancaria (CVU / CBU)
@@ -146,10 +146,10 @@ export function DepositPage() {
                       textAlign: "left",
                       borderColor: "divider",
                       bgcolor: "action.hover",
-                      "&:hover": { borderColor: "#0056D2", bgcolor: "#EFF6FF" },
+                      "&:hover": { borderColor: "primary.main", bgcolor: "action.selected" },
                     }}
                   >
-                    <CreditCardIcon sx={{ fontSize: 36, color: "#0056D2", mr: 2 }} />
+                    <CreditCardIcon sx={{ fontSize: 36, color: "primary.main", mr: 2 }} />
                     <Box>
                       <Typography sx={{ fontWeight: 700, color: "text.primary", fontSize: "1rem" }}>
                         Tarjeta de Débito
@@ -199,7 +199,7 @@ export function DepositPage() {
                   sx={{ mb: 2 }}
                 />
 
-                <Box sx={{ display: "flex", gap: 1, mb: 3 }}>
+                <Box sx={{ display: "flex", gap: 1, mb: 3, flexWrap: "wrap" }}>
                   {QUICK_AMOUNTS.map((val) => (
                     <Chip
                       key={val}
@@ -208,9 +208,11 @@ export function DepositPage() {
                       clickable
                       sx={{
                         fontWeight: 700,
-                        bgcolor: numAmount === val ? "#0056D2" : "#EFF6FF",
-                        color: numAmount === val ? "#FFFFFF" : "#0056D2",
-                        border: "1px solid #BFDBFE",
+                        bgcolor: numAmount === val ? "primary.main" : "action.hover",
+                        color: numAmount === val ? "#FFFFFF" : "text.primary",
+                        border: "1px solid",
+                        borderColor: numAmount === val ? "primary.main" : "divider",
+                        "&:hover": { bgcolor: numAmount === val ? "primary.dark" : "action.selected" },
                       }}
                     />
                   ))}
@@ -253,12 +255,12 @@ export function DepositPage() {
                   onClick={() => setStep(3)}
                   disabled={!amount || numAmount <= 0}
                   sx={{
-                    bgcolor: "#0056D2",
+                    bgcolor: "primary.main",
                     py: 1.8,
                     borderRadius: "14px",
                     fontWeight: 700,
                     textTransform: "none",
-                    "&:hover": { bgcolor: "#0047b3" },
+                    "&:hover": { bgcolor: "primary.dark" },
                   }}
                 >
                   Continuar
@@ -283,7 +285,17 @@ export function DepositPage() {
                   <Divider />
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <Typography sx={{ color: "text.secondary" }}>Motivo</Typography>
-                    <Chip label={motive} size="small" sx={{ fontWeight: 700, bgcolor: "#EFF6FF", color: "#0056D2" }} />
+                    <Chip
+                      label={motive}
+                      size="small"
+                      sx={{
+                        fontWeight: 700,
+                        bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.2)" : "#EFF6FF"),
+                        color: (theme) => (theme.palette.mode === "dark" ? "#93C5FD" : "#0056D2"),
+                        border: "1px solid",
+                        borderColor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.35)" : "#BFDBFE"),
+                      }}
+                    />
                   </Box>
                   <Divider />
                   <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -295,7 +307,7 @@ export function DepositPage() {
                   <Divider />
                   <Box sx={{ display: "flex", justifyContent: "space-between", p: 2, bgcolor: "action.hover", borderRadius: "12px", mt: 1 }}>
                     <Typography sx={{ fontWeight: 700, color: "text.primary" }}>Nuevo saldo estimado</Typography>
-                    <Typography sx={{ fontWeight: 800, color: "#0056D2", fontSize: "1.15rem" }}>
+                    <Typography sx={{ fontWeight: 800, color: (theme) => (theme.palette.mode === "dark" ? "#60A5FA" : "#0056D2"), fontSize: "1.15rem" }}>
                       {formatCurrency(currentBalance + numAmount)}
                     </Typography>
                   </Box>
@@ -307,13 +319,13 @@ export function DepositPage() {
                   onClick={handleDeposit}
                   disabled={loading}
                   sx={{
-                    bgcolor: "#0056D2",
+                    bgcolor: "primary.main",
                     py: 1.8,
                     borderRadius: "14px",
                     fontWeight: 700,
                     textTransform: "none",
                     mt: 3,
-                    "&:hover": { bgcolor: "#0047b3" },
+                    "&:hover": { bgcolor: "primary.dark" },
                   }}
                 >
                   {loading ? <CircularProgress size={24} color="inherit" /> : "Confirmar Depósito"}
@@ -328,10 +340,11 @@ export function DepositPage() {
                 subtitle="Los fondos fueron acreditados en tu cuenta DigitalArs."
                 amount={numAmount}
                 details={[
+                  { label: "Medio de ingreso", value: method === "transfer" ? "Transferencia" : "Tarjeta Débito" },
                   { label: "Motivo", value: motive },
-                  { label: "Nuevo saldo disponible", value: formatCurrency(account.money) },
-                  { label: "Medio utilizado", value: method === "transfer" ? "Transferencia Inmediata" : "Tarjeta de Débito" },
+                  { label: "Nuevo saldo disponible", value: formatCurrency(account?.money ?? 0) },
                 ]}
+                finishLabel="Volver al inicio"
                 onFinish={() => navigate("/")}
               />
             )}
@@ -341,7 +354,7 @@ export function DepositPage() {
 
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={3500}
+        autoHideDuration={4000}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
       >
         <Alert severity={snackbar.severity} sx={{ width: "100%", borderRadius: "12px" }}>
