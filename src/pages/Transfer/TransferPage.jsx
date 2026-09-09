@@ -636,15 +636,15 @@ function TransferPage() {
             {/* ─── PASO 3: CONFIRMACIÓN Y REVISIÓN DE DATOS ─── */}
             {step === 3 && verifiedRecipient && (
               <motion.div key="step3" variants={slideVariants} initial="initial" animate="animate" exit="exit">
-                <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", mb: 1.5, textAlign: "center" }}>
-                  Revisá con atención los datos de ambas partes antes de confirmar la operación.
+                <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", mb: 2, textAlign: "center" }}>
+                  Revisá los datos antes de confirmar la transferencia.
                 </Typography>
 
-                {/* 1. Datos de TU CUENTA (Emisor) */}
+                {/* 1. Datos de TU CUENTA (Origen) */}
                 <Paper
                   elevation={0}
                   sx={{
-                    p: 2,
+                    p: { xs: 1.8, sm: 2 },
                     borderRadius: "14px",
                     bgcolor: "action.hover",
                     border: "1px solid",
@@ -652,12 +652,12 @@ function TransferPage() {
                     mb: 1.5,
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 0.8, mb: 1.2 }}>
                     <Chip
-                      label="Tu Cuenta (Emisor)"
+                      label="Cuenta de origen"
                       size="small"
                       sx={{
-                        fontWeight: 800,
+                        fontWeight: 700,
                         fontSize: "0.72rem",
                         bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.22)" : "#EFF6FF"),
                         color: (theme) => (theme.palette.mode === "dark" ? "#93C5FD" : "#0056D2"),
@@ -666,7 +666,7 @@ function TransferPage() {
                         borderRadius: "8px",
                       }}
                     />
-                    <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 600 }}>
+                    <Typography sx={{ fontSize: "0.72rem", color: "text.secondary", fontWeight: 600 }}>
                       Débito inmediato
                     </Typography>
                   </Box>
@@ -702,10 +702,25 @@ function TransferPage() {
                         {myProfile.cvu}
                       </Typography>
                     </Box>
-                    <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" }, mt: 0.5, pt: 0.8, borderTop: "1px dashed", borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <Typography sx={{ fontSize: "0.74rem", color: "text.secondary", fontWeight: 600 }}>FONDOS DEBITADOS DE</Typography>
+                    <Box
+                      sx={{
+                        gridColumn: { xs: "span 1", sm: "span 2" },
+                        mt: 0.5,
+                        pt: 1,
+                        borderTop: "1px dashed",
+                        borderColor: "divider",
+                        display: "flex",
+                        flexDirection: { xs: "column", sm: "row" },
+                        justifyContent: "space-between",
+                        alignItems: { xs: "flex-start", sm: "center" },
+                        gap: 0.6,
+                      }}
+                    >
+                      <Typography sx={{ fontSize: "0.72rem", color: "text.secondary", fontWeight: 600 }}>
+                        DEBITAR DE
+                      </Typography>
                       <Chip
-                        label={sourceType === "reserve" ? `Reserva: ${selectedReserve?.name || "Apartado"}` : "Saldo Principal de Cuenta"}
+                        label={sourceType === "reserve" ? `Reserva: ${selectedReserve?.name || "Apartado"}` : "Saldo Principal"}
                         size="small"
                         sx={{
                           fontWeight: 700,
@@ -728,11 +743,11 @@ function TransferPage() {
                   </Avatar>
                 </Box>
 
-                {/* 2. Datos de LA OTRA CUENTA (Destinatario) */}
+                {/* 2. Datos del Destinatario */}
                 <Paper
                   elevation={0}
                   sx={{
-                    p: 2,
+                    p: { xs: 1.8, sm: 2 },
                     borderRadius: "14px",
                     bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(16, 185, 129, 0.12)" : "#F0FDF4"),
                     border: "1.5px solid",
@@ -741,12 +756,12 @@ function TransferPage() {
                     mt: 1,
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 0.8, mb: 1.2 }}>
                     <Chip
-                      label="Cuenta Destino (Destinatario real)"
+                      label="Destinatario"
                       size="small"
                       sx={{
-                        fontWeight: 800,
+                        fontWeight: 700,
                         fontSize: "0.72rem",
                         bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(16, 185, 129, 0.25)" : "#DCFCE7"),
                         color: (theme) => (theme.palette.mode === "dark" ? "#6EE7B7" : "#166534"),
@@ -755,14 +770,14 @@ function TransferPage() {
                         borderRadius: "8px",
                       }}
                     />
-                    <Typography sx={{ fontSize: "0.75rem", color: (theme) => (theme.palette.mode === "dark" ? "#34D399" : "#166534"), fontWeight: 700 }}>
+                    <Typography sx={{ fontSize: "0.74rem", color: (theme) => (theme.palette.mode === "dark" ? "#34D399" : "#166534"), fontWeight: 700, display: "flex", alignItems: "center", gap: 0.5 }}>
                       ✓ Verificado
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>DESTINATARIO</Typography>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>TITULAR</Typography>
                       <Typography sx={{ fontSize: "0.92rem", fontWeight: 800, color: "text.primary" }}>
                         {verifiedRecipient.name}
                       </Typography>
