@@ -63,8 +63,19 @@ export function QuickActions({ onDeposit, onTransfer, onReserves, onServices, on
           style={{ height: "100%" }}
         >
           <Box
+            component="button"
+            role="button"
+            tabIndex={0}
+            aria-label={`Acción rápida: ${act.title}`}
             onClick={act.onClick}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                act.onClick && act.onClick();
+              }
+            }}
             sx={{
+              width: "100%",
               height: "100%",
               minHeight: { xs: 84, md: 110 },
               borderRadius: "16px",
@@ -79,6 +90,8 @@ export function QuickActions({ onDeposit, onTransfer, onReserves, onServices, on
               justifyContent: "center",
               gap: { xs: 0.75, md: 1 },
               cursor: "pointer",
+              fontFamily: "inherit",
+              outline: "none",
               transition: "box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease",
               "&:hover": {
                 boxShadow: "0 8px 22px -4px rgba(0, 86, 210, 0.16)",
@@ -87,6 +100,10 @@ export function QuickActions({ onDeposit, onTransfer, onReserves, onServices, on
               },
               "&:active": {
                 transform: "scale(0.97)",
+              },
+              "&:focus-visible": {
+                outline: "2px solid #38BDF8 !important",
+                outlineOffset: "2px",
               },
               /* Mobile: colores destacados para las primeras 2 acciones */
               ...(act.isPrimaryMobile && {
