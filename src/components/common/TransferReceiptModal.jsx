@@ -42,6 +42,7 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
     origin = {},
     destination = {},
     status = "Completada / Exitosa",
+    isDeposit = false,
   } = payload;
 
   const handleCopyId = () => {
@@ -59,6 +60,7 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
       origin,
       destination,
       status,
+      isDeposit,
     });
   };
 
@@ -74,7 +76,7 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
           sx: {
             borderRadius: "20px",
             p: { xs: 0.5, sm: 1 },
-            bgcolor: "#FFFFFF",
+            bgcolor: "background.paper",
             boxShadow: "0 25px 50px -12px rgba(15, 23, 42, 0.25)",
           },
         },
@@ -105,10 +107,10 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
             <ReceiptLongOutlinedIcon sx={{ fontSize: 22 }} />
           </Box>
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 800, color: "#0F172A", fontSize: "1.05rem" }}>
-              Información de la transferencia
+            <Typography variant="h6" sx={{ fontWeight: 800, color: "text.primary", fontSize: "1.05rem" }}>
+              {isDeposit ? "Comprobante de Depósito" : "Información de la transferencia"}
             </Typography>
-            <Typography variant="caption" sx={{ color: "#64748B" }}>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
               Comprobante digital oficial DigitalArs
             </Typography>
           </Box>
@@ -118,7 +120,7 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
         </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers sx={{ p: { xs: 2, sm: 3 }, bgcolor: "#FAFAFA" }}>
+      <DialogContent dividers sx={{ p: { xs: 2, sm: 3 }, bgcolor: "background.default" }}>
         {/* Banner de Estado y Monto */}
         <Box sx={{ textAlign: "center", my: 1 }}>
           <Chip
@@ -131,7 +133,7 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
             variant="h4"
             sx={{
               fontWeight: 800,
-              color: "#0F172A",
+              color: "text.primary",
               fontSize: { xs: "1.75rem", sm: "2.1rem" },
               letterSpacing: "-0.02em",
             }}
@@ -142,10 +144,10 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
           {/* Número de Operación y Fecha */}
           <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 1.5, mt: 1 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
                 Operación:
               </Typography>
-              <Typography variant="caption" sx={{ fontWeight: 800, fontFamily: "monospace", color: "#0F172A" }}>
+              <Typography variant="caption" sx={{ fontWeight: 800, fontFamily: "monospace", color: "text.primary" }}>
                 {operationId}
               </Typography>
               <Tooltip title={copied ? "¡Copiado!" : "Copiar ID"}>
@@ -157,7 +159,7 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
             <Typography variant="caption" sx={{ color: "#CBD5E1" }}>
               •
             </Typography>
-            <Typography variant="caption" sx={{ color: "#64748B" }}>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
               {date}
             </Typography>
           </Box>
@@ -165,20 +167,20 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
 
         <Divider sx={{ my: 2 }} />
 
-        {/* 1. Datos de la Cuenta de Origen (Mi cuenta) */}
+        {/* 1. Datos de la Cuenta de Origen (Emisor) */}
         <Paper
           elevation={0}
           sx={{
             p: 2,
             borderRadius: "14px",
-            bgcolor: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            bgcolor: "background.paper",
+            border: "1px solid", borderColor: "divider",
             mb: 1.5,
           }}
         >
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
             <Chip
-              label="Cuenta de Origen (Emisor)"
+              label={isDeposit ? "Origen de los Fondos (Emisor)" : "Cuenta de Origen (Emisor)"}
               size="small"
               sx={{
                 fontWeight: 800,
@@ -188,39 +190,43 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
                 borderRadius: "8px",
               }}
             />
-            <Typography sx={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 600 }}>
+            <Typography sx={{ fontSize: "0.72rem", color: "text.secondary", fontWeight: 600 }}>
               {origin.bank || "DigitalArs Billetera Virtual"}
             </Typography>
           </Box>
 
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
             <Box>
-              <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>TITULAR</Typography>
-              <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0F172A" }}>
+              <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>TITULAR</Typography>
+              <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary" }}>
                 {origin.name || "---"}
               </Typography>
             </Box>
             <Box>
-              <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>Nº DE CUENTA</Typography>
-              <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0F172A" }}>
-                Cuenta #{origin.accountId} {origin.accountNumber ? `(${origin.accountNumber})` : ""}
+              <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>
+                {isDeposit ? "MEDIO / CUENTA" : "Nº DE CUENTA"}
+              </Typography>
+              <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary" }}>
+                {origin.accountNumber
+                  ? `${origin.accountId ? `Cuenta #${origin.accountId} ` : ""}(${origin.accountNumber})`
+                  : origin.accountId ? `Cuenta #${origin.accountId}` : "---"}
               </Typography>
             </Box>
             <Box>
-              <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>EMAIL</Typography>
-              <Typography sx={{ fontSize: "0.8rem", fontWeight: 600, color: "#334155", wordBreak: "break-all" }}>
+              <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>EMAIL</Typography>
+              <Typography sx={{ fontSize: "0.8rem", fontWeight: 600, color: "text.secondary", wordBreak: "break-all" }}>
                 {origin.email || "---"}
               </Typography>
             </Box>
             <Box>
-              <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>ALIAS</Typography>
+              <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>ALIAS</Typography>
               <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#0056D2" }}>
                 {origin.alias || "---"}
               </Typography>
             </Box>
             <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" } }}>
-              <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>CVU</Typography>
-              <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", letterSpacing: "0.02em" }}>
+              <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>CVU / CBU</Typography>
+              <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.secondary", letterSpacing: "0.02em" }}>
                 {origin.cvu || "---"}
               </Typography>
             </Box>
@@ -246,13 +252,13 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
           </Box>
         </Box>
 
-        {/* 2. Datos de la Cuenta de Destino (La otra cuenta / A quién) */}
+        {/* 2. Datos de la Cuenta de Destino (Receptor) */}
         <Paper
           elevation={0}
           sx={{
             p: 2,
             borderRadius: "14px",
-            bgcolor: "#FFFFFF",
+            bgcolor: "background.paper",
             border: "1.5px solid #BBF7D0",
             mb: 1.5,
             mt: 0.8,
@@ -260,7 +266,7 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
         >
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
             <Chip
-              label="Cuenta de Destino (Receptor / A quién)"
+              label={isDeposit ? "Cuenta DigitalArs (Receptor / Acreditación)" : "Cuenta de Destino (Receptor / A quién)"}
               size="small"
               sx={{
                 fontWeight: 800,
@@ -270,39 +276,41 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
                 borderRadius: "8px",
               }}
             />
-            <Typography sx={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 600 }}>
+            <Typography sx={{ fontSize: "0.72rem", color: "text.secondary", fontWeight: 600 }}>
               {destination.bank || "DigitalArs Billetera Virtual"}
             </Typography>
           </Box>
 
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
             <Box>
-              <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>A QUIÉN (TITULAR)</Typography>
-              <Typography sx={{ fontSize: "0.9rem", fontWeight: 800, color: "#0F172A" }}>
+              <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>
+                {isDeposit ? "TITULAR RECEPTOR" : "A QUIÉN (TITULAR)"}
+              </Typography>
+              <Typography sx={{ fontSize: "0.9rem", fontWeight: 800, color: "text.primary" }}>
                 {destination.name || "---"}
               </Typography>
             </Box>
             <Box>
-              <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>Nº DE CUENTA</Typography>
-              <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0F172A" }}>
+              <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>Nº DE CUENTA</Typography>
+              <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary" }}>
                 Cuenta #{destination.accountId} {destination.accountNumber ? `(${destination.accountNumber})` : ""}
               </Typography>
             </Box>
             <Box>
-              <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>EMAIL</Typography>
-              <Typography sx={{ fontSize: "0.8rem", fontWeight: 600, color: "#334155", wordBreak: "break-all" }}>
+              <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>EMAIL</Typography>
+              <Typography sx={{ fontSize: "0.8rem", fontWeight: 600, color: "text.secondary", wordBreak: "break-all" }}>
                 {destination.email || "---"}
               </Typography>
             </Box>
             <Box>
-              <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>ALIAS</Typography>
+              <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>ALIAS</Typography>
               <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#0056D2" }}>
                 {destination.alias || "---"}
               </Typography>
             </Box>
             <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" } }}>
-              <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>CVU</Typography>
-              <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", letterSpacing: "0.02em" }}>
+              <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>CVU</Typography>
+              <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.secondary", letterSpacing: "0.02em" }}>
                 {destination.cvu || "---"}
               </Typography>
             </Box>
@@ -315,26 +323,26 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
           sx={{
             p: 1.8,
             borderRadius: "14px",
-            bgcolor: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            bgcolor: "background.paper",
+            border: "1px solid", borderColor: "divider",
             display: "flex",
             flexDirection: "column",
             gap: 0.8,
           }}
         >
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Typography sx={{ fontSize: "0.82rem", color: "#64748B" }}>Motivo / Concepto</Typography>
+            <Typography sx={{ fontSize: "0.82rem", color: "text.secondary" }}>Motivo / Concepto</Typography>
             <Chip label={motive} size="small" sx={{ fontWeight: 700, bgcolor: "#EFF6FF", color: "#0056D2" }} />
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Typography sx={{ fontSize: "0.82rem", color: "#64748B" }}>Comisión de transferencia</Typography>
+            <Typography sx={{ fontSize: "0.82rem", color: "text.secondary" }}>Comisión de transferencia</Typography>
             <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#10B981" }}>
               Gratis ($ 0,00)
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Typography sx={{ fontSize: "0.82rem", color: "#64748B" }}>Canal</Typography>
-            <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#0F172A" }}>
+            <Typography sx={{ fontSize: "0.82rem", color: "text.secondary" }}>Canal</Typography>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.primary" }}>
               DigitalArs Web Banking
             </Typography>
           </Box>
@@ -378,10 +386,10 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
             borderRadius: "12px",
             py: 1.3,
             fontWeight: 700,
-            color: "#475569",
+            color: "text.secondary",
             borderColor: "#CBD5E1",
             textTransform: "none",
-            "&:hover": { bgcolor: "#F8FAFC", borderColor: "#94A3B8" },
+            "&:hover": { bgcolor: "action.hover", borderColor: "#94A3B8" },
           }}
         >
           Cerrar

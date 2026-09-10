@@ -14,17 +14,23 @@ import HistoryPage from "./pages/History/HistoryPage";
 import InvestmentsPage from "./pages/Investments/InvestmentsPage";
 import CardsPage from "./pages/Cards/CardsPage";
 import ProfilePage from "./pages/Profile/ProfilePage";
+import ServicesPage from "./pages/Services/ServicesPage";
+import ReservesPage from "./pages/Reserves/ReservesPage";
 import AdminUsersPage from "./pages/Admin/AdminUsersPage";
 import HelpPage from "./pages/Help/HelpPage";
 import SupportPage from "./pages/Support/SupportPage";
 import ForbiddenPage from "./pages/Forbidden/ForbiddenPage";
 import NotFoundPage from "./pages/NotFound/NotFoundPage";
 
+import SettingsPage from "./pages/Settings/SettingsPage";
+import { AppThemeProvider } from "./context/ThemeContext";
+import { LanguageProvider } from "./context/LanguageContext";
+
 export function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <AuthProvider>
+    <LanguageProvider>
+      <AppThemeProvider>
+        <AuthProvider>
         <AccountProvider>
           <BrowserRouter>
             <Routes>
@@ -34,8 +40,8 @@ export function App() {
               {/* Páginas de error / autorización (HU-23) */}
               <Route path="/403" element={<ForbiddenPage />} />
 
-              {/* Rutas protegidas para cualquier usuario autenticado (HU-23) */}
-              <Route element={<ProtectedRoute />}>
+              {/* Rutas exclusivas para billetera de usuarios estándar (Servicios, Reservas, Historial, Inversiones, Tarjetas, Depósitos, Transferencias) */}
+              <Route element={<ProtectedRoute disallowedRoles={["Admin", "admin"]} />}>
                 {/* HU-24: Dashboard principal de la billetera */}
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
@@ -45,6 +51,14 @@ export function App() {
 
                 {/* HU-26: Transferencia de fondos */}
                 <Route path="/transfer" element={<TransferPage />} />
+
+                {/* Pago de Servicios */}
+                <Route path="/services" element={<ServicesPage />} />
+                <Route path="/servicios" element={<ServicesPage />} />
+
+                {/* Reservas / Apartados de dinero */}
+                <Route path="/reserves" element={<ReservesPage />} />
+                <Route path="/reservas" element={<ReservesPage />} />
 
                 {/* HU-27: Historial con filtros y gráficos */}
                 <Route path="/history" element={<HistoryPage />} />
@@ -57,7 +71,10 @@ export function App() {
                 {/* HU-35: Tarjetas (Virtual, Física y Crédito) */}
                 <Route path="/cards" element={<CardsPage />} />
                 <Route path="/tarjetas" element={<CardsPage />} />
+              </Route>
 
+              {/* Rutas compartidas para cualquier usuario autenticado (Admin y User) */}
+              <Route element={<ProtectedRoute />}>
                 {/* HU-28: Pantalla de perfil de usuario */}
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/perfil" element={<ProfilePage />} />
@@ -69,6 +86,10 @@ export function App() {
                 {/* Soporte y Atención al Cliente */}
                 <Route path="/support" element={<SupportPage />} />
                 <Route path="/soporte" element={<SupportPage />} />
+
+                {/* Configuración / Ajustes */}
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/configuracion" element={<SettingsPage />} />
               </Route>
 
               {/* Rutas exclusivas para Administradores (HU-29) */}
@@ -83,7 +104,8 @@ export function App() {
           </BrowserRouter>
         </AccountProvider>
       </AuthProvider>
-    </ThemeProvider>
+    </AppThemeProvider>
+  </LanguageProvider>
   );
 }
 

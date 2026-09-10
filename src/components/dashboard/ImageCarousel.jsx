@@ -188,7 +188,7 @@ export function ImageCarousel({ borderRadius = "20px", height = "100%", onTransf
             key={current} // Fuerza a que la animación se reinicie cuando cambia el current
             sx={{
               height: "100%",
-              bgcolor: "#FFFFFF",
+              bgcolor: "background.paper",
               animation: `progressFill ${INTERVAL}ms linear forwards`,
               animationPlayState: paused ? "paused" : "running",
             }}

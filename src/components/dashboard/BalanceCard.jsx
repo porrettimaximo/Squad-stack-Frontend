@@ -1,7 +1,8 @@
 import React from "react";
-import { Box, Card, Typography, Skeleton } from "@mui/material";
+import { Box, Card, Typography, Skeleton, Tooltip } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 /**
  * BalanceCard: Tarjeta destacada de saldo (Figma 1:1)
@@ -16,7 +17,9 @@ export function BalanceCard({
   cvu,
   trend = 2.4,
   loading = false,
+  onInvestments,
 }) {
+  const navigate = useNavigate();
   if (loading) {
     return (
       <Skeleton
@@ -77,27 +80,26 @@ export function BalanceCard({
             SALDO TOTAL
           </Typography>
 
-          {/* Badge de tendencia con microinteracción animada */}
-          <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}>
-            <Box
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 0.5,
-                px: 1.2,
-                py: 0.35,
-                borderRadius: "20px",
-                bgcolor: "#C6F6D5",
-                color: "#047857",
-                fontWeight: 800,
-                fontSize: "0.8rem",
-                cursor: "pointer",
-              }}
-            >
-              <TrendingUpIcon sx={{ fontSize: "1rem" }} />
-              +{trend}%
-            </Box>
-          </motion.div>
+          {/* Badge informativo de rendimiento / tasa */}
+          <Box
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 0.5,
+              px: 1.2,
+              py: 0.35,
+              borderRadius: "20px",
+              bgcolor: "#C6F6D5",
+              color: "#047857",
+              fontWeight: 800,
+              fontSize: "0.8rem",
+              userSelect: "none",
+              pointerEvents: "none",
+            }}
+          >
+            <TrendingUpIcon sx={{ fontSize: "1rem" }} />
+            +{trend}%
+          </Box>
         </Box>
 
         {/* Saldo Principal Grande */}

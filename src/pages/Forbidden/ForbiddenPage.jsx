@@ -11,7 +11,7 @@ export const ForbiddenPage = () => {
     <Box
       sx={{
         minHeight: "100vh",
-        backgroundColor: "#F8FAFC",
+        backgroundColor: "background.default",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -25,8 +25,8 @@ export const ForbiddenPage = () => {
           textAlign: "center",
           maxWidth: 520,
           borderRadius: "20px",
-          border: "1px solid #E2E8F0",
-          backgroundColor: "#FFFFFF",
+          border: "1px solid", borderColor: "divider",
+          backgroundColor: "background.paper",
           boxShadow: "0px 10px 30px rgba(0, 22, 57, 0.05)",
         }}
       >
@@ -65,7 +65,7 @@ export const ForbiddenPage = () => {
           variant="h5"
           sx={{
             fontWeight: 800,
-            color: "#001639",
+            color: "text.primary",
             mb: 1.5,
           }}
         >
@@ -75,7 +75,7 @@ export const ForbiddenPage = () => {
         <Typography
           variant="body1"
           sx={{
-            color: "#64748B",
+            color: "text.secondary",
             mb: 4,
             fontWeight: 500,
             lineHeight: 1.6,
@@ -86,7 +86,10 @@ export const ForbiddenPage = () => {
 
         <Button
           variant="contained"
-          onClick={() => navigate("/dashboard")}
+          onClick={() => {
+            const role = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user"))?.role?.toLowerCase() : "";
+            navigate(role === "admin" ? "/admin" : "/dashboard");
+          }}
           sx={{
             textTransform: "none",
             fontWeight: 700,
@@ -101,7 +104,7 @@ export const ForbiddenPage = () => {
             },
           }}
         >
-          Volver al Dashboard
+          Volver al Inicio
         </Button>
       </Paper>
     </Box>

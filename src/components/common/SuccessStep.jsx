@@ -85,12 +85,12 @@ export function SuccessStep({
 
       <Typography
         variant="h5"
-        sx={{ fontWeight: 800, color: "#0F172A", mb: 1, fontSize: { xs: "1.4rem", md: "1.6rem" } }}
+        sx={{ fontWeight: 800, color: "text.primary", mb: 1, fontSize: { xs: "1.4rem", md: "1.6rem" } }}
       >
         {title}
       </Typography>
 
-      <Typography sx={{ color: "#64748B", fontSize: "0.95rem", mb: 3, maxWidth: 380 }}>
+      <Typography sx={{ color: "text.secondary", fontSize: "0.95rem", mb: 3, maxWidth: 380 }}>
         {subtitle}
       </Typography>
 
@@ -99,8 +99,8 @@ export function SuccessStep({
         <Paper
           elevation={0}
           sx={{
-            bgcolor: "#F8FAFC",
-            border: "1px solid #E2E8F0",
+            bgcolor: "action.hover",
+            border: "1px solid", borderColor: "divider",
             borderRadius: "16px",
             p: 2.5,
             width: "100%",
@@ -108,16 +108,16 @@ export function SuccessStep({
             mb: 3,
           }}
         >
-          <Typography sx={{ fontSize: "0.85rem", color: "#64748B", fontWeight: 600, mb: 0.5 }}>
+          <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", fontWeight: 600, mb: 0.5 }}>
             Monto operado
           </Typography>
-          <Typography sx={{ fontSize: "1.85rem", fontWeight: 800, color: "#0F172A" }}>
+          <Typography sx={{ fontSize: "1.85rem", fontWeight: 800, color: "text.primary" }}>
             {formatCurrency(amount)}
           </Typography>
 
           {details.length > 0 && (
             <>
-              <Divider sx={{ my: 2, borderColor: "#E2E8F0" }} />
+              <Divider sx={{ my: 2, borderColor: "divider" }} />
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 {details.map((item, idx) =>
                   item.isHeader ? (
@@ -148,14 +148,14 @@ export function SuccessStep({
                       key={idx}
                       sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}
                     >
-                      <Typography sx={{ fontSize: "0.82rem", color: "#64748B", textAlign: "left" }}>
+                      <Typography sx={{ fontSize: "0.82rem", color: "text.secondary", textAlign: "left" }}>
                         {item.label}
                       </Typography>
                       <Typography
                         sx={{
                           fontSize: "0.88rem",
                           fontWeight: 700,
-                          color: item.highlight ? "#0056D2" : "#0F172A",
+                          color: item.highlight ? "#0056D2" : "text.primary",
                           textAlign: "right",
                           wordBreak: "break-all",
                         }}

@@ -180,22 +180,23 @@ export function InvestmentsPage() {
         {/* Cabecera Principal */}
         <Box sx={{ mb: 4, display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
           <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
-              <Typography variant="h4" sx={{ fontWeight: 800, color: "#0A192F", letterSpacing: "-0.03em" }}>
+            <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "flex-start", sm: "center" }, gap: 1.5, mb: 0.5 }}>
+              <Typography variant="h4" sx={{ fontWeight: 800, color: "text.primary", letterSpacing: "-0.03em", fontSize: { xs: "1.5rem", sm: "2rem" } }}>
                 Inversiones a Plazo Fijo
               </Typography>
               <Chip
                 label={`Tasa actual: ${currentTnaRate}% TNA (hasta 35%)`}
                 sx={{
-                  bgcolor: "#ECFDF5",
-                  color: "#059669",
+                  bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(16, 185, 129, 0.15)" : "#ECFDF5",
+                  color: (theme) => theme.palette.mode === "dark" ? "#34D399" : "#059669",
                   fontWeight: 800,
                   fontSize: "0.85rem",
-                  border: "1px solid #A7F3D0",
+                  border: "1px solid",
+                  borderColor: (theme) => theme.palette.mode === "dark" ? "rgba(52, 211, 153, 0.3)" : "#A7F3D0",
                 }}
               />
             </Box>
-            <Typography variant="body1" sx={{ color: "#64748B", fontWeight: 500 }}>
+            <Typography variant="body1" sx={{ color: "text.secondary", fontWeight: 500 }}>
               Multiplica tus ahorros en pesos con rendimiento escalonado garantizado y acreditación automática.
             </Typography>
           </Box>
@@ -207,21 +208,21 @@ export function InvestmentsPage() {
               p: 2,
               px: 3,
               borderRadius: "16px",
-              bgcolor: "#FFFFFF",
-              border: "1px solid #E2E8F0",
+              bgcolor: "background.paper",
+              border: "1px solid", borderColor: "divider",
               display: "flex",
               alignItems: "center",
               gap: 2,
             }}
           >
-            <Box sx={{ width: 44, height: 44, borderRadius: "12px", bgcolor: "#EFF6FF", color: "#0056D2", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Box sx={{ width: 44, height: 44, borderRadius: "12px", bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.18)" : "#EFF6FF", color: "primary.main", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <AccountBalanceWalletIcon />
             </Box>
             <Box>
-              <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600, textTransform: "uppercase" }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase" }}>
                 Saldo Disponible
               </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: "#0A192F" }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: "text.primary" }}>
                 {formatCurrency(currentBalance)}
               </Typography>
             </Box>
@@ -243,8 +244,8 @@ export function InvestmentsPage() {
             elevation={0}
             sx={{
               borderRadius: "20px",
-              border: "1px solid #E2E8F0",
-              bgcolor: "#FFFFFF",
+              border: "1px solid", borderColor: "divider",
+              bgcolor: "background.paper",
               p: { xs: 2.5, md: 3 },
               display: "flex",
               flexDirection: "column",
@@ -252,7 +253,7 @@ export function InvestmentsPage() {
             }}
           >
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: "#0A192F", mb: 1.5, fontSize: "1.05rem" }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: "text.primary", mb: 1.5, fontSize: "1.05rem" }}>
                 1. ¿Cuánto querés invertir?
               </Typography>
 
@@ -274,7 +275,7 @@ export function InvestmentsPage() {
                   input: {
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Typography sx={{ fontWeight: 800, color: "#0056D2", fontSize: "1.2rem" }}>$</Typography>
+                        <Typography sx={{ fontWeight: 800, color: "primary.main", fontSize: "1.2rem" }}>$</Typography>
                       </InputAdornment>
                     ),
                     endAdornment: (
@@ -282,7 +283,17 @@ export function InvestmentsPage() {
                         <Button
                           size="small"
                           onClick={handleSetMaxAmount}
-                          sx={{ textTransform: "none", fontWeight: 700, color: "#0056D2", bgcolor: "#EFF6FF", "&:hover": { bgcolor: "#DBEAFE" }, borderRadius: "8px", px: 1.5 }}
+                          sx={{
+                            textTransform: "none",
+                            fontWeight: 700,
+                            color: "primary.main",
+                            bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.18)" : "#EFF6FF",
+                            "&:hover": {
+                              bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.3)" : "#DBEAFE",
+                            },
+                            borderRadius: "8px",
+                            px: 1.5,
+                          }}
                         >
                           Máximo
                         </Button>
@@ -296,7 +307,7 @@ export function InvestmentsPage() {
                     fontSize: "1.25rem",
                     fontWeight: 700,
                     borderRadius: "14px",
-                    bgcolor: "#F8FAFC",
+                    bgcolor: "action.hover",
                   },
                 }}
               />
@@ -312,19 +323,26 @@ export function InvestmentsPage() {
                     onClick={() => setAmount(q.toString())}
                     sx={{
                       fontWeight: 600,
-                      bgcolor: numAmount === q ? "#0056D2" : "#F1F5F9",
-                      color: numAmount === q ? "#FFFFFF" : "#475569",
-                      "&:hover": { bgcolor: numAmount === q ? "#0047B3" : "#E2E8F0" },
+                      bgcolor: numAmount === q ? "primary.main" : "action.hover",
+                      color: numAmount === q ? "#FFFFFF" : "text.secondary",
+                      "&:hover": { bgcolor: numAmount === q ? "primary.dark" : "action.selected" },
                     }}
                   />
                 ))}
               </Box>
 
-              <Typography variant="h6" sx={{ fontWeight: 800, color: "#0A192F", mb: 1.2, fontSize: "1.05rem" }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: "text.primary", mb: 1.2, fontSize: "1.05rem" }}>
                 2. Seleccioná el plazo
               </Typography>
 
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(3, 1fr)", md: "repeat(5, 1fr)" },
+                  gap: 1.2,
+                  mb: 2.5,
+                }}
+              >
                 {DURATION_OPTIONS.map((opt) => (
                   <Button
                     key={opt.days}
@@ -332,34 +350,33 @@ export function InvestmentsPage() {
                     variant={durationDays === opt.days ? "contained" : "outlined"}
                     size="small"
                     sx={{
-                      flex: "1 1 calc(33% - 8px)",
-                      minWidth: 85,
-                      py: 0.9,
+                      py: 1.2,
                       px: 1,
-                      borderRadius: "10px",
+                      borderRadius: "12px",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
                       justifyContent: "center",
-                      gap: 0.2,
+                      gap: 0.3,
                       textTransform: "none",
-                      borderColor: durationDays === opt.days ? "#0056D2" : "#CBD5E1",
-                      bgcolor: durationDays === opt.days ? "#0056D2" : "transparent",
-                      color: durationDays === opt.days ? "#FFFFFF" : "#334155",
+                      borderColor: durationDays === opt.days ? "primary.main" : "divider",
+                      bgcolor: durationDays === opt.days ? "primary.main" : "action.hover",
+                      color: durationDays === opt.days ? "#FFFFFF" : "text.primary",
+                      boxShadow: durationDays === opt.days ? "0 4px 12px rgba(0, 86, 210, 0.2)" : "none",
                       "&:hover": {
-                        bgcolor: durationDays === opt.days ? "#0047B3" : "#F8FAFC",
-                        borderColor: "#0056D2",
+                        bgcolor: durationDays === opt.days ? "primary.dark" : "action.selected",
+                        borderColor: "primary.main",
                       },
                     }}
                   >
-                    <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: "inherit", lineHeight: 1.1 }}>
+                    <Typography sx={{ fontWeight: 800, fontSize: "0.9rem", color: "inherit", lineHeight: 1.1 }}>
                       {opt.label}
                     </Typography>
                     <Typography
                       sx={{
                         fontWeight: 700,
-                        fontSize: "0.72rem",
-                        color: durationDays === opt.days ? "#A7F3D0" : "#059669",
+                        fontSize: "0.74rem",
+                        color: durationDays === opt.days ? "#A7F3D0" : (theme) => theme.palette.mode === "dark" ? "#34D399" : "#059669",
                         lineHeight: 1,
                       }}
                     >
@@ -370,6 +387,7 @@ export function InvestmentsPage() {
               </Box>
             </Box>
 
+
             <Box sx={{ pt: 1.5 }}>
               <Button
                 fullWidth
@@ -377,7 +395,7 @@ export function InvestmentsPage() {
                 size="large"
                 onClick={handleOpenConfirm}
                 sx={{
-                  bgcolor: "#0056D2",
+                  bgcolor: "primary.main",
                   color: "#FFFFFF",
                   py: 1.6,
                   borderRadius: "14px",
@@ -386,7 +404,7 @@ export function InvestmentsPage() {
                   textTransform: "none",
                   boxShadow: "none",
                   "&:hover": {
-                    bgcolor: "#0047B3",
+                    bgcolor: "primary.dark",
                     boxShadow: "0 4px 14px rgba(0, 86, 210, 0.25)",
                   },
                 }}
@@ -402,8 +420,10 @@ export function InvestmentsPage() {
             elevation={0}
             sx={{
               borderRadius: "20px",
-              bgcolor: "#0A192F",
+              bgcolor: (theme) => theme.palette.mode === "dark" ? "#1A2436" : "#0F172A",
               color: "#FFFFFF",
+              border: "1px solid",
+              borderColor: (theme) => theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "transparent",
               p: { xs: 2.5, md: 3 },
               display: "flex",
               flexDirection: "column",
@@ -505,7 +525,7 @@ export function InvestmentsPage() {
 
         {/* Listado de Mis Plazos Fijos */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: "#0A192F", mb: 2, fontSize: "1.3rem" }}>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary", mb: 2, fontSize: "1.3rem" }}>
             Mis Inversiones a Plazo Fijo
           </Typography>
 
@@ -521,75 +541,141 @@ export function InvestmentsPage() {
                 textAlign: "center",
                 borderRadius: "16px",
                 border: "1px dashed #CBD5E1",
-                bgcolor: "#FFFFFF",
+                bgcolor: "background.paper",
               }}
             >
               <LockClockIcon sx={{ fontSize: 42, color: "#94A3B8", mb: 1.2 }} />
-              <Typography variant="h6" sx={{ fontWeight: 700, color: "#334155", fontSize: "1.05rem" }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: "text.secondary", fontSize: "1.05rem" }}>
                 Aún no tenés plazos fijos activos
               </Typography>
-              <Typography variant="body2" sx={{ color: "#64748B", mt: 0.5 }}>
+              <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
                 Comenzá a invertir hoy desde $ 1.000 y recibí tus ganancias de forma garantizada.
               </Typography>
             </Paper>
           ) : (
-            <TableContainer
-              component={Paper}
-              elevation={0}
-              sx={{
-                borderRadius: "16px",
-                border: "1px solid #E2E8F0",
-                maxHeight: 360,
-                overflowY: "auto",
-                "&::-webkit-scrollbar": { width: "6px" },
-                "&::-webkit-scrollbar-thumb": { bgcolor: "#CBD5E1", borderRadius: "4px" },
-              }}
-            >
-              <Table>
-                <TableHead sx={{ bgcolor: "#F8FAFC" }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, color: "#475569" }}>ID</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: "#475569" }}>Monto Invertido</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: "#475569" }}>Tasa / Plazo</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: "#475569" }}>Ganancia</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: "#475569" }}>Total a Cobrar</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: "#475569" }}>Vencimiento</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: "#475569" }} align="center">Estado</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {deposits.map((dep) => (
-                    <TableRow key={dep.id} sx={{ "&:hover": { bgcolor: "#F8FAFC" } }}>
-                      <TableCell sx={{ fontWeight: 600 }}>#{dep.id}</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: "#0A192F" }}>{formatCurrency(dep.amount)}</TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{dep.durationDays} días</Typography>
-                        <Typography variant="caption" sx={{ color: "#10B981", fontWeight: 700 }}>{dep.interestRate}% TNA</Typography>
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: "#10B981" }}>+ {formatCurrency(dep.interestEarned)}</TableCell>
-                      <TableCell sx={{ fontWeight: 800, color: "#0056D2" }}>{formatCurrency(dep.finalAmount)}</TableCell>
-                      <TableCell sx={{ color: "#475569" }}>
-                        {new Date(dep.closingDate).toLocaleDateString("es-AR")}
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={dep.status === 1 || dep.statusName === "Active" ? "Activo" : "Finalizado"}
-                          size="small"
-                          sx={{
-                            fontWeight: 700,
-                            bgcolor: dep.status === 1 || dep.statusName === "Active" ? "#ECFDF5" : "#EFF6FF",
-                            color: dep.status === 1 || dep.statusName === "Active" ? "#059669" : "#0056D2",
-                            border: `1px solid ${dep.status === 1 || dep.statusName === "Active" ? "#A7F3D0" : "#BFDBFE"}`,
-                          }}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            <>
+              {/* Vista Móvil: Tarjetas individuales estilizadas y ordenadas */}
+              <Box sx={{ display: { xs: "flex", md: "none" }, flexDirection: "column", gap: 1.5 }}>
+                {deposits.map((dep) => (
+                  <Card
+                    key={dep.id}
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      borderRadius: "16px",
+                      border: "1px solid", borderColor: "divider",
+                      bgcolor: "background.paper",
+                      boxShadow: "0 2px 8px rgba(15, 23, 42, 0.04)",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography sx={{ fontWeight: 800, color: "text.primary", fontSize: "0.95rem" }}>
+                          Plazo Fijo #{dep.id}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+                          ({dep.durationDays} días)
+                        </Typography>
+                      </Box>
+                      <Chip
+                        label={dep.status === 1 || dep.statusName === "Active" ? "Activo" : "Finalizado"}
+                        size="small"
+                        sx={{
+                          height: 22,
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                          bgcolor: dep.status === 1 || dep.statusName === "Active" ? "#ECFDF5" : "#EFF6FF",
+                          color: dep.status === 1 || dep.statusName === "Active" ? "#059669" : "#0056D2",
+                          border: `1px solid ${dep.status === 1 || dep.statusName === "Active" ? "#A7F3D0" : "#BFDBFE"}`,
+                        }}
+                      />
+                    </Box>
+
+                    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, p: 1.2, bgcolor: "action.hover", borderRadius: "10px", mb: 1.2 }}>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Invertido</Typography>
+                        <Typography sx={{ fontWeight: 800, color: "text.primary", fontSize: "0.95rem" }}>{formatCurrency(dep.amount)}</Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Ganancia</Typography>
+                        <Typography sx={{ fontWeight: 800, color: "#10B981", fontSize: "0.95rem" }}>+ {formatCurrency(dep.interestEarned)}</Typography>
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pt: 0.5 }}>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        Vence: <strong style={{ color: "inherit" }}>{new Date(dep.closingDate).toLocaleDateString("es-AR")}</strong>
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontWeight: 800, color: "#0056D2", fontSize: "0.82rem" }}>
+                        Total: {formatCurrency(dep.finalAmount)}
+                      </Typography>
+                    </Box>
+                  </Card>
+                ))}
+              </Box>
+
+              {/* Vista Escritorio: Tabla completa */}
+              <Box sx={{ display: { xs: "none", md: "block" } }}>
+                <TableContainer
+                  component={Paper}
+                  elevation={0}
+                  sx={{
+                    borderRadius: "16px",
+                    border: "1px solid", borderColor: "divider",
+                    maxHeight: 360,
+                    overflowY: "auto",
+                    "&::-webkit-scrollbar": { width: "6px" },
+                    "&::-webkit-scrollbar-thumb": { bgcolor: "#CBD5E1", borderRadius: "4px" },
+                  }}
+                >
+                  <Table>
+                    <TableHead sx={{ bgcolor: "action.hover" }}>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>ID</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Monto Invertido</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Tasa / Plazo</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Ganancia</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Total a Cobrar</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Vencimiento</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: "text.secondary" }} align="center">Estado</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {deposits.map((dep) => (
+                        <TableRow key={dep.id} sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+                          <TableCell sx={{ fontWeight: 600 }}>#{dep.id}</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: "text.primary" }}>{formatCurrency(dep.amount)}</TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{dep.durationDays} días</Typography>
+                            <Typography variant="caption" sx={{ color: "#10B981", fontWeight: 700 }}>{dep.interestRate}% TNA</Typography>
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: "#10B981" }}>+ {formatCurrency(dep.interestEarned)}</TableCell>
+                          <TableCell sx={{ fontWeight: 800, color: "#0056D2" }}>{formatCurrency(dep.finalAmount)}</TableCell>
+                          <TableCell sx={{ color: "text.secondary" }}>
+                            {new Date(dep.closingDate).toLocaleDateString("es-AR")}
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              label={dep.status === 1 || dep.statusName === "Active" ? "Activo" : "Finalizado"}
+                              size="small"
+                              sx={{
+                                fontWeight: 700,
+                                bgcolor: dep.status === 1 || dep.statusName === "Active" ? "#ECFDF5" : "#EFF6FF",
+                                color: dep.status === 1 || dep.statusName === "Active" ? "#059669" : "#0056D2",
+                                border: `1px solid ${dep.status === 1 || dep.statusName === "Active" ? "#A7F3D0" : "#BFDBFE"}`,
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            </>
           )}
         </Box>
+
 
         {/* Modal de Confirmación */}
         <Dialog
@@ -600,30 +686,30 @@ export function InvestmentsPage() {
           disableRestoreFocus
           slotProps={{ paper: { sx: { borderRadius: "20px", p: 1 } } }}
         >
-          <DialogTitle component="div" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 800, color: "#0A192F" }}>
+          <DialogTitle component="div" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 800, color: "text.primary" }}>
             Confirmar Plazo Fijo
             <IconButton onClick={() => setConfirmOpen(false)} disabled={submitting}>
               <CloseIcon fontSize="small" />
             </IconButton>
           </DialogTitle>
 
-          <DialogContent dividers sx={{ borderColor: "#E2E8F0" }}>
+          <DialogContent dividers sx={{ borderColor: "divider" }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Typography variant="body2" sx={{ color: "#64748B" }}>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 Estás por constituir un plazo fijo con los siguientes términos:
               </Typography>
 
-              <Paper elevation={0} sx={{ p: 2, bgcolor: "#F8FAFC", borderRadius: "12px", border: "1px solid #E2E8F0" }}>
+              <Paper elevation={0} sx={{ p: 2, bgcolor: "action.hover", borderRadius: "12px", border: "1px solid", borderColor: "divider" }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                  <Typography variant="body2" sx={{ color: "#64748B" }}>Monto a debitar:</Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>Monto a debitar:</Typography>
                   <Typography variant="subtitle2" sx={{ fontWeight: 800, color: "#EF4444" }}>- {formatCurrency(numAmount)}</Typography>
                 </Box>
                 <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                  <Typography variant="body2" sx={{ color: "#64748B" }}>Plazo:</Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>Plazo:</Typography>
                   <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{durationDays} días ({currentTnaRate}% TNA)</Typography>
                 </Box>
                 <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                  <Typography variant="body2" sx={{ color: "#64748B" }}>Interés ganado:</Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>Interés ganado:</Typography>
                   <Typography variant="subtitle2" sx={{ fontWeight: 800, color: "#10B981" }}>+ {formatCurrency(interestEarned)}</Typography>
                 </Box>
                 <Divider sx={{ my: 1 }} />
@@ -640,7 +726,7 @@ export function InvestmentsPage() {
           </DialogContent>
 
           <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setConfirmOpen(false)} disabled={submitting} sx={{ color: "#64748B", textTransform: "none", fontWeight: 600 }}>
+            <Button onClick={() => setConfirmOpen(false)} disabled={submitting} sx={{ color: "text.secondary", textTransform: "none", fontWeight: 600 }}>
               Cancelar
             </Button>
             <Button

@@ -1,63 +1,63 @@
-import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Box,
   Typography,
   Card,
-  Button,
   TextField,
-  Snackbar,
-  Alert,
-  InputAdornment,
+  Button,
   Avatar,
   Chip,
-  Divider,
-  CardActionArea,
+  InputAdornment,
+  Snackbar,
+  Alert,
   CircularProgress,
+  CardActionArea,
+  Paper,
+  FormControl,
   Select,
   MenuItem,
-  FormControl,
-  InputLabel,
-  Paper,
 } from "@mui/material";
-import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate, useLocation } from "react-router-dom";
+import SearchIcon from "@mui/icons-material/Search";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
-import CloseIcon from "@mui/icons-material/Close";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-import SearchIcon from "@mui/icons-material/Search";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import AccountBalanceOutlinedIcon from "@mui/icons-material/AccountBalanceOutlined";
-import { motion, AnimatePresence } from "framer-motion";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
+import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
 
-import { useAccount } from "../../hooks/useAccount";
-import { useAuth } from "../../context/AuthContext";
-import accountService from "../../services/accountService";
 import AppLayout from "../../components/layout/AppLayout";
 import SuccessStep from "../../components/common/SuccessStep";
 import TransferReceiptModal from "../../components/common/TransferReceiptModal";
-import { formatCurrency, parseAmount, sanitizeNumericInput } from "../../utils/formatters";
+import { useAccount } from "../../hooks/useAccount";
+import { useAuth } from "../../context/AuthContext";
+import { formatCurrency } from "../../utils/formatters";
 import { downloadTransferReceiptPdf } from "../../utils/pdfGenerator";
-import { TRANSFER_MOTIVES, DEFAULT_MOTIVE } from "../../constants/motives";
-import { SEED_CONTACTS, findContact } from "../../constants/contacts";
+import { accountService } from "../../services/accountService";
+
+// Contactos sugeridos para selección rápida
+const SUGGESTED_CONTACTS = [
+  { id: 1, accountId: 2, name: "Roberto Carlos", cvu: "0000003100010000000002", alias: "roberto.carlos.ars", email: "roberto.carlos@digitalars.com", accountNumber: "0002-4892-02", avatar: "RC" },
+  { id: 2, accountId: 3, name: "María Elena Walsh", cvu: "0000003100010000000003", alias: "maria.walsh.ars", email: "maria.walsh@digitalars.com", accountNumber: "0002-4892-03", avatar: "MW" },
+  { id: 3, accountId: 4, name: "Lionel Andrés Messi", cvu: "0000003100010000000004", alias: "lio.messi.ars", email: "lio.messi@digitalars.com", accountNumber: "0002-4892-04", avatar: "LM" },
+  { id: 4, accountId: 5, name: "Lucía Méndez", cvu: "0000003100010000000005", alias: "lucia.mendez.ars", email: "lucia.mendez@digitalars.com", accountNumber: "0002-4892-05", avatar: "LM" },
+];
+
+const QUICK_AMOUNTS = [1000, 5000, 10000, 25000];
+const MOTIVES = ["Varios", "Alquiler", "Servicios", "Expensas", "Factura", "Honorarios", "Préstamo"];
 
 const slideVariants = {
-  initial: { opacity: 0, x: 16 },
-  animate: { opacity: 1, x: 0, transition: { duration: 0.22 } },
-  exit: { opacity: 0, x: -16, transition: { duration: 0.18 } },
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.25 } },
+  exit: { opacity: 0, x: -20, transition: { duration: 0.2 } },
 };
 
-/**
- * HU-26: Pantalla de transferencia de fondos.
- * - Validación y búsqueda de destinatario real por CVU (22 dígitos) o Alias en tiempo real.
- * - Muestra datos 100% verificados del titular destino (Nombre, CVU, Alias, Banco).
- * - Paso 3: confirmación con todos los datos de origen, destino y operación.
- * - Paso 4: pantalla de éxito limpia con comprobante completo y descarga en PDF oficial.
- */
-export function TransferPage() {
+function TransferPage() {
   const navigate = useNavigate();
-  const { account, transferFunds } = useAccount();
+  const location = useLocation();
+  const { account, transferFunds, reserves } = useAccount();
   const { user } = useAuth();
 
   const [step, setStep] = useState(1);
@@ -68,76 +68,87 @@ export function TransferPage() {
   const [recipientError, setRecipientError] = useState("");
 
   const [amount, setAmount] = useState("");
-  const [motive, setMotive] = useState(DEFAULT_MOTIVE);
-  const [loading, setLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [motive, setMotive] = useState("Varios");
+  const [sourceType, setSourceType] = useState("account"); // 'account' o 'reserve'
+  const [selectedReserveId, setSelectedReserveId] = useState(null);
 
-  // Control del modal de información completa y comprobante
+  const [loading, setLoading] = useState(false);
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
-  const [completedTxId, setCompletedTxId] = useState(null);
+  const [completedTxId, setCompletedTxId] = useState("");
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
 
   const currentBalance = account?.money ?? 0;
+  const currentAccountId = account?.id || user?.accountId;
 
-  // ─── USUARIOS DE LA PLATAFORMA (DESTINATARIOS SUGERIDOS) ───
-  const currentUserId = user?.id ? String(user.id) : null;
-  const currentAccountId = account?.id ? String(account.id) : null;
-  const currentUserEmail = user?.email?.toLowerCase();
-  const currentUserAlias = account?.alias?.toLowerCase();
-  const currentUserCvu = account?.cvu;
-
-  const suggestedUsers = useMemo(() => {
-    return SEED_CONTACTS.filter((c) => {
-      // Excluir administradores
-      const isEmailAdmin = c.email?.toLowerCase().includes("admin");
-      const isNameAdmin = c.name?.toLowerCase().includes("admin");
-      if (isEmailAdmin || isNameAdmin) return false;
-
-      // Excluir al usuario actualmente logueado
-      if (currentUserId && String(c.id) === currentUserId) return false;
-      if (currentAccountId && String(c.accountId) === currentAccountId) return false;
-      if (currentUserEmail && c.email?.toLowerCase() === currentUserEmail) return false;
-      if (currentUserAlias && c.alias?.toLowerCase() === currentUserAlias) return false;
-      if (currentUserCvu && c.cvu === currentUserCvu) return false;
-
-      return true;
-    });
-  }, [currentUserId, currentAccountId, currentUserEmail, currentUserAlias, currentUserCvu]);
-
-  // Filtro por nombre o alias al escribir en el campo de texto
+  // Filtrar para que el usuario no se transfiera a sí mismo en los sugeridos
   const displayedContacts = useMemo(() => {
-    if (!destinationInput.trim()) return suggestedUsers;
-    const q = destinationInput.trim().toLowerCase();
-    return suggestedUsers.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.alias.toLowerCase().includes(q) ||
-        c.cvu.includes(q)
+    return SUGGESTED_CONTACTS.filter(
+      (c) => !currentAccountId || String(c.accountId) !== String(currentAccountId)
     );
-  }, [suggestedUsers, destinationInput]);
+  }, [currentAccountId]);
 
-  // ─── PERFIL COMPLETO DE MI CUENTA (ORIGEN) ───
+  // Si venimos con parámetros por estado (ej: desde reservas)
+  useEffect(() => {
+    if (location.state?.fromReserveId) {
+      setSourceType("reserve");
+      setSelectedReserveId(location.state.fromReserveId);
+    }
+  }, [location.state]);
+
+  const selectedReserve = useMemo(() => {
+    if (sourceType !== "reserve" || !selectedReserveId) return null;
+    return reserves?.find((r) => r.id === selectedReserveId) || null;
+  }, [sourceType, selectedReserveId, reserves]);
+
+  const availableSourceBalance = useMemo(() => {
+    if (sourceType === "reserve") {
+      return selectedReserve?.currentAmount ?? 0;
+    }
+    return currentBalance;
+  }, [sourceType, selectedReserve, currentBalance]);
+
+  // Perfil del emisor para comprobante y resumen
   const myProfile = useMemo(() => {
-    const accId = account?.id ? String(account.id) : (user?.id ? String(user.id) : "1");
-    const email = user?.email || "usuario@digitalars.com";
-    const name = user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())));
-    const username = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, ".");
-
+    const fullName = user?.firstName && user?.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user?.name || "Usuario DigitalArs";
     return {
-      name,
-      email,
-      accountId: accId,
-      accountNumber: account?.accountNumber || `0002-4892-0${accId}`,
-      cvu: account?.cvu || (account?.id ? `000000310001000000000${account.id}` : "0000003100010000000004"),
-      alias: account?.alias || `${username}.ars`,
+      name: fullName,
+      email: user?.email || "tu-email@digitalars.com",
+      accountId: account?.id || user?.accountId || 1,
+      accountNumber: `0002-4892-0${account?.id || user?.accountId || 1}`,
+      alias: account?.alias || user?.alias || "mi.alias.digitalars",
+      cvu: account?.cvu || user?.cvu || "0000003100010000000001",
       bank: "DigitalArs Billetera Virtual",
     };
   }, [user, account]);
 
-  // ─── RESOLUCIÓN Y VERIFICACIÓN EN TIEMPO REAL DEL DESTINATARIO ───
-  const handleLookupAndProceed = async (targetQuery = null) => {
-    const query = (targetQuery || destinationInput || selectedContact?.alias || selectedContact?.cvu || "").trim();
+  // Sanitización de importe
+  const parseAmount = (val) => {
+    if (!val) return 0;
+    const clean = String(val).replace(/[^0-9.,]/g, "").replace(",", ".");
+    const n = parseFloat(clean);
+    return isNaN(n) ? 0 : n;
+  };
+
+  const num = parseAmount(amount);
+
+  // Helper para buscar contacto local en mock
+  const findContact = (query) => {
+    const q = query.trim().toLowerCase();
+    return SUGGESTED_CONTACTS.find(
+      (c) =>
+        c.alias.toLowerCase() === q ||
+        c.cvu === q ||
+        c.name.toLowerCase().includes(q)
+    );
+  };
+
+  // Validación y búsqueda de destinatario (Online API + Fallback Local)
+  const handleLookupAndProceed = async (overrideQuery) => {
+    const query = (overrideQuery || destinationInput).trim();
     if (!query) {
-      setRecipientError("Ingresá un CVU o Alias para continuar.");
+      setRecipientError("Por favor ingresá un CVU (22 dígitos) o Alias válido.");
       return;
     }
 
@@ -145,7 +156,6 @@ export function TransferPage() {
     setRecipientError("");
 
     try {
-      // 1. Consulta en tiempo real al backend (GET /api/accounts/lookup?query=...)
       const res = await accountService.lookupAccount(query);
 
       const resolved = {
@@ -186,7 +196,6 @@ export function TransferPage() {
     }
   };
 
-  // Selección interactiva de contacto de la grilla
   const handleSelectContact = (contact) => {
     setSelectedContact(contact);
     setDestinationInput(contact.alias || contact.cvu);
@@ -201,39 +210,8 @@ export function TransferPage() {
     setRecipientError("");
   };
 
-  // ─── OBJETO DE COMPROBANTE PARA MODAL Y PDF ───
-  const transferReceiptData = useMemo(() => {
-    return {
-      operationId: completedTxId || `TX-${Date.now().toString().slice(-4)}`,
-      date: new Date().toLocaleString("es-AR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      amount: parseAmount(amount) || 0,
-      motive: motive,
-      origin: myProfile,
-      destination: verifiedRecipient || {
-        name: destinationInput,
-        accountId: destinationInput,
-        cvu: "—",
-        alias: "—",
-        bank: "DigitalArs Billetera Virtual",
-      },
-      status: "Transferencia Exitosa",
-    };
-  }, [completedTxId, amount, motive, myProfile, verifiedRecipient, destinationInput]);
-
-  const handleAmountChange = (e) => {
-    setAmount(sanitizeNumericInput(e.target.value));
-  };
-
   const handleTransfer = async () => {
-    const num = parseAmount(amount);
-    if (!num || num <= 0) return;
-    if (!verifiedRecipient?.accountId) {
+    if (!verifiedRecipient) {
       setSnackbar({ open: true, message: "Destinatario no válido.", severity: "error" });
       return;
     }
@@ -248,6 +226,7 @@ export function TransferPage() {
         destinationAccountId: Number(destAccountId),
         amount: num,
         concept: motive,
+        reserveId: sourceType === "reserve" ? selectedReserveId : null,
       });
 
       const txId = res?.id ? `TX-${String(res.id).padStart(4, "0")}` : `TX-${Date.now().toString().slice(-4)}`;
@@ -269,19 +248,54 @@ export function TransferPage() {
     }
   };
 
+  // Datos estructurados completos para comprobante modal y PDF
+  const transferReceiptData = useMemo(() => {
+    const dest = verifiedRecipient || {};
+    return {
+      id: completedTxId || "TX-9941",
+      date: new Date().toLocaleDateString("es-AR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      amount: num,
+      concept: motive,
+      sender: {
+        name: myProfile.name,
+        email: myProfile.email,
+        accountId: myProfile.accountId,
+        accountNumber: myProfile.accountNumber,
+        alias: myProfile.alias,
+        cvu: myProfile.cvu,
+        bank: myProfile.bank,
+        sourceType: sourceType === "reserve" ? `Reserva: ${selectedReserve?.name || "Apartado"}` : "Saldo Principal",
+      },
+      recipient: {
+        name: dest.name || "Destinatario",
+        accountId: dest.accountId || 2,
+        accountNumber: dest.accountNumber || `0002-4892-0${dest.accountId || 2}`,
+        alias: dest.alias || "destinatario.ars",
+        cvu: dest.cvu || "0000003100010000000002",
+        bank: dest.bank || "DigitalArs Billetera Virtual",
+      },
+    };
+  }, [completedTxId, num, motive, myProfile, verifiedRecipient, sourceType, selectedReserve]);
+
   return (
     <AppLayout onBack={step < 4 ? handleBack : null} maxWidth={620}>
       <Box sx={{ maxWidth: 580, mx: "auto", width: "100%" }}>
-        {/* Cabecera compacta */}
+        {/* Cabecera */}
         {step < 4 && (
           <Box sx={{ mb: 2 }}>
             <Typography
               variant="h5"
-              sx={{ fontWeight: 800, color: "#0F172A", fontSize: { xs: "1.5rem", md: "1.75rem" } }}
+              sx={{ fontWeight: 800, color: "text.primary", fontSize: { xs: "1.5rem", md: "1.75rem" } }}
             >
               Transferir dinero
             </Typography>
-            <Typography sx={{ color: "#64748B", fontSize: "0.85rem" }}>
+            <Typography sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
               Enviá fondos de forma inmediata y sin comisiones por CVU o Alias.
             </Typography>
           </Box>
@@ -292,8 +306,9 @@ export function TransferPage() {
           sx={{
             borderRadius: "20px",
             p: { xs: 2.5, md: 3 },
-            bgcolor: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "divider",
             boxShadow: "0 8px 25px -8px rgba(15, 23, 42, 0.08)",
             display: "flex",
             flexDirection: "column",
@@ -303,15 +318,13 @@ export function TransferPage() {
             {/* ─── PASO 1: SELECCIONAR O INGRESAR DESTINATARIO POR CVU O ALIAS ─── */}
             {step === 1 && (
               <motion.div key="step1" variants={slideVariants} initial="initial" animate="animate" exit="exit">
-                {/* Mensaje de error de validación */}
                 {recipientError && (
                   <Alert severity="error" sx={{ mb: 2, borderRadius: "12px", fontSize: "0.85rem", fontWeight: 600 }}>
                     {recipientError}
                   </Alert>
                 )}
 
-                {/* Campo de búsqueda por CVU o Alias */}
-                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0F172A", mb: 0.6 }}>
+                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mb: 0.6 }}>
                   Destinatario
                 </Typography>
                 <TextField
@@ -336,20 +349,20 @@ export function TransferPage() {
                           <SearchIcon sx={{ color: "#0056D2", fontSize: "1.25rem" }} />
                         </InputAdornment>
                       ),
-                      sx: { borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.95rem" },
+                      sx: { borderRadius: "12px", bgcolor: "background.paper", fontSize: "0.95rem" },
                     },
                   }}
                   placeholder="Ingresá el CVU (22 dígitos) o Alias"
                 />
-                <Typography sx={{ fontSize: "0.75rem", color: "#64748B", mt: 0.5, ml: 0.5 }}>
+                <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", mt: 0.5, ml: 0.5 }}>
                   Ejemplo: <code>roberto.carlos.ars</code> o <code>0000003100010000000002</code>
                 </Typography>
 
-                {/* Grilla de contactos registrados */}
+                {/* Grilla de contactos sugeridos */}
                 <Box sx={{ mt: 2.5, mb: 1 }}>
                   <Typography
                     sx={{
-                      color: "#64748B",
+                      color: "text.secondary",
                       fontSize: "0.78rem",
                       fontWeight: 700,
                       textTransform: "uppercase",
@@ -373,49 +386,23 @@ export function TransferPage() {
                         sx={{
                           p: 1.4,
                           borderRadius: "12px",
-                          bgcolor: "#F8FAFC",
-                          border: "1px solid #E2E8F0",
+                          bgcolor: "action.hover",
+                          border: "1px solid",
+                          borderColor: "divider",
                           transition: "all 0.15s ease",
-                          "&:hover": { bgcolor: "#EFF6FF", borderColor: "#93C5FD" },
+                          "&:hover": { bgcolor: "action.selected", borderColor: "primary.main" },
                         }}
                       >
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
-                          <Avatar
-                            sx={{
-                              width: 38,
-                              height: 38,
-                              bgcolor: "#0056D2",
-                              color: "#FFFFFF",
-                              fontWeight: 700,
-                              fontSize: "0.92rem",
-                            }}
-                          >
-                            {contact.avatarText || contact.name?.charAt(0).toUpperCase()}
+                          <Avatar sx={{ width: 36, height: 36, bgcolor: "#0056D2", color: "#FFF", fontSize: "0.85rem", fontWeight: 700 }}>
+                            {contact.avatar}
                           </Avatar>
                           <Box sx={{ minWidth: 0, flex: 1 }}>
-                            <Typography
-                              sx={{
-                                fontWeight: 700,
-                                fontSize: "0.9rem",
-                                color: "#0F172A",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                              }}
-                            >
+                            <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: "text.primary", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                               {contact.name}
                             </Typography>
-                            <Typography
-                              sx={{
-                                fontSize: "0.75rem",
-                                color: "#0056D2",
-                                fontWeight: 600,
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                              }}
-                            >
-                              {contact.alias}
+                            <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {contact.alias || contact.cvu}
                             </Typography>
                           </Box>
                         </Box>
@@ -456,21 +443,22 @@ export function TransferPage() {
             {/* ─── PASO 2: MONTO Y MOTIVO (CON DESTINATARIO VERIFICADO) ─── */}
             {step === 2 && verifiedRecipient && (
               <motion.div key="step2" variants={slideVariants} initial="initial" animate="animate" exit="exit">
-                {/* Tarjeta Destinatario Verificado (Datos Reales de la API) */}
+                {/* Tarjeta Destinatario Verificado */}
                 <Paper
                   elevation={0}
                   sx={{
                     p: 2,
                     borderRadius: "14px",
-                    bgcolor: "#F0FDF4",
-                    border: "1.5px solid #86EFAC",
+                    bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(16, 185, 129, 0.12)" : "#F0FDF4"),
+                    border: "1.5px solid",
+                    borderColor: (theme) => (theme.palette.mode === "dark" ? "rgba(52, 211, 153, 0.35)" : "#86EFAC"),
                     mb: 2.5,
                   }}
                 >
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <CheckCircleIcon sx={{ fontSize: 18, color: "#16A34A" }} />
-                      <Typography sx={{ fontSize: "0.75rem", fontWeight: 800, color: "#166534", textTransform: "uppercase" }}>
+                      <CheckCircleIcon sx={{ fontSize: 18, color: (theme) => (theme.palette.mode === "dark" ? "#34D399" : "#16A34A") }} />
+                      <Typography sx={{ fontSize: "0.75rem", fontWeight: 800, color: (theme) => (theme.palette.mode === "dark" ? "#34D399" : "#166534"), textTransform: "uppercase" }}>
                         Destinatario Verificado
                       </Typography>
                     </Box>
@@ -481,7 +469,7 @@ export function TransferPage() {
                       sx={{
                         fontSize: "0.78rem",
                         fontWeight: 700,
-                        color: "#475569",
+                        color: (theme) => (theme.palette.mode === "dark" ? "#94A3B8" : "#475569"),
                         p: 0,
                         minWidth: "auto",
                         textTransform: "none",
@@ -492,102 +480,152 @@ export function TransferPage() {
                     </Button>
                   </Box>
 
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Avatar sx={{ width: 44, height: 44, bgcolor: "#16A34A", fontWeight: 800, fontSize: "1.1rem" }}>
-                      {verifiedRecipient.name.charAt(0).toUpperCase()}
-                    </Avatar>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", color: "#0F172A" }}>
-                        {verifiedRecipient.name}
-                      </Typography>
-                      <Typography sx={{ fontSize: "0.8rem", color: "#475569", fontWeight: 600 }}>
-                        Alias: <strong>{verifiedRecipient.alias}</strong> · CVU: {verifiedRecipient.cvu.slice(0, 8)}...{verifiedRecipient.cvu.slice(-4)}
-                      </Typography>
-                      <Typography sx={{ fontSize: "0.74rem", color: "#16A34A", fontWeight: 700 }}>
-                        {verifiedRecipient.bank}
-                      </Typography>
-                    </Box>
-                  </Box>
+                  <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", color: "text.primary" }}>
+                    {verifiedRecipient.name}
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.82rem", color: (theme) => (theme.palette.mode === "dark" ? "#A7F3D0" : "#166534"), fontWeight: 600 }}>
+                    {verifiedRecipient.alias} • CVU {verifiedRecipient.cvu}
+                  </Typography>
                 </Paper>
 
-                {/* Saldo disponible */}
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
-                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0F172A" }}>
-                    Monto a transferir
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.78rem", color: "#64748B" }}>
-                    Disponible: <strong>{formatCurrency(currentBalance)}</strong>
-                  </Typography>
-                </Box>
-
-                {/* Input de Monto */}
-                <TextField
-                  fullWidth
-                  size="small"
-                  variant="outlined"
-                  value={amount}
-                  onChange={handleAmountChange}
-                  placeholder="0,00"
-                  slotProps={{
-                    htmlInput: { inputMode: "decimal" },
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#0056D2", mr: 0.5 }}>
-                            $
-                          </Typography>
-                        </InputAdornment>
-                      ),
-                      sx: { borderRadius: "12px", fontSize: "1.4rem", fontWeight: 800, color: "#0F172A", py: 0.2 },
-                    },
-                  }}
-                  sx={{ mb: 2 }}
-                />
-
-                {/* Selector de Motivo (18 motivos oficiales) */}
-                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0F172A", mb: 0.5 }}>
-                  Motivo de la transferencia
+                {/* Selector de Origen de los Fondos */}
+                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mb: 0.5 }}>
+                  Origen de los fondos
                 </Typography>
                 <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-                  <InputLabel id="motive-select-label">Motivo</InputLabel>
                   <Select
-                    labelId="motive-select-label"
-                    value={motive}
-                    label="Motivo"
-                    onChange={(e) => setMotive(e.target.value)}
-                    sx={{ borderRadius: "12px", bgcolor: "#F8FAFC", fontSize: "0.9rem" }}
-                    slotProps={{
-                      paper: {
-                        sx: {
-                          maxHeight: 240,
-                          borderRadius: "12px",
-                          boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-                        },
-                      },
+                    value={sourceType === "account" ? "account" : `reserve-${selectedReserveId}`}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "account") {
+                        setSourceType("account");
+                        setSelectedReserveId(null);
+                      } else {
+                        const rId = Number(val.replace("reserve-", ""));
+                        setSourceType("reserve");
+                        setSelectedReserveId(rId);
+                      }
                     }}
+                    sx={{ borderRadius: "12px", bgcolor: "background.paper" }}
                   >
-                    {TRANSFER_MOTIVES.map((m) => (
-                      <MenuItem key={m.id} value={m.label} sx={{ fontSize: "0.88rem", py: 1 }}>
-                        {m.label}
+                    <MenuItem value="account">
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <AccountBalanceWalletOutlinedIcon sx={{ fontSize: 18, color: "primary.main" }} />
+                        <Typography sx={{ fontSize: "0.9rem", fontWeight: 600 }}>
+                          Cuenta Principal (Disponible: {formatCurrency(currentBalance)})
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                    {reserves?.map((r) => (
+                      <MenuItem key={r.id} value={`reserve-${r.id}`}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <SavingsOutlinedIcon sx={{ fontSize: 18, color: "#16A34A" }} />
+                          <Typography sx={{ fontSize: "0.9rem", fontWeight: 600 }}>
+                            Reserva: {r.name} (Disponible: {formatCurrency(r.currentAmount)})
+                          </Typography>
+                        </Box>
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
 
+                {/* Campo de Importe */}
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.8 }}>
+                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary" }}>
+                    Monto a transferir
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.78rem", color: "text.secondary" }}>
+                    Disponible: <strong>{formatCurrency(availableSourceBalance)}</strong>
+                  </Typography>
+                </Box>
+
+                <TextField
+                  fullWidth
+                  variant="outlined"
+                  value={amount}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9.,]/g, "");
+                    setAmount(val);
+                  }}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: "primary.main", mr: 0.5 }}>
+                            $
+                          </Typography>
+                        </InputAdornment>
+                      ),
+                      sx: { borderRadius: "12px", fontSize: "1.4rem", fontWeight: 800, color: "text.primary", py: 0.2 },
+                    },
+                  }}
+                  placeholder="0,00"
+                  error={num > availableSourceBalance}
+                  helperText={num > availableSourceBalance ? "Saldo insuficiente en el origen seleccionado" : ""}
+                />
+
+                {/* Chips de montos rápidos */}
+                <Box sx={{ display: "flex", gap: 1, my: 1.5, flexWrap: "wrap" }}>
+                  {QUICK_AMOUNTS.map((q) => (
+                    <Chip
+                      key={q}
+                      label={`+$${q.toLocaleString("es-AR")}`}
+                      onClick={() => setAmount(String((num || 0) + q))}
+                      size="small"
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: "0.78rem",
+                        cursor: "pointer",
+                        bgcolor: "action.hover",
+                        color: "text.primary",
+                        border: "1px solid",
+                        borderColor: "divider",
+                        "&:hover": { bgcolor: "primary.light", color: "primary.main" },
+                      }}
+                    />
+                  ))}
+                </Box>
+
+                {/* Motivo de la Transferencia */}
+                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "text.primary", mt: 1.5, mb: 0.5 }}>
+                  Motivo de la transferencia
+                </Typography>
+                <Box sx={{ display: "flex", gap: 0.8, flexWrap: "wrap", mb: 2 }}>
+                  {MOTIVES.map((m) => (
+                    <Chip
+                      key={m}
+                      label={m}
+                      onClick={() => setMotive(m)}
+                      size="small"
+                      sx={{
+                        fontWeight: 600,
+                        fontSize: "0.78rem",
+                        bgcolor: motive === m ? "primary.main" : "action.hover",
+                        color: motive === m ? "#FFF" : "text.primary",
+                        border: "1px solid",
+                        borderColor: motive === m ? "primary.main" : "divider",
+                        cursor: "pointer",
+                        "&:hover": { bgcolor: motive === m ? "primary.dark" : "action.selected" },
+                      }}
+                    />
+                  ))}
+                </Box>
+
                 <Button
                   variant="contained"
                   fullWidth
+                  disabled={!num || num <= 0 || num > availableSourceBalance}
                   onClick={() => setStep(3)}
-                  disabled={!amount || parseAmount(amount) <= 0 || parseAmount(amount) > currentBalance}
                   sx={{
-                    bgcolor: "#0056D2",
+                    bgcolor: "primary.main",
                     color: "#FFF",
                     borderRadius: "12px",
                     py: 1.4,
                     fontSize: "0.95rem",
                     fontWeight: 700,
+                    mt: 1,
                     textTransform: "none",
-                    "&:hover": { bgcolor: "#0047b3" },
+                    "&:hover": { bgcolor: "primary.dark" },
                   }}
                 >
                   Continuar
@@ -595,130 +633,176 @@ export function TransferPage() {
               </motion.div>
             )}
 
-            {/* ─── PASO 3: RESUMEN COMPLETO CON DATOS REALES DE AMBAS CUENTAS ─── */}
+            {/* ─── PASO 3: CONFIRMACIÓN Y REVISIÓN DE DATOS ─── */}
             {step === 3 && verifiedRecipient && (
               <motion.div key="step3" variants={slideVariants} initial="initial" animate="animate" exit="exit">
-                <Typography sx={{ color: "#0F172A", fontSize: "1.1rem", fontWeight: 800, mb: 0.5 }}>
-                  Confirmá los datos de la transferencia
-                </Typography>
-                <Typography sx={{ color: "#64748B", fontSize: "0.85rem", mb: 2 }}>
-                  Revisá la cuenta de origen, la cuenta de destino y el detalle antes de confirmar.
+                <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", mb: 2, textAlign: "center" }}>
+                  Revisá los datos antes de confirmar la transferencia.
                 </Typography>
 
-                {/* 1. Datos de MI CUENTA (Cuenta Origen) */}
+                {/* 1. Datos de TU CUENTA (Origen) */}
                 <Paper
                   elevation={0}
                   sx={{
-                    p: 2,
+                    p: { xs: 1.8, sm: 2 },
                     borderRadius: "14px",
-                    bgcolor: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    bgcolor: "action.hover",
+                    border: "1px solid",
+                    borderColor: "divider",
                     mb: 1.5,
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 0.8, mb: 1.2 }}>
                     <Chip
-                      label="Cuenta Origen (Mi cuenta)"
+                      label="Cuenta de origen"
                       size="small"
                       sx={{
-                        fontWeight: 800,
+                        fontWeight: 700,
                         fontSize: "0.72rem",
-                        bgcolor: "#E0E7FF",
-                        color: "#3730A3",
+                        bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.22)" : "#EFF6FF"),
+                        color: (theme) => (theme.palette.mode === "dark" ? "#93C5FD" : "#0056D2"),
+                        border: "1px solid",
+                        borderColor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.45)" : "#BFDBFE"),
                         borderRadius: "8px",
                       }}
                     />
-                    <Typography sx={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600 }}>
-                      {myProfile.bank}
+                    <Typography sx={{ fontSize: "0.72rem", color: "text.secondary", fontWeight: 600 }}>
+                      Débito inmediato
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>TITULAR</Typography>
-                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#0F172A" }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>TITULAR</Typography>
+                      <Typography sx={{ fontSize: "0.92rem", fontWeight: 800, color: "text.primary" }}>
                         {myProfile.name}
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>Nº DE CUENTA</Typography>
-                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#0F172A" }}>
-                        Cuenta #{myProfile.accountId}
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>Nº DE CUENTA</Typography>
+                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "text.primary" }}>
+                        {myProfile.accountNumber}
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>ALIAS</Typography>
-                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0056D2" }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>EMAIL</Typography>
+                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.secondary", wordBreak: "break-all" }}>
+                        {myProfile.email}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>ALIAS</Typography>
+                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: (theme) => (theme.palette.mode === "dark" ? "#60A5FA" : "#0056D2") }}>
                         {myProfile.alias}
                       </Typography>
                     </Box>
-                    <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>CVU</Typography>
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", letterSpacing: "0.02em" }}>
+                    <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" } }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>CVU</Typography>
+                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.secondary", letterSpacing: "0.02em" }}>
                         {myProfile.cvu}
                       </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        gridColumn: { xs: "span 1", sm: "span 2" },
+                        mt: 0.5,
+                        pt: 1,
+                        borderTop: "1px dashed",
+                        borderColor: "divider",
+                        display: "flex",
+                        flexDirection: { xs: "column", sm: "row" },
+                        justifyContent: "space-between",
+                        alignItems: { xs: "flex-start", sm: "center" },
+                        gap: 0.6,
+                      }}
+                    >
+                      <Typography sx={{ fontSize: "0.72rem", color: "text.secondary", fontWeight: 600 }}>
+                        DEBITAR DE
+                      </Typography>
+                      <Chip
+                        label={sourceType === "reserve" ? `Reserva: ${selectedReserve?.name || "Apartado"}` : "Saldo Principal"}
+                        size="small"
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: "0.74rem",
+                          bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.2)" : "#EFF6FF"),
+                          color: (theme) => (theme.palette.mode === "dark" ? "#93C5FD" : "#0056D2"),
+                          border: "1px solid",
+                          borderColor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.4)" : "#BFDBFE"),
+                          borderRadius: "8px",
+                        }}
+                      />
                     </Box>
                   </Box>
                 </Paper>
 
-                {/* Flecha indicadora de transferencia */}
+                {/* Flecha indicadora */}
                 <Box sx={{ display: "flex", justifyContent: "center", my: -0.5 }}>
-                  <Avatar sx={{ width: 28, height: 28, bgcolor: "#0056D2", color: "#FFFFFF" }}>
+                  <Avatar sx={{ width: 28, height: 28, bgcolor: "primary.main", color: "#FFFFFF" }}>
                     <ArrowDownwardIcon sx={{ fontSize: 16 }} />
                   </Avatar>
                 </Box>
 
-                {/* 2. Datos de LA OTRA CUENTA (Cuenta Destino Real) */}
+                {/* 2. Datos del Destinatario */}
                 <Paper
                   elevation={0}
                   sx={{
-                    p: 2,
+                    p: { xs: 1.8, sm: 2 },
                     borderRadius: "14px",
-                    bgcolor: "#F0FDF4",
-                    border: "1.5px solid #86EFAC",
+                    bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(16, 185, 129, 0.12)" : "#F0FDF4"),
+                    border: "1.5px solid",
+                    borderColor: (theme) => (theme.palette.mode === "dark" ? "rgba(52, 211, 153, 0.35)" : "#86EFAC"),
                     mb: 1.5,
                     mt: 1,
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 0.8, mb: 1.2 }}>
                     <Chip
-                      label="Cuenta Destino (Destinatario real)"
+                      label="Destinatario"
                       size="small"
                       sx={{
-                        fontWeight: 800,
+                        fontWeight: 700,
                         fontSize: "0.72rem",
-                        bgcolor: "#DCFCE7",
-                        color: "#166534",
+                        bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(16, 185, 129, 0.25)" : "#DCFCE7"),
+                        color: (theme) => (theme.palette.mode === "dark" ? "#6EE7B7" : "#166534"),
+                        border: "1px solid",
+                        borderColor: (theme) => (theme.palette.mode === "dark" ? "rgba(16, 185, 129, 0.4)" : "#86EFAC"),
                         borderRadius: "8px",
                       }}
                     />
-                    <Typography sx={{ fontSize: "0.75rem", color: "#166534", fontWeight: 700 }}>
+                    <Typography sx={{ fontSize: "0.74rem", color: (theme) => (theme.palette.mode === "dark" ? "#34D399" : "#166534"), fontWeight: 700, display: "flex", alignItems: "center", gap: 0.5 }}>
                       ✓ Verificado
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>DESTINATARIO</Typography>
-                      <Typography sx={{ fontSize: "0.92rem", fontWeight: 800, color: "#0F172A" }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>TITULAR</Typography>
+                      <Typography sx={{ fontSize: "0.92rem", fontWeight: 800, color: "text.primary" }}>
                         {verifiedRecipient.name}
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>Nº DE CUENTA</Typography>
-                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#0F172A" }}>
-                        Cuenta #{verifiedRecipient.accountId}
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>Nº DE CUENTA</Typography>
+                      <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "text.primary" }}>
+                        {verifiedRecipient.accountNumber}
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>ALIAS</Typography>
-                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#0056D2" }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>EMAIL</Typography>
+                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.secondary", wordBreak: "break-all" }}>
+                        {verifiedRecipient.email}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>ALIAS</Typography>
+                      <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: (theme) => (theme.palette.mode === "dark" ? "#60A5FA" : "#0056D2") }}>
                         {verifiedRecipient.alias}
                       </Typography>
                     </Box>
-                    <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>CVU</Typography>
-                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155", letterSpacing: "0.02em" }}>
+                    <Box sx={{ gridColumn: { xs: "span 1", sm: "span 2" } }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 600 }}>CVU</Typography>
+                      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "text.secondary", letterSpacing: "0.02em" }}>
                         {verifiedRecipient.cvu}
                       </Typography>
                     </Box>
@@ -731,8 +815,9 @@ export function TransferPage() {
                   sx={{
                     p: 2,
                     borderRadius: "14px",
-                    bgcolor: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    bgcolor: "action.hover",
+                    border: "1px solid",
+                    borderColor: "divider",
                     mb: 2,
                     display: "flex",
                     flexDirection: "column",
@@ -740,20 +825,30 @@ export function TransferPage() {
                   }}
                 >
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>Monto a transferir</Typography>
-                    <Typography sx={{ fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
-                      {formatCurrency(parseAmount(amount))}
+                    <Typography sx={{ fontSize: "0.85rem", color: "text.secondary" }}>Monto a transferir</Typography>
+                    <Typography sx={{ fontSize: "1.05rem", fontWeight: 800, color: "text.primary" }}>
+                      {formatCurrency(num)}
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>Motivo</Typography>
-                    <Chip label={motive} size="small" sx={{ fontWeight: 700, bgcolor: "#EFF6FF", color: "#0056D2" }} />
+                    <Typography sx={{ fontSize: "0.85rem", color: "text.secondary" }}>Motivo</Typography>
+                    <Chip
+                      label={motive}
+                      size="small"
+                      sx={{
+                        fontWeight: 700,
+                        bgcolor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.2)" : "#EFF6FF"),
+                        color: (theme) => (theme.palette.mode === "dark" ? "#93C5FD" : "#0056D2"),
+                        border: "1px solid",
+                        borderColor: (theme) => (theme.palette.mode === "dark" ? "rgba(59, 130, 246, 0.35)" : "#BFDBFE"),
+                      }}
+                    />
                   </Box>
 
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>Comisión de transferencia</Typography>
-                    <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#10B981" }}>
+                    <Typography sx={{ fontSize: "0.85rem", color: "text.secondary" }}>Comisión de transferencia</Typography>
+                    <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, color: (theme) => (theme.palette.mode === "dark" ? "#34D399" : "#10B981") }}>
                       Gratis ($ 0,00)
                     </Typography>
                   </Box>
@@ -765,14 +860,15 @@ export function TransferPage() {
                       alignItems: "center",
                       mt: 0.5,
                       pt: 1.2,
-                      borderTop: "1px dashed #CBD5E1",
+                      borderTop: "1px dashed",
+                      borderColor: "divider",
                     }}
                   >
-                    <Typography sx={{ fontWeight: 800, color: "#0F172A", fontSize: "0.95rem" }}>
+                    <Typography sx={{ fontWeight: 800, color: "text.primary", fontSize: "0.95rem" }}>
                       Total a debitar
                     </Typography>
-                    <Typography sx={{ fontWeight: 800, color: "#0056D2", fontSize: "1.25rem" }}>
-                      {formatCurrency(parseAmount(amount))}
+                    <Typography sx={{ fontWeight: 800, color: (theme) => (theme.palette.mode === "dark" ? "#60A5FA" : "#0056D2"), fontSize: "1.25rem" }}>
+                      {formatCurrency(num)}
                     </Typography>
                   </Box>
                 </Paper>
@@ -783,14 +879,14 @@ export function TransferPage() {
                   onClick={handleTransfer}
                   disabled={loading}
                   sx={{
-                    bgcolor: "#0056D2",
+                    bgcolor: "primary.main",
                     color: "#FFF",
                     borderRadius: "12px",
                     py: 1.4,
                     fontSize: "0.95rem",
                     fontWeight: 700,
                     textTransform: "none",
-                    "&:hover": { bgcolor: "#0047b3" },
+                    "&:hover": { bgcolor: "primary.dark" },
                   }}
                 >
                   {loading ? <CircularProgress size={22} color="inherit" /> : "Confirmar Transferencia"}
@@ -798,13 +894,13 @@ export function TransferPage() {
               </motion.div>
             )}
 
-            {/* ─── PASO 4: ÉXITO LIMPIO CON COMPROBANTE Y DESCARGA EN PDF ─── */}
+            {/* ─── PASO 4: ÉXITO CON INFORMACIÓN DE LA TRANSFERENCIA Y DESCARGA EN PDF ─── */}
             {step === 4 && (
               <>
                 <SuccessStep
                   title="¡Transferencia exitosa!"
-                  subtitle={`Enviamos el dinero a ${verifiedRecipient?.name || "el destinatario"}.`}
-                  amount={parseAmount(amount)}
+                  subtitle={`Enviamos el dinero a ${verifiedRecipient?.name || destinationInput}.`}
+                  amount={num}
                   maxWidth={440}
                   autoRedirectSeconds={0}
                   details={[
@@ -845,25 +941,25 @@ export function TransferPage() {
                           borderRadius: "14px",
                           py: 1.2,
                           fontWeight: 700,
-                          color: "#475569",
+                          color: "text.secondary",
                           borderColor: "#CBD5E1",
-                          bgcolor: "#FFFFFF",
+                          bgcolor: "background.paper",
                           textTransform: "none",
                           fontSize: "0.92rem",
-                          "&:hover": { bgcolor: "#F8FAFC", borderColor: "#94A3B8" },
+                          "&:hover": { bgcolor: "action.hover", borderColor: "#94A3B8" },
                         }}
                       >
                         Descargar en PDF
                       </Button>
                     </>
                   }
-                  onFinish={() => navigate("/")}
-                  onPrimaryClick={() => navigate("/")}
                   finishLabel="Volver al inicio"
                   primaryButtonText="Volver al inicio"
+                  onFinish={() => navigate("/")}
+                  onPrimaryClick={() => navigate("/")}
                 />
 
-                {/* Modal emergente con información de la transferencia */}
+                {/* Modal de Información Completa de la Transferencia */}
                 <TransferReceiptModal
                   open={receiptModalOpen}
                   onClose={() => setReceiptModalOpen(false)}
@@ -874,23 +970,17 @@ export function TransferPage() {
             )}
           </AnimatePresence>
         </Card>
-
-        {/* Snackbar de notificaciones de error o éxito */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={4000}
-          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        >
-          <Alert
-            onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-            severity={snackbar.severity}
-            sx={{ width: "100%", borderRadius: "10px", fontWeight: 600 }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
       </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3500}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+      >
+        <Alert severity={snackbar.severity} sx={{ width: "100%", borderRadius: "12px" }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </AppLayout>
   );
 }

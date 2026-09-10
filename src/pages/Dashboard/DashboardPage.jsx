@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -17,10 +17,11 @@ import { useAccount } from "../../hooks/useAccount";
 import { useAuth } from "../../context/AuthContext";
 import Sidebar from "../../components/layout/Sidebar";
 import DashboardNavbar from "../../components/layout/DashboardNavbar";
-import MobileBottomNav from "../../components/layout/MobileBottomNav";
 import BalanceCard from "../../components/dashboard/BalanceCard";
 import QuickActions from "../../components/dashboard/QuickActions";
 import ImageCarousel from "../../components/dashboard/ImageCarousel";
+import NotificationPopover from "../../components/common/NotificationPopover";
+import notificationService from "../../services/notificationService";
 
 import iconoImg from "../../assets/icono.png";
 
@@ -33,13 +34,49 @@ export function DashboardPage() {
   const muiTheme = useTheme();
   const isDesktop = useMediaQuery(muiTheme.breakpoints.up("md"));
 
-  const { user, account, loading } = useAccount();
+  const { user, account, loading, refreshAccount, refreshTransactions } = useAccount();
   const { logout } = useAuth();
   const [currentTab, setCurrentTab] = useState(0);
-  const [activeSidebarItem, setActiveSidebarItem] = useState("inicio");
-  const [activeMobileNav, setActiveMobileNav] = useState(0);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [mobileNotificationsAnchor, setMobileNotificationsAnchor] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
+
+  const fetchUnread = React.useCallback(async () => {
+    try {
+      const count = await notificationService.getUnreadNotificationCount();
+      setUnreadCount(count || 0);
+    } catch {
+      setUnreadCount(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user?.role?.toLowerCase() === "admin") {
+      navigate("/admin", { replace: true });
+      return;
+    }
+    refreshAccount();
+    refreshTransactions();
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 15000);
+    return () => clearInterval(interval);
+  }, [user, navigate, refreshAccount, refreshTransactions, fetchUnread]);
+
+  const handleSidebarClick = (item) => {
+    setMobileDrawerOpen(false);
+    if (item === "inicio") navigate("/");
+    else if (item === "servicios") navigate("/services");
+    else if (item === "reservas") navigate("/reserves");
+    else if (item === "historial") navigate("/history");
+    else if (item === "inversiones") navigate("/investments");
+    else if (item === "tarjetas") navigate("/cards");
+    else if (item === "perfil") navigate("/profile");
+    else if (item === "configuracion") navigate("/settings");
+    else if (item === "admin" || item === "admin-users") navigate("/admin");
+    else if (item === "ayuda") navigate("/help");
+    else if (item === "soporte") navigate("/support");
+  };
 
   const handleLogout = () => {
     setMobileDrawerOpen(false);
@@ -50,17 +87,14 @@ export function DashboardPage() {
   const userName = user?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : user?.email || "Usuario");
 
   return (
-    <Box sx={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", bgcolor: "#F8FAFC" }}>
+    <Box sx={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", bgcolor: "background.default" }}>
       {/* ─── 1. VISTA DESKTOP (md y superior) ─── */}
       {isDesktop ? (
         <>
           {/* Barra Lateral Izquierda */}
           <Sidebar
-            activeItem={activeSidebarItem}
-            onItemClick={(item) => {
-              setActiveSidebarItem(item);
-              if (item === "admin") navigate("/admin");
-            }}
+            activeItem="inicio"
+            onItemClick={handleSidebarClick}
             onLogout={handleLogout}
           />
 
@@ -73,7 +107,7 @@ export function DashboardPage() {
               display: "flex",
               flexDirection: "column",
               overflowY: "auto",
-              bgcolor: "#F8FAFC",
+              bgcolor: "background.default",
               pb: 4,
             }}
           >
@@ -96,7 +130,7 @@ export function DashboardPage() {
                   variant="caption"
                   sx={{
                     display: "block",
-                    color: "#64748B",
+                    color: "text.secondary",
                     fontWeight: 600,
                     fontSize: "0.85rem",
                     letterSpacing: "0.02em",
@@ -109,7 +143,7 @@ export function DashboardPage() {
                   variant="h4"
                   sx={{
                     fontWeight: 800,
-                    color: "#0F172A",
+                    color: "text.primary",
                     fontSize: "2.1rem",
                     letterSpacing: "-0.02em",
                   }}
@@ -135,12 +169,13 @@ export function DashboardPage() {
                     cvu={account.cvu || (account.id ? `000000310001000000000${account.id}` : "0000003100010000000004")}
                     trend={account.trend}
                     loading={loading}
+                    onInvestments={() => navigate("/investments")}
                   />
                   <QuickActions
                     onDeposit={() => navigate("/deposit")}
                     onTransfer={() => navigate("/transfer")}
-                    onScan={() => setSnackbar({ open: true, message: "Módulo Escanear QR próximamente disponible." })}
-                    onServices={() => setSnackbar({ open: true, message: "Módulo Pago de Servicios próximamente disponible." })}
+                    onReserves={() => navigate("/reserves")}
+                    onServices={() => navigate("/services")}
                   />
                 </Box>
 
@@ -204,29 +239,47 @@ export function DashboardPage() {
                 </Typography>
               </Box>
 
-              {/* Botón Circular de Notificaciones */}
+              {/* Botón Circular de Notificaciones Mobile */}
               <IconButton
+                onClick={(e) => setMobileNotificationsAnchor(e.currentTarget)}
+                aria-label="Ver notificaciones"
                 sx={{
-                  bgcolor: "#0d2650",
+                  bgcolor: Boolean(mobileNotificationsAnchor) ? "#133368" : "#0d2650",
                   width: 44,
                   height: 44,
+                  transition: "all 0.2s ease",
                   "&:hover": { bgcolor: "#133368" },
                 }}
               >
                 <Badge
+                  badgeContent={unreadCount}
                   color="error"
-                  variant="dot"
+                  max={9}
                   sx={{
                     "& .MuiBadge-badge": {
                       bgcolor: "#EF4444",
-                      top: 4,
-                      right: 4,
+                      fontSize: "0.7rem",
+                      fontWeight: 800,
+                      height: 18,
+                      minWidth: 18,
+                      top: 2,
+                      right: 2,
                     },
                   }}
                 >
                   <NotificationsNoneOutlinedIcon sx={{ color: "#FFFFFF", fontSize: "1.35rem" }} />
                 </Badge>
               </IconButton>
+
+              <NotificationPopover
+                anchorEl={mobileNotificationsAnchor}
+                open={Boolean(mobileNotificationsAnchor)}
+                onClose={() => {
+                  setMobileNotificationsAnchor(null);
+                  fetchUnread();
+                }}
+                onNotificationsChange={fetchUnread}
+              />
             </Box>
 
             {/* Saludo Mobile */}
@@ -262,6 +315,7 @@ export function DashboardPage() {
               cvu={account.cvu || (account.id ? `000000310001000000000${account.id}` : "0000003100010000000004")}
               trend={account.trend}
               loading={loading}
+              onInvestments={() => navigate("/investments")}
             />
           </Box>
 
@@ -269,11 +323,11 @@ export function DashboardPage() {
           <Box
             sx={{
               flex: 1,
-              bgcolor: "#FFFFFF",
+              bgcolor: "background.paper",
               borderRadius: "28px 28px 0 0",
               px: 2.5,
               pt: 3,
-              pb: 12,
+              pb: 4,
             }}
           >
             {/* Acciones Rápidas (2x2 Grid) */}
@@ -281,8 +335,8 @@ export function DashboardPage() {
               <QuickActions
                 onDeposit={() => navigate("/deposit")}
                 onTransfer={() => navigate("/transfer")}
-                onScan={() => setSnackbar({ open: true, message: "Módulo Escanear QR próximamente disponible." })}
-                onServices={() => setSnackbar({ open: true, message: "Módulo Pago de Servicios próximamente disponible." })}
+                onReserves={() => navigate("/reserves")}
+                onServices={() => navigate("/services")}
               />
             </Box>
 
@@ -296,18 +350,6 @@ export function DashboardPage() {
               />
             </Box>
           </Box>
-
-          {/* Barra Fija Inferior Mobile */}
-          <MobileBottomNav
-            activeNav={0}
-            onChange={(e, val) => {
-              setActiveMobileNav(val);
-              if (val === 0) navigate("/");
-              else if (val === 1) navigate("/history");
-              else if (val === 2) navigate("/profile");
-              else if (val === 3) navigate("/profile");
-            }}
-          />
 
           {/* Menú Lateral Deslizable para Mobile (Slide Drawer) */}
           <Drawer
@@ -332,13 +374,7 @@ export function DashboardPage() {
               activeItem="inicio"
               onItemClick={(item) => {
                 setMobileDrawerOpen(false);
-                if (item === "inicio") navigate("/");
-                else if (item === "historial") navigate("/history");
-                else if (item === "inversiones") navigate("/investments");
-                else if (item === "perfil") navigate("/profile");
-                else if (item === "admin") navigate("/admin");
-                else if (item === "ayuda") navigate("/help");
-                else if (item === "soporte") navigate("/support");
+                handleSidebarClick(item);
               }}
               onLogout={handleLogout}
               onClose={() => setMobileDrawerOpen(false)}

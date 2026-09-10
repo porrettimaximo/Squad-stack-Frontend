@@ -139,7 +139,7 @@ export function SupportPage() {
         </Box>
 
         {/* Canales de Contacto Directo */}
-        <Typography variant="h6" sx={{ fontWeight: 700, color: "#001639", mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary", mb: 2 }}>
           Canales de Contacto Directo
         </Typography>
 
@@ -150,7 +150,7 @@ export function SupportPage() {
               sx={{
                 height: "100%",
                 borderRadius: "16px",
-                border: "1px solid #E2E8F0",
+                border: "1px solid", borderColor: "divider",
                 boxShadow: "0 2px 10px rgba(0,0,0,0.03)",
                 display: "flex",
                 flexDirection: "column",
@@ -180,13 +180,13 @@ export function SupportPage() {
                 >
                   <ChatOutlinedIcon fontSize="medium" />
                 </Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#001639", mb: 0.5 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary", mb: 0.5 }}>
                   Chat de WhatsApp
                 </Typography>
-                <Typography variant="body2" sx={{ color: "#64748B", mb: 2 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
                   Conversá en tiempo real con un asistente especializado.
                 </Typography>
-                <Typography variant="caption" sx={{ color: "#0F172A", fontWeight: 600, display: "block", mb: 2 }}>
+                <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, display: "block", mb: 2 }}>
                   Lun a Vie: 9:00 a 20:00 hs
                 </Typography>
               </Box>
@@ -219,7 +219,7 @@ export function SupportPage() {
               sx={{
                 height: "100%",
                 borderRadius: "16px",
-                border: "1px solid #E2E8F0",
+                border: "1px solid", borderColor: "divider",
                 boxShadow: "0 2px 10px rgba(0,0,0,0.03)",
                 display: "flex",
                 flexDirection: "column",
@@ -249,13 +249,13 @@ export function SupportPage() {
                 >
                   <EmailOutlinedIcon fontSize="medium" />
                 </Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#001639", mb: 0.5 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary", mb: 0.5 }}>
                   Correo Electrónico
                 </Typography>
-                <Typography variant="body2" sx={{ color: "#64748B", mb: 2 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
                   soporte@digitalars.com
                 </Typography>
-                <Typography variant="caption" sx={{ color: "#0F172A", fontWeight: 600, display: "block", mb: 2 }}>
+                <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, display: "block", mb: 2 }}>
                   Respuesta estimada en &lt; 24 hs
                 </Typography>
               </Box>
@@ -286,7 +286,7 @@ export function SupportPage() {
               sx={{
                 height: "100%",
                 borderRadius: "16px",
-                border: "1px solid #E2E8F0",
+                border: "1px solid", borderColor: "divider",
                 boxShadow: "0 2px 10px rgba(0,0,0,0.03)",
                 display: "flex",
                 flexDirection: "column",
@@ -316,13 +316,13 @@ export function SupportPage() {
                 >
                   <PhoneInTalkOutlinedIcon fontSize="medium" />
                 </Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#001639", mb: 0.5 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary", mb: 0.5 }}>
                   Línea de Urgencias
                 </Typography>
-                <Typography variant="body2" sx={{ color: "#64748B", mb: 2 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
                   0800-333-DARS (3277)
                 </Typography>
-                <Typography variant="caption" sx={{ color: "#0F172A", fontWeight: 600, display: "block", mb: 2 }}>
+                <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, display: "block", mb: 2 }}>
                   Bloqueo de cuenta y emergencias 24/7
                 </Typography>
               </Box>
@@ -352,18 +352,18 @@ export function SupportPage() {
         <Card
           sx={{
             borderRadius: "20px",
-            border: "1px solid #E2E8F0",
-            bgcolor: "#FFFFFF",
+            border: "1px solid", borderColor: "divider",
+            bgcolor: "background.paper",
             boxShadow: "0 4px 20px rgba(0, 22, 57, 0.04)",
             p: { xs: 2.5, sm: 4 },
             mb: 4,
           }}
         >
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: "#001639", mb: 0.5 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary", mb: 0.5 }}>
               Generar un Ticket de Soporte
             </Typography>
-            <Typography variant="body2" sx={{ color: "#64748B" }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               Completá los detalles de tu consulta. Te enviaremos el número de caso y el seguimiento a tu correo.
             </Typography>
           </Box>
@@ -377,7 +377,7 @@ export function SupportPage() {
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Grid container spacing={2.5}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, color: "#0F172A", mb: 0.5, display: "block" }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, color: "text.primary", mb: 0.5, display: "block" }}>
                   Nombre y Apellido *
                 </Typography>
                 <TextField
@@ -392,7 +392,7 @@ export function SupportPage() {
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, color: "#0F172A", mb: 0.5, display: "block" }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, color: "text.primary", mb: 0.5, display: "block" }}>
                   Correo Electrónico *
                 </Typography>
                 <TextField
@@ -408,7 +408,7 @@ export function SupportPage() {
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, color: "#0F172A", mb: 0.5, display: "block" }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, color: "text.primary", mb: 0.5, display: "block" }}>
                   Motivo de la consulta *
                 </Typography>
                 <TextField
@@ -429,7 +429,7 @@ export function SupportPage() {
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, color: "#0F172A", mb: 0.5, display: "block" }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, color: "text.primary", mb: 0.5, display: "block" }}>
                   N° de Transacción / ID de Referencia (Opcional)
                 </Typography>
                 <TextField
@@ -444,7 +444,7 @@ export function SupportPage() {
               </Grid>
 
               <Grid size={{ xs: 12 }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, color: "#0F172A", mb: 0.5, display: "block" }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, color: "text.primary", mb: 0.5, display: "block" }}>
                   Descripción detallada *
                 </Typography>
                 <TextField
@@ -488,8 +488,8 @@ export function SupportPage() {
         <Card
           sx={{
             borderRadius: "16px",
-            border: "1px solid #E2E8F0",
-            bgcolor: "#F8FAFC",
+            border: "1px solid", borderColor: "divider",
+            bgcolor: "action.hover",
             p: 2.5,
           }}
         >
@@ -504,10 +504,10 @@ export function SupportPage() {
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
               <HelpOutlineOutlinedIcon sx={{ color: "#0056D2", fontSize: 28 }} />
               <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#001639" }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.primary" }}>
                   ¿Buscás respuestas inmediatas sobre cómo operar?
                 </Typography>
-                <Typography variant="caption" sx={{ color: "#64748B" }}>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
                   Revisá los tutoriales y preguntas frecuentes en nuestro Centro de Ayuda.
                 </Typography>
               </Box>
@@ -556,18 +556,18 @@ export function SupportPage() {
             >
               <CheckCircleOutlinedIcon sx={{ fontSize: 36 }} />
             </Box>
-            <Typography variant="h5" sx={{ fontWeight: 800, color: "#001639" }}>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary" }}>
               ¡Ticket Registrado!
             </Typography>
           </DialogTitle>
           <DialogContent sx={{ pb: 2 }}>
-            <Typography variant="body2" sx={{ color: "#64748B", mb: 2 }}>
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
               Hemos recibido tu consulta con éxito. Un representante de nuestro equipo te contactará por email en menos de 24 horas.
             </Typography>
 
             <Box
               sx={{
-                bgcolor: "#F8FAFC",
+                bgcolor: "action.hover",
                 p: 2,
                 borderRadius: "12px",
                 border: "1px dashed #CBD5E1",
@@ -575,7 +575,7 @@ export function SupportPage() {
               }}
             >
               <Stack direction="row" sx={{ justifyContent: "space-between", mb: 1 }}>
-                <Typography variant="caption" sx={{ color: "#64748B" }}>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
                   Número de Ticket:
                 </Typography>
                 <Typography variant="caption" sx={{ fontWeight: 800, color: "#0056D2" }}>
@@ -583,18 +583,18 @@ export function SupportPage() {
                 </Typography>
               </Stack>
               <Stack direction="row" sx={{ justifyContent: "space-between", mb: 1 }}>
-                <Typography variant="caption" sx={{ color: "#64748B" }}>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
                   Motivo:
                 </Typography>
-                <Typography variant="caption" sx={{ fontWeight: 600, color: "#0F172A" }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, color: "text.primary" }}>
                   {successTicket?.category}
                 </Typography>
               </Stack>
               <Stack direction="row" sx={{ justifyContent: "space-between" }}>
-                <Typography variant="caption" sx={{ color: "#64748B" }}>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
                   Fecha y Hora:
                 </Typography>
-                <Typography variant="caption" sx={{ fontWeight: 500, color: "#0F172A" }}>
+                <Typography variant="caption" sx={{ fontWeight: 500, color: "text.primary" }}>
                   {successTicket?.date}
                 </Typography>
               </Stack>
