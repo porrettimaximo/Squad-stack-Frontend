@@ -24,11 +24,13 @@ import NotFoundPage from "./pages/NotFound/NotFoundPage";
 
 import SettingsPage from "./pages/Settings/SettingsPage";
 import { AppThemeProvider } from "./context/ThemeContext";
+import { LanguageProvider } from "./context/LanguageContext";
 
 export function App() {
   return (
-    <AppThemeProvider>
-      <AuthProvider>
+    <LanguageProvider>
+      <AppThemeProvider>
+        <AuthProvider>
         <AccountProvider>
           <BrowserRouter>
             <Routes>
@@ -103,6 +105,7 @@ export function App() {
         </AccountProvider>
       </AuthProvider>
     </AppThemeProvider>
+  </LanguageProvider>
   );
 }
 

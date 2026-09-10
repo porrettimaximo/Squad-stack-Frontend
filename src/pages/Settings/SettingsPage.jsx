@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
+import TranslateIcon from "@mui/icons-material/Translate";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import CreditCardOutlinedIcon from "@mui/icons-material/CreditCardOutlined";
@@ -22,16 +23,19 @@ import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNone
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../../components/layout/AppLayout";
 import { useThemeMode } from "../../context/ThemeContext";
+import { useLanguage } from "../../context/LanguageContext";
 import { useAccount } from "../../hooks/useAccount";
 
 /**
  * SettingsPage: Pantalla ligera de Ajustes / Configuración.
  * - Conmutador interactivo de Tema (Modo Claro / Modo Oscuro).
+ * - Selector de Idioma y Accesibilidad (TalkBack / VoiceOver / NVDA).
  * - Accesos directos para reutilizar lo ya existente: Mi Cuenta / Perfil, Historial de Movimientos, Tarjetas y Seguridad.
  */
 export function SettingsPage() {
   const navigate = useNavigate();
   const { darkMode, toggleTheme } = useThemeMode();
+  const { language, setLanguage, isSpanish } = useLanguage();
   const { user } = useAccount();
 
   const shortcutLinks = [
@@ -75,8 +79,8 @@ export function SettingsPage() {
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             {isAdmin
-              ? "Personaliza la apariencia del panel de administración."
-              : "Personaliza la apariencia y gestiona las preferencias de tu cuenta DigitalArs."}
+              ? "Personaliza la apariencia y accesibilidad del panel de administración."
+              : "Personaliza la apariencia, accesibilidad y gestiona las preferencias de tu cuenta DigitalArs."}
           </Typography>
         </Box>
 
@@ -148,6 +152,131 @@ export function SettingsPage() {
                   },
                 }}
               />
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* 2. Accesibilidad: Idioma del Lector de Pantalla (TalkBack / VoiceOver / NVDA) */}
+        <Card
+          sx={{
+            mb: 3,
+            border: "1px solid",
+            borderColor: "divider",
+            transition: "all 0.18s ease",
+            "&:hover": { borderColor: "primary.main" },
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                alignItems: { xs: "flex-start", sm: "center" },
+                justifyContent: "space-between",
+                gap: 2,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Avatar
+                  sx={{
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "rgba(16, 185, 129, 0.15)"
+                        : "rgba(16, 185, 129, 0.1)",
+                    color: "#10B981",
+                    width: 46,
+                    height: 46,
+                  }}
+                >
+                  <TranslateIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                    Idioma del Lector de Pantalla
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
+                    {isSpanish
+                      ? "Español (Argentina): Pronunciación natural y fluida en lectores de pantalla."
+                      : "English (US): Screen readers will synthesize speech with English phonetics."}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Botones accesibles de selección de idioma */}
+              <Box
+                role="radiogroup"
+                aria-label="Seleccionar idioma para accesibilidad y lector de pantalla"
+                sx={{
+                  display: "flex",
+                  p: 0.5,
+                  bgcolor: "action.hover",
+                  borderRadius: "12px",
+                  border: "1px solid",
+                  borderColor: "divider",
+                  alignSelf: { xs: "stretch", sm: "auto" },
+                }}
+              >
+                <Button
+                  role="radio"
+                  aria-checked={isSpanish}
+                  onClick={() => setLanguage("es")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setLanguage("es");
+                    }
+                  }}
+                  sx={{
+                    flex: { xs: 1, sm: "initial" },
+                    px: 2,
+                    py: 0.8,
+                    borderRadius: "10px",
+                    fontWeight: 700,
+                    fontSize: "0.85rem",
+                    bgcolor: isSpanish ? "primary.main" : "transparent",
+                    color: isSpanish ? "#FFFFFF" : "text.secondary",
+                    "&:hover": {
+                      bgcolor: isSpanish ? "primary.dark" : "action.selected",
+                    },
+                    "&:focus-visible": {
+                      outline: "2px solid #38BDF8 !important",
+                      outlineOffset: "2px",
+                    },
+                  }}
+                >
+                  Español
+                </Button>
+                <Button
+                  role="radio"
+                  aria-checked={!isSpanish}
+                  onClick={() => setLanguage("en")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setLanguage("en");
+                    }
+                  }}
+                  sx={{
+                    flex: { xs: 1, sm: "initial" },
+                    px: 2,
+                    py: 0.8,
+                    borderRadius: "10px",
+                    fontWeight: 700,
+                    fontSize: "0.85rem",
+                    bgcolor: !isSpanish ? "primary.main" : "transparent",
+                    color: !isSpanish ? "#FFFFFF" : "text.secondary",
+                    "&:hover": {
+                      bgcolor: !isSpanish ? "primary.dark" : "action.selected",
+                    },
+                    "&:focus-visible": {
+                      outline: "2px solid #38BDF8 !important",
+                      outlineOffset: "2px",
+                    },
+                  }}
+                >
+                  English
+                </Button>
+              </Box>
             </Box>
           </CardContent>
         </Card>

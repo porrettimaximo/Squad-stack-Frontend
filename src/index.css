@@ -161,6 +161,27 @@ select,
   outline: none !important;
 }
 
+/* Evitar fondo blanco o texto oscuro del navegador en inputs con autocompletado en tema oscuro o login */
+#login-form input:-webkit-autofill,
+#login-form input:-webkit-autofill:hover,
+#login-form input:-webkit-autofill:focus,
+#login-form input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #091a38 inset !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  caret-color: #FFFFFF !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+[data-theme="dark"] input:-webkit-autofill,
+[data-theme="dark"] input:-webkit-autofill:hover,
+[data-theme="dark"] input:-webkit-autofill:focus,
+[data-theme="dark"] input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #1A263B inset !important;
+  -webkit-text-fill-color: #F8FAFC !important;
+  caret-color: #F8FAFC !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 /* Accesibilidad: Enlace para saltar al contenido principal (Screen readers / Keyboard users) */
 .skip-link {
   position: absolute;

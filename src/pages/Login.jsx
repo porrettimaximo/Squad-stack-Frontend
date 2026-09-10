@@ -179,9 +179,32 @@ export const Login = () => {
                 mb: 2,
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "12px",
-                  backgroundColor: "action.hover",
-                  "& fieldset": { borderColor: "#CBD5E1" },
-                  "&:hover fieldset": { borderColor: "#0056D2" },
+                  backgroundColor: "rgba(255, 255, 255, 0.08) !important",
+                  "& fieldset": {
+                    borderColor: "rgba(255, 255, 255, 0.2) !important",
+                    transition: "border-color 0.2s ease",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#38BDF8 !important",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#38BDF8 !important",
+                    borderWidth: "2px",
+                  },
+                  "& input": {
+                    color: "#FFFFFF !important",
+                    "&::placeholder": {
+                      color: "rgba(255, 255, 255, 0.5) !important",
+                      opacity: "1 !important",
+                    },
+                    "&:-webkit-autofill, &:-webkit-autofill:hover, &:-webkit-autofill:focus, &:-webkit-autofill:active": {
+                      WebkitBoxShadow: "0 0 0 1000px #091a38 inset !important",
+                      WebkitTextFillColor: "#FFFFFF !important",
+                      caretColor: "#FFFFFF !important",
+                      transition: "background-color 5000s ease-in-out 0s",
+                      borderRadius: "12px",
+                    },
+                  },
                 },
               }}
             />
@@ -219,7 +242,11 @@ export const Login = () => {
                         edge="end"
                         disabled={loading}
                         size="small"
-                        sx={{ color: "text.secondary", mr: 0.5 }}>
+                        sx={{
+                          color: "rgba(255, 255, 255, 0.7)",
+                          mr: 0.5,
+                          "&:hover": { color: "#FFFFFF" },
+                        }}>
                         {showPassword ? (
                           <VisibilityOff fontSize="small" />
                         ) : (
@@ -234,11 +261,33 @@ export const Login = () => {
                 mb: 3,
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "12px",
-                  backgroundColor: "action.hover",
+                  backgroundColor: "rgba(255, 255, 255, 0.08) !important",
                   pr: 1,
-                  "& fieldset": { borderColor: "#CBD5E1" },
-                  "&:hover fieldset": { borderColor: "#0056D2" },
-                  "& input": { color: "text.primary" },
+                  "& fieldset": {
+                    borderColor: "rgba(255, 255, 255, 0.2) !important",
+                    transition: "border-color 0.2s ease",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#38BDF8 !important",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#38BDF8 !important",
+                    borderWidth: "2px",
+                  },
+                  "& input": {
+                    color: "#FFFFFF !important",
+                    "&::placeholder": {
+                      color: "rgba(255, 255, 255, 0.5) !important",
+                      opacity: "1 !important",
+                    },
+                    "&:-webkit-autofill, &:-webkit-autofill:hover, &:-webkit-autofill:focus, &:-webkit-autofill:active": {
+                      WebkitBoxShadow: "0 0 0 1000px #091a38 inset !important",
+                      WebkitTextFillColor: "#FFFFFF !important",
+                      caretColor: "#FFFFFF !important",
+                      transition: "background-color 5000s ease-in-out 0s",
+                      borderRadius: "12px",
+                    },
+                  },
                 },
               }}
             />
