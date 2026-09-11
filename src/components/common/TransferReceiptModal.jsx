@@ -34,16 +34,14 @@ export function TransferReceiptModal({ open, onClose, transferData, data }) {
   const payload = transferData || data;
   if (!payload) return null;
 
-  const {
-    operationId = "TX-0001",
-    date = new Date().toLocaleString("es-AR"),
-    amount = 0,
-    motive = "Varios",
-    origin = {},
-    destination = {},
-    status = "Completada / Exitosa",
-    isDeposit = false,
-  } = payload;
+  const operationId = payload.operationId || payload.id || payload.transactionId || "TX-0001";
+  const date = payload.date || new Date().toLocaleString("es-AR");
+  const amount = payload.amount ?? 0;
+  const motive = payload.motive || payload.concept || payload.reason || "Varios";
+  const origin = payload.origin || payload.sender || {};
+  const destination = payload.destination || payload.recipient || {};
+  const status = payload.status || "Completada / Exitosa";
+  const isDeposit = payload.isDeposit || false;
 
   const handleCopyId = () => {
     navigator.clipboard?.writeText(String(operationId));

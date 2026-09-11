@@ -293,8 +293,9 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
       <List
         sx={{
           px: collapsed ? 0.8 : 1.5,
-          pb: isMobileDrawer ? 5 : 2,
+          pb: isMobileDrawer ? 3 : 2,
           pt: 1,
+          flex: 1,
           minHeight: 0,
           overflowY: isMobileDrawer ? "visible" : "auto",
           overflowX: "hidden",
@@ -371,14 +372,14 @@ export function Sidebar({ activeItem = "inicio", onItemClick, onLogout, onClose,
         })}
       </List>
 
-      {/* Sección Inferior: Soporte, Ayuda y Cerrar Sesión */}
+      {/* Sección Inferior: Soporte, Ayuda y Cerrar Sesión siempre al fondo */}
       <Box
         sx={{
           px: collapsed ? 0.8 : 1.5,
-          py: 0.4,
-          flex: isMobileDrawer ? "none" : 1,
+          pt: 1,
+          pb: 2,
           flexShrink: 0,
-          mt: isMobileDrawer ? 2 : "auto",
+          mt: "auto",
         }}
       >
         <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)", mb: 1 }} />

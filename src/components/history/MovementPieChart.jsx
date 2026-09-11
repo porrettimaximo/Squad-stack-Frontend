@@ -136,16 +136,21 @@ export const MovementPieChart = ({
       // Obtener el motivo de forma prioritaria
       let motive = (tx.motive || tx.reason || tx.concept || "").trim();
 
+      if (tx.type === 4 || motive.toLowerCase().includes("invers") || motive.toLowerCase().includes("plazo fijo") || motive.toLowerCase().includes("rendimiento")) {
+        motive = "Inversión";
+      }
+
       // Si no tiene motivo o es un nombre genérico, deducir
       if (!motive || motive === "EGRESO" || motive === "INGRESO" || motive === "DEPÓSITO" || motive.startsWith("Transferencia")) {
         const title = (tx.title || "").toLowerCase();
-        if (title.includes("alquiler") || title.includes("vivienda")) motive = "Alquiler";
+        if (title.includes("invers") || title.includes("plazo fijo") || title.includes("rendimiento")) motive = "Inversión";
+        else if (title.includes("alquiler") || title.includes("vivienda")) motive = "Alquiler";
         else if (title.includes("comida") || title.includes("starbucks") || title.includes("alimento")) motive = "Comidas y bebidas";
         else if (title.includes("servicio") || title.includes("edenor") || title.includes("spotify") || title.includes("netflix")) motive = "Cuentas y servicios";
         else if (title.includes("salud") || title.includes("farmacity") || title.includes("médico")) motive = "Salud";
         else if (title.includes("combustible") || title.includes("ypf") || title.includes("transporte")) motive = "Transporte";
         else if (title.includes("compra") || title.includes("coto") || title.includes("mercado libre")) motive = "Compras";
-        else if (title.includes("educacion") || title.includes("educación") || title.includes("curso")) motive = "Educación";
+        else if (title.includes("educacion") || title.includes("educación") || title.includes("curso") || title.includes("clase")) motive = "Educación";
         else if (title.includes("entretenimiento") || title.includes("cine")) motive = "Entretenimiento y cultura";
         else if (title.includes("honorario") || title.includes("profesional")) motive = "Honorarios profesionales";
         else if (title.includes("haber") || title.includes("sueldo")) motive = "Haberes";

@@ -8,25 +8,29 @@ function resolveMotive(tx) {
   const concept = (tx.concept || "").trim();
   const lower = concept.toLowerCase();
 
+  // Inversiones (Plazo Fijo / Type 4)
+  if (tx.type === 4 || lower.includes("invers") || lower.includes("plazo fijo") || lower.includes("rendimiento")) {
+    return "Inversión";
+  }
+
+  if (tx.type === 5 && !concept) {
+    return "Cuentas y servicios";
+  }
+
   if (!concept) {
     if (tx.type === 1) return "Depósito de Fondos";
     if (tx.type === 2) return "Transferencia Recibida";
     return "Varios";
   }
 
-  // Pagos de servicios: "Servicio: Electricidad (Luz)" → preservar tal cual
-  if (lower.startsWith("servicio:")) {
+  // Pagos de servicios: "Servicio: Electricidad (Luz)" o "Pago de Servicio - Edenor"
+  if (lower.startsWith("servicio:") || lower.startsWith("pago de servicio")) {
     return concept;
   }
 
   // Movimientos de reservas: "Reserva: Vacaciones" → preservar tal cual
   if (lower.startsWith("reserva:")) {
     return concept;
-  }
-
-  // Inversiones (Plazo Fijo)
-  if (lower.startsWith("constitución de plazo fijo") || lower.startsWith("constitucion de plazo fijo")) {
-    return "Inversión: Plazo Fijo";
   }
 
   // Si incluye un motivo después de un separador (ej: "Transferencia recibida · Salud")
@@ -43,7 +47,7 @@ function resolveMotive(tx) {
   if (lower.includes("salud") || lower.includes("farmacity") || lower.includes("medico") || lower.includes("médico") || lower.includes("farmacia") || lower.includes("clinica")) return "Salud";
   if (lower.includes("combustible") || lower.includes("ypf") || lower.includes("shell") || lower.includes("nafta") || lower.includes("transporte") || lower.includes("uber") || lower.includes("cabify") || lower.includes("sube")) return "Transporte";
   if (lower.includes("compra") || lower.includes("coto") || lower.includes("mercado") || lower.includes("super")) return "Compras";
-  if (lower.includes("educacion") || lower.includes("educación") || lower.includes("curso") || lower.includes("facultad")) return "Educación";
+  if (lower.includes("educacion") || lower.includes("educación") || lower.includes("curso") || lower.includes("clase") || lower.includes("facultad")) return "Educación";
   if (lower.includes("entretenimiento") || lower.includes("cine") || lower.includes("teatro") || lower.includes("salida")) return "Entretenimiento y cultura";
   if (lower.includes("honorario") || lower.includes("profesional")) return "Honorarios profesionales";
   if (lower.includes("haber") || lower.includes("sueldo") || lower.includes("nómina") || lower.includes("cobro de trabajo")) return "Haberes";
@@ -143,13 +147,19 @@ export const transactionService = {
     search = "",
     localTransactions = [],
   } = {}) {
-    const params = { page, pageSize };
+    const rawSearch = (search || "").trim();
+    const isSearching = Boolean(rawSearch);
+
+    const params = {
+      page: isSearching ? 1 : page,
+      pageSize: isSearching ? 100 : pageSize,
+    };
+
     if (type !== null && type !== "" && type !== "all") {
       params.movementType = type;
     }
     if (dateFrom) params.dateFrom = dateFrom;
     if (dateTo) params.dateTo = dateTo;
-    if (search && search.trim()) params.search = search.trim();
 
     try {
       const response = await api.get("/transactions/me", { params });
@@ -201,6 +211,43 @@ export const transactionService = {
           };
         });
 
+        // Filtrado inteligente multivariable por motivo, título, concepto, monto o contacto
+        if (isSearching) {
+          const q = rawSearch.toLowerCase();
+          items = items.filter((tx) => {
+            const motive = (tx.motive || tx.reason || "").toLowerCase();
+            const title = (tx.title || "").toLowerCase();
+            const category = (tx.category || "").toLowerCase();
+            const counterpart = (tx.counterpart || "").toLowerCase();
+            const concept = (tx.concept || "").toLowerCase();
+            const amountStr = String(tx.amount || "");
+            const idStr = `tx-${String(tx.id || "").padStart(4, "0")}`.toLowerCase();
+
+            return (
+              motive.includes(q) ||
+              title.includes(q) ||
+              category.includes(q) ||
+              counterpart.includes(q) ||
+              concept.includes(q) ||
+              amountStr.includes(q) ||
+              idStr.includes(q)
+            );
+          });
+
+          const totalItems = items.length;
+          const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+          const start = (page - 1) * pageSize;
+          const paginatedItems = items.slice(start, start + pageSize);
+
+          return {
+            items: paginatedItems,
+            page,
+            pageSize,
+            totalItems,
+            totalPages,
+          };
+        }
+
         return {
           items,
           page: response.data.page || page,
@@ -210,8 +257,7 @@ export const transactionService = {
         };
       }
     } catch {
-
-      // Fallback a filtrado en memoria solo si no hay sesión
+      // Fallback a filtrado en memoria
     }
 
     const token = localStorage.getItem("token");
@@ -256,6 +302,7 @@ export const transactionService = {
           t.category?.toLowerCase().includes(q) ||
           t.concept?.toLowerCase().includes(q) ||
           t.reason?.toLowerCase().includes(q) ||
+          t.motive?.toLowerCase().includes(q) ||
           t.subtitle?.toLowerCase().includes(q) ||
           t.counterpart?.toLowerCase().includes(q)
       );

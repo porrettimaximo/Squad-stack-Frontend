@@ -118,12 +118,20 @@ git clone https://github.com/MicaMulato/Squad-stack.git
 
 Inicie sesión inmediatamente con cualquiera de las siguientes cuentas preconfiguradas:
 
-| Rol | Usuario / Nombre | Email | Contraseña | Saldo Inicial | Acceso Permitido |
-| :--- | :--- | :--- | :--- | :---: | :--- |
-| **Admin** | Administrador DigitalArs | `admin@digitalars.com` | `Admin123!` | $500.000,00 | Panel Admin (`/admin`), ABM de usuarios, bloqueo de cuentas y ajustes de tema. |
-| **User** | Roberto Carlos | `robercarlos3@gmail.com` | `Roberto1!` | $260.000,00 | Billetera (`/dashboard`), transferencias, depósitos, inversiones, tarjetas, servicios y reservas. |
-| **User** | Mohammed Khan | `mokha@gmail.com` | `Mohammed1!` | $185.000,50 | Billetera (`/dashboard`), transferencias y comprobantes. |
-| **User** | Alejandro Silva | `alejandro.silva@digitalars.com` | `User123!` | $45.230,50 | Historial y pagos. |
+| Rol | Usuario / Nombre | Email | Contraseña | Alias | Saldo Disponible |
+| :--- | :--- | :--- | :--- | :--- | :---: |
+| **Admin** | Administrador DigitalArs | `admin@digitalars.com` | `Admin123!` | `admin.digital.ars` | $1.500.000,00 |
+| **User** | Mateo Rossi | `mateo.rossi@gmail.com` | `User123!` | `mateo.rossi.ars` | $345.800,00 |
+| **User** | Sofía Martínez | `sofia.martinez@gmail.com` | `User123!` | `sofia.martinez.ars` | $215.450,00 |
+| **User** | Lucas Benítez | `lucas.benitez@gmail.com` | `User123!` | `lucas.benitez.ars` | $128.900,00 |
+| **User** | Camila Fernández | `camila.fernandez@gmail.com` | `User123!` | `camila.fernandez.ars` | $480.200,00 |
+| **User** | Joaquín Díaz | `joaquin.diaz@gmail.com` | `User123!` | `joaquin.diaz.ars` | $72.600,00 |
+| **User** | Valentina Gómez | `valentina.gomez@gmail.com` | `User123!` | `valentina.gomez.ars` | $590.000,00 |
+| **User** | Diego Romero | `diego.romero@gmail.com` | `User123!` | `diego.romero.ars` | $95.300,00 |
+
+> 🔑 **Nota de Acceso:**  
+> - Los usuarios con rol **User** acceden a la billetera completa (`/dashboard`): Transferencias cruzadas, Depósitos, Plazos Fijos, Tarjetas Físicas/Virtuales, Pagos de Servicios, Metas de Ahorro y Notificaciones.  
+> - El usuario con rol **Admin** accede al panel de administración (`/admin`): Listado y ABM de usuarios, bloqueo de cuentas y métricas del sistema.
 
 ---
 

@@ -36,13 +36,17 @@ import { useAuth } from "../../context/AuthContext";
 import { formatCurrency } from "../../utils/formatters";
 import { downloadTransferReceiptPdf } from "../../utils/pdfGenerator";
 import { accountService } from "../../services/accountService";
+import { getReserves } from "../../services/reservesService";
 
 // Contactos sugeridos para selección rápida
 const SUGGESTED_CONTACTS = [
-  { id: 1, accountId: 2, name: "Roberto Carlos", cvu: "0000003100010000000002", alias: "roberto.carlos.ars", email: "roberto.carlos@digitalars.com", accountNumber: "0002-4892-02", avatar: "RC" },
-  { id: 2, accountId: 3, name: "María Elena Walsh", cvu: "0000003100010000000003", alias: "maria.walsh.ars", email: "maria.walsh@digitalars.com", accountNumber: "0002-4892-03", avatar: "MW" },
-  { id: 3, accountId: 4, name: "Lionel Andrés Messi", cvu: "0000003100010000000004", alias: "lio.messi.ars", email: "lio.messi@digitalars.com", accountNumber: "0002-4892-04", avatar: "LM" },
-  { id: 4, accountId: 5, name: "Lucía Méndez", cvu: "0000003100010000000005", alias: "lucia.mendez.ars", email: "lucia.mendez@digitalars.com", accountNumber: "0002-4892-05", avatar: "LM" },
+  { id: 1, accountId: 2, name: "Mateo Rossi", cvu: "0000003100010000000002", alias: "mateo.rossi.ars", email: "mateo.rossi@gmail.com", accountNumber: "0002-4892-02", avatar: "MR" },
+  { id: 2, accountId: 3, name: "Sofía Martínez", cvu: "0000003100010000000003", alias: "sofia.martinez.ars", email: "sofia.martinez@gmail.com", accountNumber: "0002-4892-03", avatar: "SM" },
+  { id: 3, accountId: 4, name: "Lucas Benítez", cvu: "0000003100010000000004", alias: "lucas.benitez.ars", email: "lucas.benitez@gmail.com", accountNumber: "0002-4892-04", avatar: "LB" },
+  { id: 4, accountId: 5, name: "Camila Fernández", cvu: "0000003100010000000005", alias: "camila.fernandez.ars", email: "camila.fernandez@gmail.com", accountNumber: "0002-4892-05", avatar: "CF" },
+  { id: 5, accountId: 6, name: "Joaquín Díaz", cvu: "0000003100010000000006", alias: "joaquin.diaz.ars", email: "joaquin.diaz@gmail.com", accountNumber: "0002-4892-06", avatar: "JD" },
+  { id: 6, accountId: 7, name: "Valentina Gómez", cvu: "0000003100010000000007", alias: "valentina.gomez.ars", email: "valentina.gomez@gmail.com", accountNumber: "0002-4892-07", avatar: "VG" },
+  { id: 7, accountId: 8, name: "Diego Romero", cvu: "0000003100010000000008", alias: "diego.romero.ars", email: "diego.romero@gmail.com", accountNumber: "0002-4892-08", avatar: "DR" },
 ];
 
 const QUICK_AMOUNTS = [1000, 5000, 10000, 25000];
@@ -57,7 +61,7 @@ const slideVariants = {
 function TransferPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { account, transferFunds, reserves } = useAccount();
+  const { account, transferFunds } = useAccount();
   const { user } = useAuth();
 
   const [step, setStep] = useState(1);
@@ -71,6 +75,7 @@ function TransferPage() {
   const [motive, setMotive] = useState("Varios");
   const [sourceType, setSourceType] = useState("account"); // 'account' o 'reserve'
   const [selectedReserveId, setSelectedReserveId] = useState(null);
+  const [reservesList, setReservesList] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
@@ -79,6 +84,25 @@ function TransferPage() {
 
   const currentBalance = account?.money ?? 0;
   const currentAccountId = account?.id || user?.accountId;
+
+  // Carga reactiva de reservas activas del usuario
+  useEffect(() => {
+    let isMounted = true;
+    const fetchReserves = async () => {
+      try {
+        const data = await getReserves();
+        if (isMounted && Array.isArray(data)) {
+          setReservesList(data);
+        }
+      } catch (err) {
+        console.warn("No se pudieron cargar las reservas para la transferencia:", err);
+      }
+    };
+    fetchReserves();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Filtrar para que el usuario no se transfiera a sí mismo en los sugeridos
   const displayedContacts = useMemo(() => {
@@ -97,14 +121,14 @@ function TransferPage() {
 
   const selectedReserve = useMemo(() => {
     if (sourceType !== "reserve" || !selectedReserveId) return null;
-    return reserves?.find((r) => r.id === selectedReserveId) || null;
-  }, [sourceType, selectedReserveId, reserves]);
+    return reservesList?.find((r) => r.id === selectedReserveId) || null;
+  }, [sourceType, selectedReserveId, reservesList]);
 
   const availableSourceBalance = useMemo(() => {
     if (sourceType === "reserve") {
-      return selectedReserve?.currentAmount ?? 0;
+      return Number(selectedReserve?.currentBalance ?? selectedReserve?.currentAmount ?? 0);
     }
-    return currentBalance;
+    return Number(currentBalance);
   }, [sourceType, selectedReserve, currentBalance]);
 
   // Perfil del emisor para comprobante y resumen
@@ -251,7 +275,28 @@ function TransferPage() {
   // Datos estructurados completos para comprobante modal y PDF
   const transferReceiptData = useMemo(() => {
     const dest = verifiedRecipient || {};
+    const originProfile = {
+      name: myProfile.name,
+      email: myProfile.email,
+      accountId: myProfile.accountId,
+      accountNumber: myProfile.accountNumber,
+      alias: myProfile.alias,
+      cvu: myProfile.cvu,
+      bank: myProfile.bank,
+      sourceType: sourceType === "reserve" ? `Reserva: ${selectedReserve?.name || "Apartado"}` : "Saldo Principal",
+    };
+    const destProfile = {
+      name: dest.name || `${dest.firstName || ""} ${dest.lastName || ""}`.trim() || "Destinatario",
+      accountId: dest.accountId || 2,
+      accountNumber: dest.accountNumber || `0002-4892-0${dest.accountId || 2}`,
+      alias: dest.alias || "destinatario.ars",
+      cvu: dest.cvu || "0000003100010000000002",
+      email: dest.email || `${dest.alias || "usuario"}@digitalars.com`,
+      bank: dest.bank || "DigitalArs Billetera Virtual",
+    };
+
     return {
+      operationId: completedTxId || "TX-9941",
       id: completedTxId || "TX-9941",
       date: new Date().toLocaleDateString("es-AR", {
         day: "2-digit",
@@ -261,25 +306,14 @@ function TransferPage() {
         minute: "2-digit",
       }),
       amount: num,
-      concept: motive,
-      sender: {
-        name: myProfile.name,
-        email: myProfile.email,
-        accountId: myProfile.accountId,
-        accountNumber: myProfile.accountNumber,
-        alias: myProfile.alias,
-        cvu: myProfile.cvu,
-        bank: myProfile.bank,
-        sourceType: sourceType === "reserve" ? `Reserva: ${selectedReserve?.name || "Apartado"}` : "Saldo Principal",
-      },
-      recipient: {
-        name: dest.name || "Destinatario",
-        accountId: dest.accountId || 2,
-        accountNumber: dest.accountNumber || `0002-4892-0${dest.accountId || 2}`,
-        alias: dest.alias || "destinatario.ars",
-        cvu: dest.cvu || "0000003100010000000002",
-        bank: dest.bank || "DigitalArs Billetera Virtual",
-      },
+      motive: motive || "Varios",
+      concept: motive || "Varios",
+      origin: originProfile,
+      sender: originProfile,
+      destination: destProfile,
+      recipient: destProfile,
+      status: "Completada / Exitosa",
+      isDeposit: false,
     };
   }, [completedTxId, num, motive, myProfile, verifiedRecipient, sourceType, selectedReserve]);
 
@@ -516,16 +550,19 @@ function TransferPage() {
                         </Typography>
                       </Box>
                     </MenuItem>
-                    {reserves?.map((r) => (
-                      <MenuItem key={r.id} value={`reserve-${r.id}`}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <SavingsOutlinedIcon sx={{ fontSize: 18, color: "#16A34A" }} />
-                          <Typography sx={{ fontSize: "0.9rem", fontWeight: 600 }}>
-                            Reserva: {r.name} (Disponible: {formatCurrency(r.currentAmount)})
-                          </Typography>
-                        </Box>
-                      </MenuItem>
-                    ))}
+                    {reservesList?.map((r) => {
+                      const reserveBalance = Number(r.currentBalance ?? r.currentAmount ?? 0);
+                      return (
+                        <MenuItem key={r.id} value={`reserve-${r.id}`}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <SavingsOutlinedIcon sx={{ fontSize: 18, color: r.color || "#16A34A" }} />
+                            <Typography sx={{ fontSize: "0.9rem", fontWeight: 600 }}>
+                              Reserva: {r.name} (Disponible: {formatCurrency(reserveBalance)})
+                            </Typography>
+                          </Box>
+                        </MenuItem>
+                      );
+                    })}
                   </Select>
                 </FormControl>
 
